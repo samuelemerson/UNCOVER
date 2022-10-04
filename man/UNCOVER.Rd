@@ -18,7 +18,9 @@ UNCOVER(
   SMC_method = "SMC_BIC",
   SMC_thres = 30,
   rprior = NULL,
-  prior_pdf = NULL
+  prior_pdf = NULL,
+  plot_progress = F,
+  verbose = T
 )
 }
 \arguments{
@@ -49,6 +51,10 @@ UNCOVER(
 \item{rprior}{Function to sample from the prior. Must only have two arguments, `p_num` and `di` (Number of prior samples to generate and the number of dimensions of a single sample respectively).}
 
 \item{prior_pdf}{Probability Density Function of the prior. Must only have two arguments, `th` and `di` (a vector or matrix of regression coefficients samples and the number of dimensions of a single sample respectively).}
+
+\item{plot_progress}{Do you want to plot the output of the clustering each time an edge is removed or reintroduced?}
+
+\item{verbose}{Do you want the progress of the algorithm to be shown?}
 }
 \value{
 Either a list or a list of two lists. See details.
@@ -99,12 +105,12 @@ rv <- sample(0:1,100,replace=T)
 
 # We can then run our algorithm to see what cohorts are selected for each
 # of the different reforestation criteria
-UN.none <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", SMC_thres = 30)
-UN.noc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "NoC", max_K = 3, SMC_thres = 30)
-UN.soc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", min_size = 10, SMC_thres = 30)
-UN.maxreg <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", reg = 0.1, SMC_thres = 30)
-UN.validation <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", split = 0.8, SMC_thres = 30)
-clu_al_mat <- rbind(UN.none[[1]],UN.noc[[1]],UN.soc[[1]],UN.maxreg[[1]],UN.validation[[1]])
+UN.none <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", SMC_thres = 30,verbose = F)
+UN.noc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "NoC", max_K = 3, SMC_thres = 30,verbose = F)
+UN.soc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "SoC", min_size = 10, SMC_thres = 30,verbose = F)
+UN.maxreg <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "MaxReg", reg = 0.1, SMC_thres = 30,verbose = F)
+UN.validation <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "Validation", split = 0.8, SMC_thres = 30,verbose = F)
+clu_al_mat <- rbind(UN.none[[1]],UN.noc[[1]],UN.soc[[1]],UN.maxreg[[1]],UN.validation[[2]][[1]])
 # We can create a matrix where each entry shows in how many of the methods
 # did the indexed observations belong to the same cluster
 obs_con_mat <- matrix(0,100,100)
@@ -117,8 +123,7 @@ obs_con_mat[j,i] <- obs_con_mat[i,j]
 obs_con_mat
 # We can also view the outputted overall Bayesian evidence of the five
 # models as well
-log_Z_mat <- rbind(UN.none[[2]],UN.noc[[2]],UN.soc[[2]],UN.maxreg[[2]],UN.validation[[2]])
-rowSums(log_Z_mat)
+c(sum(UN.none[[2]]),sum(UN.noc[[2]]),sum(UN.soc[[2]]),sum(UN.maxreg[[2]]),sum(UN.validation[[2]][[2]]))
 
 # If we don't assume the prior for the regression coefficients is a
 # standard normal but instead a multivariate normal with mean (1,1) and the
@@ -127,7 +132,7 @@ pr_samp <- function(p_n,di){return(rmvn(p_n,rep(1,di),diag(di)))}
 pr_fun <- function(th,di){return(dmvn(th,mu=rep(1,di),sigma=diag(di)))}
 
 # We then can run UNCOVER using this prior and compare to the standard result
-UN.none.2 <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun)
+UN.none.2 <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 c(sum(UN.none[[2]]),sum(UN.none.2[[2]]))
 }
 \seealso{

@@ -37,6 +37,7 @@
 ##' @param pdf_fun Probability Density Function of the prior. Must only have two arguments, `th` and `di` (a vector or matrix of regression coefficients samples and the number of dimensions of a single sample respectively).
 ##' @param p_p Do you want to plot the output of the clustering each time an edge is reintroduced?
 ##' @param rho Only applies if `p_p` is `TRUE`. A vector specifying which variables of the covariate matrix to plot.
+##' @param vb Do you want the progress of the algorithm to be shown?
 ##' @return A list consisting of; the cluster allocation vector of the new model, the resulting Bayesian evidence vector for the new model, an `igraph` object containing information on the new graph, the number of clusters in the model and the edges that have been removed from the graph to achieve this model.
 ##' @details Requires a minimum spanning forest graph which defines components for a multiplicative Bayesian logistic regression model, and the edges removed to achieve this graph.
 ##'
@@ -83,7 +84,8 @@
 ##' er.2[[2]]
 ##' sum(er.2[[2]])
 
-reforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,est_method="SMC_BIC",est_thres=Inf,par_no=0,rfun=NULL,pdf_fun=NULL,p_p=F,rho=NULL){
+reforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,est_method="SMC_BIC",
+                         est_thres=Inf,par_no=0,rfun=NULL,pdf_fun=NULL,p_p=F,rho=NULL,vb = F){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -92,23 +94,31 @@ reforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,est_meth
     c_s <- vector(mode="list",length=1)
   }
   j <- 1
-  message("Assessing the reintroduction of edges which have been removed")
+  if(vb){
+    message("Assessing the reintroduction of edges which have been removed")
+  }
   while(j <= nrow(eps)){
-    edge_clu_al <- sort(clu_al[get.edgelist(gra,names = F)[get.edge.ids(gra,eps[j,]),]])
+    edge_clu_al <- sort(clu_al[match(eps[j,],V(gra)$name)])
     if(!identical(c_s[[j]][[1]],which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2]))){
       c_s[[j]] <- list(which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2]),lbe.gen(method = est_method,thres = est_thres,obs_mat = obs[which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2]),,drop=F],res_vec = res[which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2])],p_num = par_no,rpri = rfun,p_pdf = pdf_fun))
     }
-    txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
+    if(vb){
+      txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
+    }
     if(j==nrow(eps)){
-      message("")
+      if(vb){
+        message("")
+      }
       lbe_comb.1 <- sapply(c_s,FUN = function(u){u[[2]]})
-      lbe_comb.2 <- apply(eps,MARGIN = 1,FUN = function(u,lZ,ca,cg){sum(lZ[-ca[get.edgelist(cg,names = F)[get.edge.ids(cg,u),]]])},lZ = lbe,ca = clu_al,cg = gra)
+      lbe_comb.2 <- apply(eps,MARGIN = 1,FUN = function(u,lZ,ca,cg){sum(lZ[-ca[match(u,V(cg)$name)]])},lZ = lbe,ca = clu_al,cg = gra)
       lbe_comb <- lbe_comb.1 + lbe_comb.2
       if(K>K_dag | any(lbe_comb>sum(lbe))){
         cut_comb <- which.max(lbe_comb)
-        edge_clu_al <- sort(clu_al[get.edgelist(gra,names = F)[get.edge.ids(gra,eps[cut_comb,])]])
-        message("")
-        message(blue(paste0("Combining connected components ",edge_clu_al[1]," and ",edge_clu_al[2])))
+        edge_clu_al <- sort(clu_al[match(eps[cut_comb,],V(gra)$name)])
+        if(vb){
+          message("")
+          message(blue(paste0("Combining connected components ",edge_clu_al[1]," and ",edge_clu_al[2])))
+        }
         clu_al[which(clu_al==edge_clu_al[2])] <- edge_clu_al[1]
         for(k in (edge_clu_al[2]+1):K){
           clu_al[which(clu_al==k)] <- k-1
@@ -126,7 +136,7 @@ reforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,est_meth
           pairs(obs[,rho],pch=as.character(res),col=clu_al,cex=0.5)
         }
         j <- 0
-        if(nrow(eps)!=0){
+        if(nrow(eps)!=0 & vb){
           message("")
           message(green("Reassessing the reintroduction of edges which have been removed"))
         }
@@ -166,6 +176,7 @@ reforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,est_meth
 ##' @param pdf_fun Probability Density Function of the prior. Must only have two arguments, `th` and `di` (a vector or matrix of regression coefficients samples and the number of dimensions of a single sample respectively).
 ##' @param p_p Do you want to plot the output of the clustering each time an edge is reintroduced?
 ##' @param rho Only applies if `p_p` is `TRUE`. A vector specifying which variables of the covariate matrix to plot.
+##' @param vb Do you want the progress of the algorithm to be shown?
 ##' @return A list consisting of; the cluster allocation vector of the new model, the resulting Bayesian evidence vector for the new model, an `igraph` object containing information on the new graph, the number of clusters in the model and the edges that have been removed from the graph to achieve this model.
 ##' @details Requires a minimum spanning forest graph which defines components for a multiplicative Bayesian logistic regression model, and the edges removed to achieve this graph.
 ##'
@@ -182,7 +193,8 @@ reforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,est_meth
 ##' @examples
 ##'
 
-reforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,est_method="SMC_BIC",est_thres=Inf,par_no=0,rfun=NULL,pdf_fun=NULL,p_p=F,rho=NULL){
+reforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,est_method="SMC_BIC",
+                         est_thres=Inf,par_no=0,rfun=NULL,pdf_fun=NULL,p_p=F,rho=NULL,vb = F){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -191,27 +203,35 @@ reforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,est_meth
     c_s <- vector(mode="list",length=1)
   }
   j <- 1
-  message("Assessing the reintroduction of edges which have been removed")
+  if(vb){
+    message("Assessing the reintroduction of edges which have been removed")
+  }
   while(j <= nrow(eps)){
-    edge_clu_al <- sort(clu_al[get.edgelist(gra,names = F)[get.edge.ids(gra,eps[j,]),]])
+    edge_clu_al <- sort(clu_al[match(eps[j,],V(gra)$name)])
     if(!identical(c_s[[j]][[1]],which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2]))){
       c_s[[j]] <- list(which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2]),lbe.gen(method = est_method,thres = est_thres,obs_mat = obs[which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2]),,drop=F],res_vec = res[which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2])],p_num = par_no,rpri = rfun,p_pdf = pdf_fun))
     }
-    txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
+    if(vb){
+      txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
+    }
     if(j==nrow(eps)){
-      message("")
+      if(vb){
+        message("")
+      }
       lbe_comb.1 <- sapply(c_s,FUN = function(u){u[[2]]})
-      lbe_comb.2 <- apply(eps,MARGIN = 1,FUN = function(u,lZ,ca,cg){sum(lZ[-ca[get.edgelist(cg,names = F)[get.edge.ids(cg,u),]]])},lZ = lbe, ca = clu_al,cg = gra)
+      lbe_comb.2 <- apply(eps,MARGIN = 1,FUN = function(u,lZ,ca,cg){sum(lZ[-ca[match(u,V(cg)$name)]])},lZ = lbe, ca = clu_al,cg = gra)
       lbe_comb <- lbe_comb.1 + lbe_comb.2
       small_clu <- which(table(clu_al)<n_dag)
-      small_bool <- apply(eps,MARGIN = 1,FUN = function(x,ca,sc,cg){ca[get.edgelist(cg,names = F)[get.edge.ids(cg,x),1]]%in%sc | ca[get.edgelist(cg,names = F)[get.edge.ids(cg,x),2]]%in%sc},ca=clu_al,sc=small_clu,cg=gra)
+      small_bool <- apply(eps,MARGIN = 1,FUN = function(u,ca,sc,cg){ca[match(u,V(cg)$name)[1]]%in%sc | ca[match(u,V(cg)$name)[2]]%in%sc},ca=clu_al,sc=small_clu,cg=gra)
       small_bool <- small_bool | lbe_comb>sum(lbe)
       if(any(small_bool)){
         lbe_comb[which(!small_bool)] <- -Inf
         cut_comb <- which.max(lbe_comb)
-        edge_clu_al <- sort(clu_al[get.edgelist(gra,names = F)[get.edge.ids(gra,eps[cut_comb,])]])
-        message("")
-        message(blue(paste0("Combining connected components ",edge_clu_al[1]," and ",edge_clu_al[2])))
+        edge_clu_al <- sort(clu_al[match(eps[cut_comb,],V(gra)$name)])
+        if(vb){
+          message("")
+          message(blue(paste0("Combining connected components ",edge_clu_al[1]," and ",edge_clu_al[2])))
+        }
         clu_al[which(clu_al==edge_clu_al[2])] <- edge_clu_al[1]
         for(k in (edge_clu_al[2]+1):K){
           clu_al[which(clu_al==k)] <- k-1
@@ -229,7 +249,7 @@ reforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,est_meth
           pairs(obs[,rho],pch=as.character(res),col=clu_al,cex=0.5)
         }
         j <- 0
-        if(nrow(eps)!=0){
+        if(nrow(eps)!=0 & vb){
           message("")
           message(green("Reassessing the reintroduction of edges which have been removed"))
         }
@@ -269,6 +289,7 @@ reforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,est_meth
 ##' @param pdf_fun Probability Density Function of the prior. Must only have two arguments, `th` and `di` (a vector or matrix of regression coefficients samples and the number of dimensions of a single sample respectively).
 ##' @param p_p Do you want to plot the output of the clustering each time an edge is reintroduced?
 ##' @param rho Only applies if `p_p` is `TRUE`. A vector specifying which variables of the covariate matrix to plot.
+##' @param vb Do you want the progress of the algorithm to be shown?
 ##' @return A list consisting of; the cluster allocation vector of the new model, the resulting Bayesian evidence vector for the new model, an `igraph` object containing information on the new graph, the number of clusters in the model and the edges that have been removed from the graph to achieve this model.
 ##' @details Requires a minimum spanning forest graph which defines components for a multiplicative Bayesian logistic regression model, and the edges removed to achieve this graph.
 ##'
@@ -287,7 +308,8 @@ reforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,est_meth
 ##' @examples
 ##'
 
-reforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_method="SMC_BIC",est_thres=Inf,par_no=0,rfun=NULL,pdf_fun=NULL,p_p=F,rho=NULL){
+reforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_method="SMC_BIC",
+                            est_thres=Inf,par_no=0,rfun=NULL,pdf_fun=NULL,p_p=F,rho=NULL,vb = F){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -296,23 +318,31 @@ reforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_met
     c_s <- vector(mode="list",length=1)
   }
   j <- 1
-  message("Assessing the reintroduction of edges which have been removed")
+  if(vb){
+    message("Assessing the reintroduction of edges which have been removed")
+  }
   while(j <= nrow(eps)){
-    edge_clu_al <- sort(clu_al[get.edgelist(gra,names = F)[get.edge.ids(gra,eps[j,]),]])
+    edge_clu_al <- sort(clu_al[match(eps[j,],V(gra)$name)])
     if(!identical(c_s[[j]][[1]],which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2]))){
       c_s[[j]] <- list(which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2]),lbe.gen(method = est_method,thres = est_thres,obs_mat = obs[which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2]),,drop=F],res_vec = res[which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2])],p_num = par_no,rpri = rfun,p_pdf = pdf_fun))
     }
-    txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
+    if(vb){
+      txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
+    }
     if(j==nrow(eps)){
-      message("")
+      if(vb){
+        message("")
+      }
       lbe_comb.1 <- sapply(c_s,FUN = function(u){u[[2]]})
-      lbe_comb.2 <- apply(eps,MARGIN = 1,FUN = function(u,lZ,ca,cg){sum(lZ[-ca[get.edgelist(cg,names = F)[get.edge.ids(cg,u),]]])},lZ = lbe,ca = clu_al,cg = gra)
+      lbe_comb.2 <- apply(eps,MARGIN = 1,FUN = function(u,lZ,ca,cg){sum(lZ[-ca[match(u,V(cg)$name)]])},lZ = lbe,ca = clu_al,cg = gra)
       lbe_comb <- lbe_comb.1 + lbe_comb.2
       if(any(tau + lbe_comb>sum(lbe))){
         cut_comb <- which.max(lbe_comb)
-        edge_clu_al <- sort(clu_al[get.edgelist(gra,names = F)[get.edge.ids(gra,eps[cut_comb,])]])
-        message("")
-        message(blue(paste0("Combining connected components ",edge_clu_al[1]," and ",edge_clu_al[2])))
+        edge_clu_al <- sort(clu_al[match(eps[cut_comb,],V(gra)$name)])
+        if(vb){
+          message("")
+          message(blue(paste0("Combining connected components ",edge_clu_al[1]," and ",edge_clu_al[2])))
+        }
         clu_al[which(clu_al==edge_clu_al[2])] <- edge_clu_al[1]
         for(k in (edge_clu_al[2]+1):K){
           clu_al[which(clu_al==k)] <- k-1
@@ -330,7 +360,7 @@ reforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_met
           pairs(obs[,rho],pch=as.character(res),col=clu_al,cex=0.5)
         }
         j <- 0
-        if(nrow(eps)!=0){
+        if(nrow(eps)!=0 & vb){
           message("")
           message(green("Reassessing the reintroduction of edges which have been removed"))
         }
@@ -373,6 +403,7 @@ reforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_met
 ##' @param rfun Function to sample from the prior. Must only have two arguments, `p_n` and `di` (Number of prior samples to generate and the number of dimensions of a single sample respectively).
 ##' @param pdf_fun Probability Density Function of the prior. Must only have two arguments, `th` and `di` (a vector or matrix of regression coefficients samples and the number of dimensions of a single sample respectively).
 ##' @param p_p Do you want to plot the output of the clustering each time an edge is reintroduced?
+##' @param vb Do you want the progress of the algorithm to be shown?
 ##' @return A list of two lists, one containing information of the training data model and one containing information on the overall model. Each list consists of a further list containing; the cluster allocation vector of the new model, the resulting Bayesian evidence vector for the new model, an `igraph` object containing information on the new graph, the number of clusters in the model and the edges that have been removed from the graph to achieve this model.
 ##' @details Requires a minimum spanning forest graph which defines components for a multiplicative Bayesian logistic regression model, and the edges removed to achieve this graph. This will correspond to the training model.
 ##'
@@ -392,7 +423,9 @@ reforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_met
 ##'
 
 
-reforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,gra_all = NULL,tr_ind=NULL,rho=NULL,clu_al = NULL,c_s=NULL,est_method="SMC_BIC",est_thres=Inf,par_no=0,rfun=NULL,pdf_fun=NULL,p_p=F){
+reforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,gra_all = NULL,tr_ind=NULL,
+                                rho=NULL,clu_al = NULL,c_s=NULL,est_method="SMC_BIC",
+                                est_thres=Inf,par_no=0,rfun=NULL,pdf_fun=NULL,p_p=F,vb = F){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -416,8 +449,10 @@ reforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,gra_all = NU
   RobS <- sum(lbe_all-lbe)
   j <- 1
   c_s_all <- vector(mode="list",length=nrow(eps))
-  message("")
-  message("Assessing the reintroduction of edges which have been removed")
+  if(vb){
+    message("")
+    message("Assessing the reintroduction of edges which have been removed")
+  }
   while(j <= nrow(eps)){
     edge_clu_al <- sort(clu_al_all[as.numeric(eps[j,])])
     if(!identical(c_s[[j]][[1]],which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2]))){
@@ -426,10 +461,12 @@ reforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,gra_all = NU
     if(!identical(c_s_all[[j]][[1]],which(clu_al_all==edge_clu_al[1]| clu_al_all==edge_clu_al[2]))){
       c_s_all[[j]] <- list(which(clu_al_all==edge_clu_al[1]| clu_al_all==edge_clu_al[2]),lbe.gen(method = est_method,thres = est_thres,obs_mat = obs_all[which(clu_al_all==edge_clu_al[1]| clu_al_all==edge_clu_al[2]),,drop=F],res_vec = res_all[which(clu_al_all==edge_clu_al[1]| clu_al_all==edge_clu_al[2])],p_num = par_no,rpri = rfun,p_pdf = pdf_fun))
     }
-    txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
+    if(vb){
+      txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
+    }
     if(j==nrow(eps)){
       lbe_comb.1 <- sapply(c_s,FUN = function(u){u[[2]]})
-      lbe_comb.2 <- apply(eps,MARGIN = 1,FUN = function(u,lZ,ca,cg){sum(lZ[-ca[get.edgelist(cg,names = F)[get.edge.ids(cg,u),]]])},lZ = lbe,ca = clu_al,cg = gra)
+      lbe_comb.2 <- apply(eps,MARGIN = 1,FUN = function(u,lZ,ca,cg){sum(lZ[-ca[match(u,V(cg)$name)]])},lZ = lbe,ca = clu_al,cg = gra)
       lbe_comb <- lbe_comb.1 + lbe_comb.2
       lbe_comb_all.1 <- sapply(c_s_all,FUN = function(u){u[[2]]})
       lbe_comb_all.2 <- apply(eps,MARGIN = 1,FUN = function(u,lZa,caa){sum(lZa[-caa[as.numeric(u)]])},lZa = lbe_all,caa = clu_al_all)
@@ -438,8 +475,10 @@ reforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,gra_all = NU
       if(any(RobS_comb>RobS)){
         cut_comb <- which.max(RobS_comb)
         edge_clu_al <- sort(clu_al_all[as.numeric(eps[cut_comb,])])
-        message("")
-        message(blue(paste0("Combining connected components ",edge_clu_al[1]," and ",edge_clu_al[2])))
+        if(vb){
+          message("")
+          message(blue(paste0("Combining connected components ",edge_clu_al[1]," and ",edge_clu_al[2])))
+        }
         clu_al[which(clu_al==edge_clu_al[2])] <- edge_clu_al[1]
         for(k in (edge_clu_al[2]+1):K){
           clu_al[which(clu_al==k)] <- k-1
@@ -466,7 +505,7 @@ reforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,gra_all = NU
           pairs(obs_all[,rho],pch=as.character(res_all),col=clu_al_all,cex=0.5)
         }
         j <- 0
-        if(nrow(eps)!=0){
+        if(nrow(eps)!=0 & vb){
           message("")
           message(green("Reassessing the reintroduction of edges which have been removed"))
         }

@@ -36,6 +36,8 @@
 ##' @param SMC_thres The threshold for which the number of observations needs to exceed to consider using BIC as an estimator. Only applies if method `"SMC_BIC"` is selected. Defaults to `Inf` if not specified.
 ##' @param rprior Function to sample from the prior. Must only have two arguments, `p_num` and `di` (Number of prior samples to generate and the number of dimensions of a single sample respectively).
 ##' @param prior_pdf Probability Density Function of the prior. Must only have two arguments, `th` and `di` (a vector or matrix of regression coefficients samples and the number of dimensions of a single sample respectively).
+##' @param plot_progress Do you want to plot the output of the clustering each time an edge is removed or reintroduced?
+##' @param verbose Do you want the progress of the algorithm to be shown?
 ##' @return Either a list or a list of two lists. See details.
 ##' @details Assumes a Bayesian logistic regression model for each cohort, with the overall model being a product of these sub-models.
 ##'
@@ -78,12 +80,12 @@
 ##'
 ##' # We can then run our algorithm to see what cohorts are selected for each
 ##' # of the different reforestation criteria
-##' UN.none <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", SMC_thres = 30)
-##' UN.noc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "NoC", max_K = 3, SMC_thres = 30)
-##' UN.soc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", min_size = 10, SMC_thres = 30)
-##' UN.maxreg <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", reg = 0.1, SMC_thres = 30)
-##' UN.validation <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", split = 0.8, SMC_thres = 30)
-##' clu_al_mat <- rbind(UN.none[[1]],UN.noc[[1]],UN.soc[[1]],UN.maxreg[[1]],UN.validation[[1]])
+##' UN.none <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", SMC_thres = 30,verbose = F)
+##' UN.noc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "NoC", max_K = 3, SMC_thres = 30,verbose = F)
+##' UN.soc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "SoC", min_size = 10, SMC_thres = 30,verbose = F)
+##' UN.maxreg <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "MaxReg", reg = 0.1, SMC_thres = 30,verbose = F)
+##' UN.validation <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "Validation", split = 0.8, SMC_thres = 30,verbose = F)
+##' clu_al_mat <- rbind(UN.none[[1]],UN.noc[[1]],UN.soc[[1]],UN.maxreg[[1]],UN.validation[[2]][[1]])
 ##' # We can create a matrix where each entry shows in how many of the methods
 ##' # did the indexed observations belong to the same cluster
 ##' obs_con_mat <- matrix(0,100,100)
@@ -96,8 +98,7 @@
 ##' obs_con_mat
 ##' # We can also view the outputted overall Bayesian evidence of the five
 ##' # models as well
-##' log_Z_mat <- rbind(UN.none[[2]],UN.noc[[2]],UN.soc[[2]],UN.maxreg[[2]],UN.validation[[2]])
-##' rowSums(log_Z_mat)
+##' c(sum(UN.none[[2]]),sum(UN.noc[[2]]),sum(UN.soc[[2]]),sum(UN.maxreg[[2]]),sum(UN.validation[[2]][[2]]))
 ##'
 ##' # If we don't assume the prior for the regression coefficients is a
 ##' # standard normal but instead a multivariate normal with mean (1,1) and the
@@ -106,14 +107,14 @@
 ##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(1,di),sigma=diag(di)))}
 ##'
 ##' # We then can run UNCOVER using this prior and compare to the standard result
-##' UN.none.2 <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun)
+##' UN.none.2 <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 ##' c(sum(UN.none[[2]]),sum(UN.none.2[[2]]))
 
 
 UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
                     reforest_criterion="None",split=1,max_K=Inf,min_size=0,
                     reg=0,SMC_method="SMC_BIC",SMC_thres=30,rprior=NULL,
-                    prior_pdf=NULL){
+                    prior_pdf=NULL,plot_progress=F,verbose = T){
   if((!is.null(rprior)&is.null(prior_pdf))|(is.null(rprior)&!is.null(prior_pdf))){
     stop("Both sampling function and probability density function of the prior are required")
   }
@@ -152,14 +153,18 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
   }
   m <- 1
   while(T){
-    message("")
-    message(paste0("Iteration ",m))
+    if(verbose){
+      message("")
+      message(paste0("Iteration ",m))
+    }
     for(k in 1:K){
       if(length(system_save[[k]][[1]])!=0){
         next
       }
-      message("")
-      message(green(paste0("Assessing the removal of edges from connected component ",k)))
+      if(verbose){
+        message("")
+        message(green(paste0("Assessing the removal of edges from connected component ",k)))
+      }
       if(reforest_criterion=="Validation"){
         system_save[[k]] <- list(z,logZ,g,c(),g_all)
       } else{
@@ -167,36 +172,46 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
       }
       for(i in 1:length(E(g))){
         if(z[get.edgelist(g,names=F)[i,]][1]!=k){
-          txtProgressBar(min=1,max=length(E(g)),initial=i,style=3)
+          if(verbose){
+            txtProgressBar(min=1,max=length(E(g)),initial=i,style=3)
+          }
           next
         }
         if(reforest_criterion=="Validation"){
           g_temp <- delete_edges(g_all,E(g_all)[get.edge.ids(g_all,get.edgelist(g)[i,])])
           z_temp <- components(g_temp)$membership
           if(!identical(sort(unique(z_temp[-samp])),as.numeric(1:(K+1)))){
-            txtProgressBar(min=1,max=length(E(g)),initial=i,style=3)
+            if(verbose){
+              txtProgressBar(min=1,max=length(E(g)),initial=i,style=3)
+            }
             next
           }
         }
         er_temp <- remove.edge(gra = g,j = i,clu_al = z,lbe = logZ,obs = X,res = y,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf)
         if(sum(er_temp[[2]])>sum(system_save[[k]][[2]])){
           if(reforest_criterion=="Validation"){
-            system_save[[k]] <- c(er_temp,get.edgelist(g)[i,],g_temp)
+            system_save[[k]] <- c(er_temp,list(get.edgelist(g)[i,]),list(g_temp))
           } else{
-            system_save[[k]] <- c(er_temp,get.edgelist(g)[i,])
+            system_save[[k]] <- c(er_temp,list(get.edgelist(g)[i,]))
           }
         }
-        txtProgressBar(min=1,max=length(E(g_mst)),initial=i,style=3)
+        if(verbose){
+          txtProgressBar(min=1,max=length(E(g)),initial=i,style=3)
+        }
       }
-      message("")
+      if(verbose){
+        message("")
+      }
     }
     logZ_regions <- sapply(system_save,FUN = function(u){sum(u[[2]])})
     if(all(logZ_regions<=sum(logZ))){
       break
     }
     k_change <- which.max(logZ_regions)
-    message("")
-    message(blue(paste0("Removing edge from connected component ",k_change)))
+    if(verbose){
+      message("")
+      message(blue(paste0("Removing edge from connected component ",k_change)))
+    }
     combine_save[[K]] <- list(which(z==k_change),logZ[k_change])
     z <- system_save[[k_change]][[1]]
     logZ <- system_save[[k_change]][[2]]
@@ -225,28 +240,36 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
     }
     K <- K+1
     system_save[[K]] <- vector(mode = "list",length=1)
-    if((K<=max_K & reforest_criterion=="NoC" & sum(logZ)>sum(model_selection[[2]])) | (all(table(z)>=min_size) & reforest_criterion=="SoC" & sum(logZ)>sum(model_selection[[2]]))){
-      model_selection <- list(z,logZ,g,K,edge_rem)
+    if(reforest_criterion=="NoC" | reforest_criterion=="SoC"){
+      if((K<=max_K & reforest_criterion=="NoC" & sum(logZ)>sum(model_selection[[2]])) | (all(table(z)>=min_size) & reforest_criterion=="SoC" & sum(logZ)>sum(model_selection[[2]]))){
+        model_selection <- list(z,logZ,g,K,edge_rem)
+      }
     }
     j <- 1
-    message("")
-    message(green("Assessing the reintroduction of edges which have been removed"))
+    if(verbose){
+      message("")
+      message(green("Assessing the reintroduction of edges which have been removed"))
+    }
     while(j <= nrow(edge_rem)){
-      edge_z <- sort(z[get.edgelist(g,names = F)[get.edge.ids(g,edge_rem[j,]),]])
+      edge_z <- sort(z[match(edge_rem[j,],V(g)$name)])
       if(!identical(combine_save[[j]][[1]],which(z==edge_z[1]| z==edge_z[2]))){
         combine_save[[j]] <- list(which(z==edge_z[1]| z==edge_z[2]),lbe.gen(method = SMC_method,thres = SMC_thres,obs_mat = X[which(z==edge_z[1]| z==edge_z[2]),,drop=F],res_vec = y[which(z==edge_z[1]| z==edge_z[2])],p_num = N,rpri = rprior,p_pdf = prior_pdf))
       }
-      txtProgressBar(min=1,max=nrow(edge_rem)+1,initial=j+1,style=3)
+      if(verbose){
+        txtProgressBar(min=1,max=nrow(edge_rem)+1,initial=j+1,style=3)
+      }
       if(j==nrow(edge_rem)){
         message("")
         logZ_comb.1 <- sapply(combine_save,FUN = function(u){u[[2]]})
-        logZ_comb.2 <- apply(edge_rem,MARGIN = 1,FUN = function(u,lZ,ca,cg){sum(lZ[-ca[get.edgelist(cg,names = F)[get.edge.ids(cg,u),]]])},lZ = logZ,ca = z, cg = g)
+        logZ_comb.2 <- apply(edge_rem,MARGIN = 1,FUN = function(u,lZ,ca,cg){sum(lZ[-ca[match(u,V(cg)$name)]])},lZ = logZ,ca = z, cg = g)
         logZ_comb <- logZ_comb.1 + logZ_comb.2
         if(any(logZ_comb>sum(logZ))){
           cut_comb <- which.max(logZ_comb)
-          edge_z <- sort(z[get.edgelist(g,names = F)[get.edge.ids(g,edge_rem[cut_comb,])]])
-          message("")
-          message(blue(paste0("Combining connected components ",edge_z[1]," and ",edge_z[2])))
+          edge_z <- sort(z[match(edge_rem[cut_comb,],V(g)$name)])
+          if(verbose){
+            message("")
+            message(blue(paste0("Combining connected components ",edge_z[1]," and ",edge_z[2])))
+          }
           system_save[[edge_z[1]]] <- vector(mode = "list",length=1)
           system_save[[edge_z[2]]] <- c()
           z[which(z==edge_z[2])] <- edge_z[1]
@@ -280,10 +303,14 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
             pairs(X[,mst_var],pch=as.character(y),col=z,cex=0.5)
           }
           j <- 0
-          message("")
-          message(green("Reassessing the reintroduction of edges which have been removed"))
-          if((K<=max_K & reforest_criterion=="NoC" & sum(logZ)>sum(model_selection[[2]])) | (all(table(z)>=min_size) & reforest_criterion=="SoC" & sum(logZ)>sum(model_selection[[2]]))){
-            model_selection <- list(z,logZ,g,K,edge_rem)
+          if(verbose){
+            message("")
+            message(green("Reassessing the reintroduction of edges which have been removed"))
+          }
+          if(reforest_criterion=="NoC" | reforest_criterion=="SoC"){
+            if((K<=max_K & reforest_criterion=="NoC" & sum(logZ)>sum(model_selection[[2]])) | (all(table(z)>=min_size) & reforest_criterion=="SoC" & sum(logZ)>sum(model_selection[[2]]))){
+              model_selection <- list(z,logZ,g,K,edge_rem)
+            }
           }
         }
       }
@@ -294,13 +321,17 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
     }
     m <- m + 1
   }
-  message("")
-  message("Pruning")
-  if(reforest_criterion=="NoC"){
+  if(verbose){
     message("")
-    message("Assessing the reintroduction of edges which have been removed")
-    pnoc <- reforest.noc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,K_dag = max_K,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var)
-    if(sum(model_selection[[2]])>pnoc[[2]]){
+    message("Reforestation Stage")
+  }
+  if(reforest_criterion=="NoC"){
+    if(verbose){
+      message("")
+      message("Assessing the reintroduction of edges which have been removed")
+    }
+    pnoc <- reforest.noc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,K_dag = max_K,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
+    if(sum(model_selection[[2]])>sum(pnoc[[2]])){
       if(plot_progress){
         pairs(X[,mst_var],pch=as.character(y),col=model_selection[[1]],cex=0.5)
       }
@@ -317,10 +348,12 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
     }
   }
   if(reforest_criterion=="SoC"){
-    message("")
-    message(green("Assessing the reintroduction of edges which have been removed"))
-    psoc <- reforest.soc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,n_dag = min_size,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var)
-    if(sum(model_selection[[2]])>psoc[[2]]){
+    if(verbose){
+      message("")
+      message("Assessing the reintroduction of edges which have been removed")
+    }
+    psoc <- reforest.soc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,n_dag = min_size,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
+    if(sum(model_selection[[2]])>sum(psoc[[2]])){
       if(plot_progress){
         pairs(X[,mst_var],pch=as.character(y),col=model_selection[[1]],cex=0.5)
       }
@@ -337,26 +370,32 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
     }
   }
   if(reforest_criterion=="None"){
-    pairs(X[,mst_var],pch=as.character(y),col=z,cex=0.5)
+    if(plot_progress){
+      pairs(X[,mst_var],pch=as.character(y),col=model_selection[[1]],cex=0.5)
+    }
     return(list("Cluster Allocation" = z,
                 "Log Marginal Likelihoods" = logZ,
-                "Graph" = g_mst,
+                "Graph" = g,
                 "Number of Clusters" = K,
                 "Edges Removed" = edge_rem))
   }
   if(reforest_criterion=="MaxReg"){
-    message("")
-    message(green("Assessing the reintroduction of edges which have been removed"))
-    pmaxreg <- reforest.maxreg(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,tau = reg,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var)
+    if(verbose){
+      message("")
+      message("Assessing the reintroduction of edges which have been removed")
+    }
+    pmaxreg <- reforest.maxreg(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,tau = reg,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
     if(plot_progress){
       pairs(X[,mst_var],pch=as.character(y),col=pmaxreg[[1]],cex=0.5)
     }
     return(pmaxreg)
   }
   if(reforest_criterion=="Validation"){
-    message("")
-    message(green("Assessing the reintroduction of edges which have been removed"))
-    pval <- reforest.validation(obs = X,obs_all = X_all,res = y,res_all = y_all,gra = g,lbe = logZ,eps = edge_rem,gra_all = g_all,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var)
+    if(verbose){
+      message("")
+      message("Assessing the reintroduction of edges which have been removed")
+    }
+    pval <- reforest.validation(obs = X,obs_all = X_all,res = y,res_all = y_all,gra = g,lbe = logZ,eps = edge_rem,gra_all = g_all,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
     if(plot_progress){
       pairs(X_all[,mst_var],pch=as.character(y_all),col=pval[[1]],cex=0.5)
     }

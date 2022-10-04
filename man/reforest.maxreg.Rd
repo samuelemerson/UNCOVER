@@ -19,7 +19,8 @@ reforest.maxreg(
   rfun = NULL,
   pdf_fun = NULL,
   p_p = F,
-  rho = NULL
+  rho = NULL,
+  vb = F
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ reforest.maxreg(
 \item{p_p}{Do you want to plot the output of the clustering each time an edge is reintroduced?}
 
 \item{rho}{Only applies if `p_p` is `TRUE`. A vector specifying which variables of the covariate matrix to plot.}
+
+\item{vb}{Do you want the progress of the algorithm to be shown?}
 }
 \value{
 A list consisting of; the cluster allocation vector of the new model, the resulting Bayesian evidence vector for the new model, an `igraph` object containing information on the new graph, the number of clusters in the model and the edges that have been removed from the graph to achieve this model.

@@ -22,7 +22,8 @@ reforest.validation(
   par_no = 0,
   rfun = NULL,
   pdf_fun = NULL,
-  p_p = F
+  p_p = F,
+  vb = F
 )
 }
 \arguments{
@@ -61,6 +62,8 @@ reforest.validation(
 \item{pdf_fun}{Probability Density Function of the prior. Must only have two arguments, `th` and `di` (a vector or matrix of regression coefficients samples and the number of dimensions of a single sample respectively).}
 
 \item{p_p}{Do you want to plot the output of the clustering each time an edge is reintroduced?}
+
+\item{vb}{Do you want the progress of the algorithm to be shown?}
 }
 \value{
 A list of two lists, one containing information of the training data model and one containing information on the overall model. Each list consists of a further list containing; the cluster allocation vector of the new model, the resulting Bayesian evidence vector for the new model, an `igraph` object containing information on the new graph, the number of clusters in the model and the edges that have been removed from the graph to achieve this model.

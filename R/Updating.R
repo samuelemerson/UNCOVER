@@ -83,7 +83,7 @@ remove.edge <- function(gra,j,clu_al=NULL,lbe,obs,res,est_method="SMC_BIC",est_t
     clu_al <- igraph::components(gra)$membership
   }
   k <- clu_al[igraph::get.edgelist(gra,names=F)[j,]][1]
-  gra_rem <- igraph::delete_edges(gra,E(gra)[j])
+  gra_rem <- igraph::delete_edges(gra,E(gra)[.env$j])
   clu_al_rem <- igraph::components(gra_rem)$membership
   change_set <- which(clu_al_rem==clu_al_rem[igraph::get.edgelist(gra,names=F)[j,2]])
   clu_al[change_set] <- K+1
