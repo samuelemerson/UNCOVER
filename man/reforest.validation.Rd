@@ -13,7 +13,7 @@ reforest.validation(
   lbe,
   eps,
   gra_all = NULL,
-  tr_ind = NULL,
+  which_tr = NULL,
   rho = NULL,
   clu_al = NULL,
   c_s = NULL,
@@ -41,9 +41,9 @@ reforest.validation(
 
 \item{eps}{A 2-column matrix of edges previously removed from the graph `gra`. Rows correspond to edges and edges should be expressed as the two vertices the edge connects.}
 
-\item{gra_all}{`igraph` object which contains the information of the graph of the current model for the all the data. If not specified `tr_ind` and `rho` must be specified. See details.}
+\item{gra_all}{`igraph` object which contains the information of the graph of the current model for the all the data. If not specified `which_tr` and `rho` must be specified. See details.}
 
-\item{tr_ind}{Only applies if `gra_all` is `NULL`. Vector of indices of the training observations.}
+\item{which_tr}{Only applies if `gra_all` is `NULL`. Vector of indices of the training observations.}
 
 \item{rho}{Only applies if `gra_all` is `NULL` or `p_p` is `TRUE`. A vector specifying which variables of the covariate matrix were used to construct the graph `gra`.}
 
@@ -76,7 +76,7 @@ Used in UNCOVER if the reforest condition is set to "Validation".
 \details{
 Requires a minimum spanning forest graph which defines components for a multiplicative Bayesian logistic regression model, and the edges removed to achieve this graph. This will correspond to the training model.
 
-`gra_all` represents the graph obtained by adding the validation data to the initial minimum spanning tree graph of the training data and then removing the edges removed from the training data graph. See details in `two.stage.mst` for more information. If `gra_all` is not specified but `tr_ind` and `rho` are, then `tr_ind` must be the row indices of `obs_all` that are not present in `obs` and `rho` must be the same variables that constucted the training graph.
+`gra_all` represents the graph obtained by adding the validation data to the initial minimum spanning tree graph of the training data and then removing the edges removed from the training data graph. See details in `two.stage.mst` for more information. If `gra_all` is not specified but `which_tr` and `rho` are, then `which_tr` must be the row indices of `obs_all` that are not present in `obs` and `rho` must be the same variables that constucted the training graph.
 
 The names of the vertices in `gra` (and `gra_all` if provided) must correspond to the row index of the observation in `obs_all`.
 
@@ -87,6 +87,37 @@ If the clusters specified by the initial model have fixed labels then this shoul
 `c_s` allows the user to specify information about the edges removed. For example if `c_s` is specified it must be of the form of list with each element representing information on the reintroduction of an edge. The index of this list corresponds to the index of the edges in `eps`. Furthermore, each element of the list will itself be a list of two elements, the first being the indices of the observations combined by introducing this edge and the second being the sub log Bayesian evidence of the cluster formed through this edge reintroduction. `c_s` is intended to be used to reduce computation time, and so whilst incorrect information on the observations involved in particular lists of `c_s` will not produce incorrect results, it will not have the desired time saving effect.
 
 For more details on the specifics of the possible values for `est_method`, see the help page of the function `lbe.gen`.
+
+Finally, whilst this function can be used separately we strongly encourage specifying `reforest_criterion="Validation"` in the `UNCOVER` function instead as this ensures that each cluster created has at least one validation observation attached at the reforestation stage.
+}
+\examples{
+
+# First we generate a covariate matrix `obs` and binary response vector `res`
+CM <- matrix(rnorm(200),100,2)
+rv <- sample(0:1,100,replace=T)
+
+# Assuming the prior for the regression coefficients is a standard normal
+pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
+pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
+
+# We can initially run the UNCOVER algorithm with no criteria specified
+UN.none <- UNCOVER(X = CM,y = rv,N=1000, mst_var = 1:2, stop_criterion = 8,reforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+
+# We may then obtain new observations and wish to use these new observations
+# as validation data to possibly combine clusters. This can be achieved
+# through `reforest.validation`
+CM_val <- matrix(rnorm(50),25,2)
+rv_val <- sample(0:1,25,replace=T)
+CM_all <- rbind(CM,CM_val)
+rv_all <- c(rv,rv_val)
+UN.val <- reforest.validation(obs = CM,obs_all = CM_all,res = rv,res_all = rv_all,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],which_tr = 1:100,rho = 1:2,clu_al = UN.none[[1]],est_method = "SMC_BIC",est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+
+# We can then see which edges we have reintroduced as well as if this method
+# has improved the Bayesian evidence per observation (log(Z)/n)
+UN.none[[5]]
+UN.val[[2]][[5]]
+c(sum(UN.none[[2]])/100,sum(UN.val[[2]][[2]])/125)
+
 }
 \seealso{
 [lbe.gen],[two.stage.mst]

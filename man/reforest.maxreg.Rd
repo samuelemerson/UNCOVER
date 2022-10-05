@@ -79,6 +79,32 @@ If the clusters specified by the initial model have fixed labels then this shoul
 
 For more details on the specifics of the possible values for `est_method`, see the help page of the function `lbe.gen`.
 }
+\examples{
+
+# First we generate a covariate matrix `obs` and binary response vector `res`
+CM <- matrix(rnorm(200),100,2)
+rv <- sample(0:1,100,replace=T)
+
+# Assuming the prior for the regression coefficients is a standard normal
+pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
+pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
+
+# We can initially run the UNCOVER algorithm with no criteria specified
+UN.none <- UNCOVER(X = CM,y = rv,N=1000, stop_criterion = 8,reforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+
+# Then we may retrospectively decide that we would like fewer clusters, but
+# the maximum that we are willing to decrease the Bayesian evidence through
+# an edge reintroduction by is `exp(1)` each time. This is achievable using
+# `reforest.maxreg`
+UN.maxreg <- reforest.maxreg(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],tau = 1, clu_al = UN.none[[1]],est_method = "SMC_BIC",est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+
+# We can then see which edges we have reintroduced and the cost that has had
+# on the Bayesian evidence
+UN.none[[5]]
+UN.maxreg[[5]]
+c(sum(UN.none[[2]]),sum(UN.maxreg[[2]]))
+
+}
 \seealso{
 [lbe.gen]
 }

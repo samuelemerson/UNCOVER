@@ -83,7 +83,7 @@
 ##' UN.none <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", SMC_thres = 30,verbose = F)
 ##' UN.noc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "NoC", max_K = 3, SMC_thres = 30,verbose = F)
 ##' UN.soc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "SoC", min_size = 10, SMC_thres = 30,verbose = F)
-##' UN.maxreg <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "MaxReg", reg = 0.1, SMC_thres = 30,verbose = F)
+##' UN.maxreg <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "MaxReg", reg = 1, SMC_thres = 30,verbose = F)
 ##' UN.validation <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "Validation", split = 0.8, SMC_thres = 30,verbose = F)
 ##' clu_al_mat <- rbind(UN.none[[1]],UN.noc[[1]],UN.soc[[1]],UN.maxreg[[1]],UN.validation[[2]][[1]])
 ##' # We can create a matrix where each entry shows in how many of the methods

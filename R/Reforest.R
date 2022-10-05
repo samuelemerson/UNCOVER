@@ -50,39 +50,30 @@
 ##' `c_s` allows the user to specify information about the edges removed. For example if `c_s` is specified it must be of the form of list with each element representing information on the reintroduction of an edge. The index of this list corresponds to the index of the edges in `eps`. Furthermore, each element of the list will itself be a list of two elements, the first being the indices of the observations combined by introducing this edge and the second being the sub log Bayesian evidence of the cluster formed through this edge reintroduction. `c_s` is intended to be used to reduce computation time, and so whilst incorrect information on the observations involved in particular lists of `c_s` will not produce incorrect results, it will not have the desired time saving effect.
 ##'
 ##' For more details on the specifics of the possible values for `est_method`, see the help page of the function `lbe.gen`.
-##' @seealso [lbe.gen]
+##' @seealso [lbe.gen,UNCOVER]
 ##' @examples
 ##'
 ##' # First we generate a covariate matrix `obs` and binary response vector `res`
-##' CM <- matrix(rnorm(20),10,2)
-##' rv <- sample(0:1,10,replace=T)
+##' CM <- matrix(rnorm(200),100,2)
+##' rv <- sample(0:1,100,replace=T)
 ##'
-##' # We then generate the minimum spanning tree graph from CM
-##' gra_CM <- one.stage.mst(obs = CM)
-##' plot(gra_CM,layout=CM)
-##'
-##' # If we assume the prior for the regression coefficients is a standard normal
+##' # Assuming the prior for the regression coefficients is a standard normal
 ##' pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
 ##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 ##'
-##' # Then we can generate the log Bayesian evidence for this one component model
-##' lZ <- lbe.gen(method = "SMC_BIC",obs_mat = CM,res_vec = rv,p_num = 500, rpri = pr_samp, p_pdf = pr_fun)
-##' lZ
+##' # We can initially run the UNCOVER algorithm with no criteria specified
+##' UN.none <- UNCOVER(X = CM,y = rv,N=1000, stop_criterion = 8,reforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 ##'
-##' # If we wished to remove the first edge in the graph we would have
-##' er <- remove.edge(gra = gra_CM, j = 1, lbe = lZ, obs = CM, res = rv, est_method = "SMC_BIC", par_no = 500, rfun = pr_samp, pdf_fun = pr_fun)
-##' clu_al.2 <- er[[1]]
-##' lZ.2 <- er[[2]]
-##' gra_CM.2 <- er[[3]]
-##' plot(gra_CM.2,layout=CM)
-##' lZ.2
-##' sum(lZ.2)
+##' # Then we may retrospectively want to reduce the number of clusters in our
+##' # output to 3 using `reforest.noc`
+##' UN.noc <- reforest.noc(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],K_dag = 3, clu_al = UN.none[[1]],est_method = "SMC_BIC", est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
 ##'
-##' # If we then wanted to remove the first edge of the newly formed graph gra_CM.2 we would have
-##' er.2 <- remove.edge(gra = gra_CM.2, j = 1, clu_al = clu_al.2, lbe = lZ.2, obs = CM, res = rv, est_method = "SMC_BIC", par_no = 500, rfun = pr_samp, pdf_fun = pr_fun)
-##' plot(er.2[[3]],layout=CM)
-##' er.2[[2]]
-##' sum(er.2[[2]])
+##' # We can then see which edges we have reintroduced and the cost that has had
+##' # on the Bayesian evidence
+##' UN.none[[5]]
+##' UN.noc[[5]]
+##' c(sum(UN.none[[2]]),sum(UN.noc[[2]]))
+##'
 
 reforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,est_method="SMC_BIC",
                          est_thres=Inf,par_no=0,rfun=NULL,pdf_fun=NULL,p_p=F,rho=NULL,vb = F){
@@ -91,7 +82,7 @@ reforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,est_meth
     clu_al <- igraph::components(gra)$membership
   }
   if(is.null(c_s)){
-    c_s <- vector(mode="list",length=1)
+    c_s <- vector(mode="list",length=nrow(eps))
   }
   j <- 1
   if(vb){
@@ -189,8 +180,29 @@ reforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,est_meth
 ##' `c_s` allows the user to specify information about the edges removed. For example if `c_s` is specified it must be of the form of list with each element representing information on the reintroduction of an edge. The index of this list corresponds to the index of the edges in `eps`. Furthermore, each element of the list will itself be a list of two elements, the first being the indices of the observations combined by introducing this edge and the second being the sub log Bayesian evidence of the cluster formed through this edge reintroduction. `c_s` is intended to be used to reduce computation time, and so whilst incorrect information on the observations involved in particular lists of `c_s` will not produce incorrect results, it will not have the desired time saving effect.
 ##'
 ##' For more details on the specifics of the possible values for `est_method`, see the help page of the function `lbe.gen`.
-##' @seealso [lbe.gen]
+##' @seealso [lbe.gen,UNCOVER]
 ##' @examples
+##'
+##' # First we generate a covariate matrix `obs` and binary response vector `res`
+##' CM <- matrix(rnorm(200),100,2)
+##' rv <- sample(0:1,100,replace=T)
+##'
+##' # Assuming the prior for the regression coefficients is a standard normal
+##' pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
+##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
+##'
+##' # We can initially run the UNCOVER algorithm with no criteria specified
+##' UN.none <- UNCOVER(X = CM,y = rv,N=1000, stop_criterion = 8,reforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+##'
+##' # Then we may retrospectively want to ensure that each one of our clusters
+##' # is assigned at least 10 observations using `reforest.soc`
+##' UN.soc <- reforest.soc(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],n_dag = 10, clu_al = UN.none[[1]],est_method = "SMC_BIC", est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+##'
+##' # We can then see which edges we have reintroduced and the cost that has had
+##' # on the Bayesian evidence
+##' UN.none[[5]]
+##' UN.soc[[5]]
+##' c(sum(UN.none[[2]]),sum(UN.soc[[2]]))
 ##'
 
 reforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,est_method="SMC_BIC",
@@ -200,7 +212,7 @@ reforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,est_meth
     clu_al <- igraph::components(gra)$membership
   }
   if(is.null(c_s)){
-    c_s <- vector(mode="list",length=1)
+    c_s <- vector(mode="list",length=nrow(eps))
   }
   j <- 1
   if(vb){
@@ -307,6 +319,29 @@ reforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,est_meth
 ##' @seealso [lbe.gen]
 ##' @examples
 ##'
+##' # First we generate a covariate matrix `obs` and binary response vector `res`
+##' CM <- matrix(rnorm(200),100,2)
+##' rv <- sample(0:1,100,replace=T)
+##'
+##' # Assuming the prior for the regression coefficients is a standard normal
+##' pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
+##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
+##'
+##' # We can initially run the UNCOVER algorithm with no criteria specified
+##' UN.none <- UNCOVER(X = CM,y = rv,N=1000, stop_criterion = 8,reforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+##'
+##' # Then we may retrospectively decide that we would like fewer clusters, but
+##' # the maximum that we are willing to decrease the Bayesian evidence through
+##' # an edge reintroduction by is `exp(1)` each time. This is achievable using
+##' # `reforest.maxreg`
+##' UN.maxreg <- reforest.maxreg(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],tau = 1, clu_al = UN.none[[1]],est_method = "SMC_BIC",est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+##'
+##' # We can then see which edges we have reintroduced and the cost that has had
+##' # on the Bayesian evidence
+##' UN.none[[5]]
+##' UN.maxreg[[5]]
+##' c(sum(UN.none[[2]]),sum(UN.maxreg[[2]]))
+##'
 
 reforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_method="SMC_BIC",
                             est_thres=Inf,par_no=0,rfun=NULL,pdf_fun=NULL,p_p=F,rho=NULL,vb = F){
@@ -315,7 +350,7 @@ reforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_met
     clu_al <- igraph::components(gra)$membership
   }
   if(is.null(c_s)){
-    c_s <- vector(mode="list",length=1)
+    c_s <- vector(mode="list",length=nrow(eps))
   }
   j <- 1
   if(vb){
@@ -392,8 +427,8 @@ reforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_met
 ##' @param gra `igraph` object which contains the information of the graph of the current model for the training data
 ##' @param lbe A vector detailing the log Bayesian evidences of all the sub-models defined by the separated components of `gra`
 ##' @param eps A 2-column matrix of edges previously removed from the graph `gra`. Rows correspond to edges and edges should be expressed as the two vertices the edge connects.
-##' @param gra_all `igraph` object which contains the information of the graph of the current model for the all the data. If not specified `tr_ind` and `rho` must be specified. See details.
-##' @param tr_ind Only applies if `gra_all` is `NULL`. Vector of indices of the training observations.
+##' @param gra_all `igraph` object which contains the information of the graph of the current model for the all the data. If not specified `which_tr` and `rho` must be specified. See details.
+##' @param which_tr Only applies if `gra_all` is `NULL`. Vector of indices of the training observations.
 ##' @param rho Only applies if `gra_all` is `NULL` or `p_p` is `TRUE`. A vector specifying which variables of the covariate matrix were used to construct the graph `gra`.
 ##' @param clu_al A vector detailing the cluster allocation of each observation. If not specified the function will generate this vector.
 ##' @param c_s A list of length `nrow(eps)`. See details more information. Does not need to be specified.
@@ -407,7 +442,7 @@ reforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_met
 ##' @return A list of two lists, one containing information of the training data model and one containing information on the overall model. Each list consists of a further list containing; the cluster allocation vector of the new model, the resulting Bayesian evidence vector for the new model, an `igraph` object containing information on the new graph, the number of clusters in the model and the edges that have been removed from the graph to achieve this model.
 ##' @details Requires a minimum spanning forest graph which defines components for a multiplicative Bayesian logistic regression model, and the edges removed to achieve this graph. This will correspond to the training model.
 ##'
-##' `gra_all` represents the graph obtained by adding the validation data to the initial minimum spanning tree graph of the training data and then removing the edges removed from the training data graph. See details in `two.stage.mst` for more information. If `gra_all` is not specified but `tr_ind` and `rho` are, then `tr_ind` must be the row indices of `obs_all` that are not present in `obs` and `rho` must be the same variables that constucted the training graph.
+##' `gra_all` represents the graph obtained by adding the validation data to the initial minimum spanning tree graph of the training data and then removing the edges removed from the training data graph. See details in `two.stage.mst` for more information. If `gra_all` is not specified but `which_tr` and `rho` are, then `which_tr` must be the row indices of `obs_all` that are not present in `obs` and `rho` must be the same variables that constucted the training graph.
 ##'
 ##' The names of the vertices in `gra` (and `gra_all` if provided) must correspond to the row index of the observation in `obs_all`.
 ##'
@@ -418,12 +453,40 @@ reforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_met
 ##' `c_s` allows the user to specify information about the edges removed. For example if `c_s` is specified it must be of the form of list with each element representing information on the reintroduction of an edge. The index of this list corresponds to the index of the edges in `eps`. Furthermore, each element of the list will itself be a list of two elements, the first being the indices of the observations combined by introducing this edge and the second being the sub log Bayesian evidence of the cluster formed through this edge reintroduction. `c_s` is intended to be used to reduce computation time, and so whilst incorrect information on the observations involved in particular lists of `c_s` will not produce incorrect results, it will not have the desired time saving effect.
 ##'
 ##' For more details on the specifics of the possible values for `est_method`, see the help page of the function `lbe.gen`.
+##'
+##' Finally, whilst this function can be used separately we strongly encourage specifying `reforest_criterion="Validation"` in the `UNCOVER` function instead as this ensures that each cluster created has at least one validation observation attached at the reforestation stage.
 ##' @seealso [lbe.gen],[two.stage.mst]
 ##' @examples
 ##'
+##' # First we generate a covariate matrix `obs` and binary response vector `res`
+##' CM <- matrix(rnorm(200),100,2)
+##' rv <- sample(0:1,100,replace=T)
+##'
+##' # Assuming the prior for the regression coefficients is a standard normal
+##' pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
+##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
+##'
+##' # We can initially run the UNCOVER algorithm with no criteria specified
+##' UN.none <- UNCOVER(X = CM,y = rv,N=1000, mst_var = 1:2, stop_criterion = 8,reforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+##'
+##' # We may then obtain new observations and wish to use these new observations
+##' # as validation data to possibly combine clusters. This can be achieved
+##' # through `reforest.validation`
+##' CM_val <- matrix(rnorm(50),25,2)
+##' rv_val <- sample(0:1,25,replace=T)
+##' CM_all <- rbind(CM,CM_val)
+##' rv_all <- c(rv,rv_val)
+##' UN.val <- reforest.validation(obs = CM,obs_all = CM_all,res = rv,res_all = rv_all,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],which_tr = 1:100,rho = 1:2,clu_al = UN.none[[1]],est_method = "SMC_BIC",est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+##'
+##' # We can then see which edges we have reintroduced as well as if this method
+##' # has improved the Bayesian evidence per observation (log(Z)/n)
+##' UN.none[[5]]
+##' UN.val[[2]][[5]]
+##' c(sum(UN.none[[2]])/100,sum(UN.val[[2]][[2]])/125)
+##'
 
 
-reforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,gra_all = NULL,tr_ind=NULL,
+reforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,gra_all = NULL,which_tr=NULL,
                                 rho=NULL,clu_al = NULL,c_s=NULL,est_method="SMC_BIC",
                                 est_thres=Inf,par_no=0,rfun=NULL,pdf_fun=NULL,p_p=F,vb = F){
   K <- igraph::count_components(gra)
@@ -431,11 +494,11 @@ reforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,gra_all = NU
     clu_al <- igraph::components(gra)$membership
   }
   if(is.null(c_s)){
-    c_s <- vector(mode="list",length=1)
+    c_s <- vector(mode="list",length=nrow(eps))
   }
   if(is.null(gra_all)){
-    gra_val <- two.stage.mst(obs_mat = obs_all,tr_ind = tr_ind,mst_sub = rho)
-    gra_all <- delete_edges(gra_val[[2]],E(gra_val[[2]])[get.edge.ids(gra_val[[2]],eps)])
+    gra_val <- two.stage.mst(obs_mat = obs_all,tr_ind = which_tr,mst_sub = rho)
+    gra_all <- delete_edges(gra_val[[2]],E(gra_val[[2]])[get.edge.ids(gra_val[[2]],c(t(eps)))])
   }
   clu_al_all <- components(gra_all)$membership
   for(k in 1:K){

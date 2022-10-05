@@ -80,38 +80,29 @@ For more details on the specifics of the possible values for `est_method`, see t
 \examples{
 
 # First we generate a covariate matrix `obs` and binary response vector `res`
-CM <- matrix(rnorm(20),10,2)
-rv <- sample(0:1,10,replace=T)
+CM <- matrix(rnorm(200),100,2)
+rv <- sample(0:1,100,replace=T)
 
-# We then generate the minimum spanning tree graph from CM
-gra_CM <- one.stage.mst(obs = CM)
-plot(gra_CM,layout=CM)
-
-# If we assume the prior for the regression coefficients is a standard normal
+# Assuming the prior for the regression coefficients is a standard normal
 pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
 pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 
-# Then we can generate the log Bayesian evidence for this one component model
-lZ <- lbe.gen(method = "SMC_BIC",obs_mat = CM,res_vec = rv,p_num = 500, rpri = pr_samp, p_pdf = pr_fun)
-lZ
+# We can initially run the UNCOVER algorithm with no criteria specified
+UN.none <- UNCOVER(X = CM,y = rv,N=1000, stop_criterion = 8,reforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 
-# If we wished to remove the first edge in the graph we would have
-er <- remove.edge(gra = gra_CM, j = 1, lbe = lZ, obs = CM, res = rv, est_method = "SMC_BIC", par_no = 500, rfun = pr_samp, pdf_fun = pr_fun)
-clu_al.2 <- er[[1]]
-lZ.2 <- er[[2]]
-gra_CM.2 <- er[[3]]
-plot(gra_CM.2,layout=CM)
-lZ.2
-sum(lZ.2)
+# Then we may retrospectively want to reduce the number of clusters in our
+# output to 3 using `reforest.noc`
+UN.noc <- reforest.noc(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],K_dag = 3, clu_al = UN.none[[1]],est_method = "SMC_BIC", est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
 
-# If we then wanted to remove the first edge of the newly formed graph gra_CM.2 we would have
-er.2 <- remove.edge(gra = gra_CM.2, j = 1, clu_al = clu_al.2, lbe = lZ.2, obs = CM, res = rv, est_method = "SMC_BIC", par_no = 500, rfun = pr_samp, pdf_fun = pr_fun)
-plot(er.2[[3]],layout=CM)
-er.2[[2]]
-sum(er.2[[2]])
+# We can then see which edges we have reintroduced and the cost that has had
+# on the Bayesian evidence
+UN.none[[5]]
+UN.noc[[5]]
+c(sum(UN.none[[2]]),sum(UN.noc[[2]]))
+
 }
 \seealso{
-[lbe.gen]
+[lbe.gen,UNCOVER]
 }
 \keyword{number}
 \keyword{reforest}
