@@ -10,7 +10,7 @@ UNCOVER(
   mst_var = NULL,
   N = 1000,
   stop_criterion = Inf,
-  reforest_criterion = "None",
+  deforest_criterion = "None",
   split = 1,
   max_K = Inf,
   min_size = 0,
@@ -32,17 +32,17 @@ UNCOVER(
 
 \item{N}{Number of samples of the prior used for the SMC sampler. Not required if method `"BIC"` selected. If required but not specified the default value is set to `1000`.}
 
-\item{stop_criterion}{What is the maximum number of clusters allowed before we terminate the first stage and begin reforestation. If not specified the algorithm continues until the Bayesian evidence cannot be improved upon, however for time and memory purposes specifying a number is highly recommended.}
+\item{stop_criterion}{What is the maximum number of clusters allowed before we terminate the first stage and begin deforestation. If not specified the algorithm continues until the Bayesian evidence cannot be improved upon, however for time and memory purposes specifying a number is highly recommended.}
 
-\item{reforest_criterion}{Criterion in which edges are reintroduced to allow the model to satisfy. Can be one of `"NoC"`,`"SoC"`,`"MaxReg"`,`"Validation"` or `"None"`.}
+\item{deforest_criterion}{Criterion in which edges are reintroduced to allow the model to satisfy. Can be one of `"NoC"`,`"SoC"`,`"MaxReg"`,`"Validation"` or `"None"`.}
 
-\item{split}{What fraction of the data should be used for training. Should only be specified if `reforest_criterion == "Validation`. Defaults to `1`.}
+\item{split}{What fraction of the data should be used for training. Should only be specified if `deforest_criterion == "Validation`. Defaults to `1`.}
 
-\item{max_K}{The maximum number of clusters allowed in the final output. Should only be specified if `reforest_criterion == "NoC`. Defaults to `Inf`.}
+\item{max_K}{The maximum number of clusters allowed in the final output. Should only be specified if `deforest_criterion == "NoC`. Defaults to `Inf`.}
 
-\item{min_size}{The minimum number of observations allowed for any cluster in the final model. Should only be specified if `reforest_criterion == "SoC`. Defaults to `0`.}
+\item{min_size}{The minimum number of observations allowed for any cluster in the final model. Should only be specified if `deforest_criterion == "SoC`. Defaults to `0`.}
 
-\item{reg}{Numerical natural logarithm of the tolerance parameter. Must be positive. Should only be specified if `reforest_criterion == "MaxReg`. Defaults to `0`.}
+\item{reg}{Numerical natural logarithm of the tolerance parameter. Must be positive. Should only be specified if `deforest_criterion == "MaxReg`. Defaults to `0`.}
 
 \item{SMC_method}{Method to be used to estimate the log Bayesian evidence of the newly formed sub-models, can be one of `"SMC"`,`"SMC_BIC"` or `"BIC"`}
 
@@ -62,28 +62,28 @@ Either a list or a list of two lists. See details.
 \description{
 Generates cohorts for a data set through removal of edges from a graphical representation of the covariates. Edges are removed (or reintroduced) by considering the normalisation constant (or Bayesian evidence) of a multiplicative Bayesian logistic regression model.
 
-The first stage of the function is concerned purely with a greedy optimisation of the Bayeisan evidence through edge manipulation. The second stage then addresses any other criteria (known as reforest conditions) expressed by the user through reintroduction of edges.
+The first stage of the function is concerned purely with a greedy optimisation of the Bayeisan evidence through edge manipulation. The second stage then addresses any other criteria (known as deforest conditions) expressed by the user through reintroduction of edges.
 }
 \details{
 Assumes a Bayesian logistic regression model for each cohort, with the overall model being a product of these sub-models.
 
-A minimum spanning tree graph is first constructed from a subset of the covariates. Then at each iteration, each edge in the current graph is checked to see if removal to split a cohort is beneficial, and then either we selected the optimal edge to remove or we concluded it is not beneficial to remove any more edges. At the end of each iteration we also check the set of removed edges to see if it beneficial to reintroduce any previously removed edges. After this process has ended we then reintroduce edges in the removed set specifically to meet the criteria set by the user in the most optimal manner possible through a greedy approach. For more details see the help pages of `lbe.gen`,`one.stage.mst`,`two.stage.mst`,`remove.edge`,`reforest.noc`,`reforest.soc`,`reforest.maxreg`,`reforest.validation` and the paper *UNCOVER*.
+A minimum spanning tree graph is first constructed from a subset of the covariates. Then at each iteration, each edge in the current graph is checked to see if removal to split a cohort is beneficial, and then either we selected the optimal edge to remove or we concluded it is not beneficial to remove any more edges. At the end of each iteration we also check the set of removed edges to see if it beneficial to reintroduce any previously removed edges. After this process has ended we then reintroduce edges in the removed set specifically to meet the criteria set by the user in the most optimal manner possible through a greedy approach. For more details see the help pages of `lbe.gen`,`one.stage.mst`,`two.stage.mst`,`remove.edge`,`deforest.noc`,`deforest.soc`,`deforest.maxreg`,`deforest.validation` and the paper *UNCOVER*.
 
-The graph can be undergo reforestation to meet 5 possible criteria:
+The graph can be undergo deforestation to meet 5 possible criteria:
 
-1. `"NoC"`: Number of Clusters - we specify a maximum number of clusters (`max_K`) we can tolerate in the final output of the algorithm. See `reforest.noc` for more details.
+1. `"NoC"`: Number of Clusters - we specify a maximum number of clusters (`max_K`) we can tolerate in the final output of the algorithm. See `deforest.noc` for more details.
 
-2. `"SoC"`: Size of Clusters - we specify a minimum number of observations (`min_size`) we can tolerate being assigned to a cluster in the final output of the algorithm. See `reforest.soc` for more details.
+2. `"SoC"`: Size of Clusters - we specify a minimum number of observations (`min_size`) we can tolerate being assigned to a cluster in the final output of the algorithm. See `deforest.soc` for more details.
 
-3. `"MaxReg"`: Maximal Regret - we give a maximum tolerlance (`exp(reg)`) that we allow the Bayesian evidence to decrease by by reintroducing an edge. See `reforest.maxreg` for more details.
+3. `"MaxReg"`: Maximal Regret - we give a maximum tolerlance (`exp(reg)`) that we allow the Bayesian evidence to decrease by by reintroducing an edge. See `deforest.maxreg` for more details.
 
-4. `"Validation"`: Validation Data - we split (using `split`) the data into training and validation data, apply the first stage of the algorithm on the training data and the introduce the validation data for the reforestation stage. See `reforest.valaidation` for more details.
+4. `"Validation"`: Validation Data - we split (using `split`) the data into training and validation data, apply the first stage of the algorithm on the training data and the introduce the validation data for the deforestation stage. See `deforest.valaidation` for more details.
 
-5. `"None"`: No Criteria Specified - we do not go through the second reforestation stage of the algorithm.
+5. `"None"`: No Criteria Specified - we do not go through the second deforestation stage of the algorithm.
 
 For more details on the specifics of the possible values for `SMC_method`, see the help page of the function `lbe.gen`.
 
-If any reforestation criterion other than `"Validation"` is chosen, then the output will be a list of the following:
+If any deforestation criterion other than `"Validation"` is chosen, then the output will be a list of the following:
 
 1. Cluster Allocation - A vector indicating which cluster each observation belongs to.
 
@@ -95,7 +95,7 @@ If any reforestation criterion other than `"Validation"` is chosen, then the out
 
 5. Edges Removed - A matrix of the edges removed, expressed as the two vertices in the graph that the edge connected.
 
-If the reforestation criterion chosen is `"Validation"`, then we produce a list of two lists. The first is the list given above for only the training data, and the second is the list given above for both the training data and the valaidation data combined.
+If the deforestation criterion chosen is `"Validation"`, then we produce a list of two lists. The first is the list given above for only the training data, and the second is the list given above for both the training data and the valaidation data combined.
 }
 \examples{
 
@@ -104,12 +104,12 @@ CM <- matrix(rnorm(200),100,2)
 rv <- sample(0:1,100,replace=T)
 
 # We can then run our algorithm to see what cohorts are selected for each
-# of the different reforestation criteria
-UN.none <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", SMC_thres = 30,verbose = F)
-UN.noc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "NoC", max_K = 3, SMC_thres = 30,verbose = F)
-UN.soc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "SoC", min_size = 10, SMC_thres = 30,verbose = F)
-UN.maxreg <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "MaxReg", reg = 1, SMC_thres = 30,verbose = F)
-UN.validation <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "Validation", split = 0.8, SMC_thres = 30,verbose = F)
+# of the different deforestation criteria
+UN.none <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "None", SMC_thres = 30,verbose = F)
+UN.noc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "NoC", max_K = 3, SMC_thres = 30,verbose = F)
+UN.soc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "SoC", min_size = 10, SMC_thres = 30,verbose = F)
+UN.maxreg <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "MaxReg", reg = 1, SMC_thres = 30,verbose = F)
+UN.validation <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "Validation", split = 0.8, SMC_thres = 30,verbose = F)
 clu_al_mat <- rbind(UN.none[[1]],UN.noc[[1]],UN.soc[[1]],UN.maxreg[[1]],UN.validation[[2]][[1]])
 # We can create a matrix where each entry shows in how many of the methods
 # did the indexed observations belong to the same cluster
@@ -132,11 +132,11 @@ pr_samp <- function(p_n,di){return(rmvn(p_n,rep(1,di),diag(di)))}
 pr_fun <- function(th,di){return(dmvn(th,mu=rep(1,di),sigma=diag(di)))}
 
 # We then can run UNCOVER using this prior and compare to the standard result
-UN.none.2 <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+UN.none.2 <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "None", SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 c(sum(UN.none[[2]]),sum(UN.none.2[[2]]))
 }
 \seealso{
-[lbe.gen,one.stage.mst,two.stage.mst,remove.edge,reforest.noc,reforest.soc,reforest.maxreg,reforest.validation]
+[lbe.gen,one.stage.mst,two.stage.mst,remove.edge,deforest.noc,deforest.soc,deforest.maxreg,deforest.validation]
 }
 \keyword{bayesian}
 \keyword{cluster}

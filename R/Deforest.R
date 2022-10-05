@@ -16,12 +16,12 @@
 ##'
 ##'
 ##' @export
-##' @name reforest.noc
+##' @name deforest.noc
 ##' @description Adds edges to the graph to reduce the number of clusters until the criteria is met and it is no longer beneficial to reintroduce any more edges. This is done in a greedy manner to optimise the log Bayesian evidence of the resulting models.
 ##'
-##' Used in UNCOVER if the reforest condition is set to "NoC".
+##' Used in UNCOVER if the deforest condition is set to "NoC".
 ##'
-##' @keywords reforest number
+##' @keywords deforest number
 ##' @param obs Covariate matrix
 ##' @param res Binary response vector
 ##' @param gra `igraph` object which contains the information of the graph of the current model
@@ -62,11 +62,11 @@
 ##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 ##'
 ##' # We can initially run the UNCOVER algorithm with no criteria specified
-##' UN.none <- UNCOVER(X = CM,y = rv,N=1000, stop_criterion = 8,reforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+##' UN.none <- UNCOVER(X = CM,y = rv,N=1000, stop_criterion = 8,deforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 ##'
 ##' # Then we may retrospectively want to reduce the number of clusters in our
-##' # output to 3 using `reforest.noc`
-##' UN.noc <- reforest.noc(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],K_dag = 3, clu_al = UN.none[[1]],est_method = "SMC_BIC", est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+##' # output to 3 using `deforest.noc`
+##' UN.noc <- deforest.noc(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],K_dag = 3, clu_al = UN.none[[1]],est_method = "SMC_BIC", est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
 ##'
 ##' # We can then see which edges we have reintroduced and the cost that has had
 ##' # on the Bayesian evidence
@@ -75,7 +75,7 @@
 ##' c(sum(UN.none[[2]]),sum(UN.noc[[2]]))
 ##'
 
-reforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,est_method="SMC_BIC",
+deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,est_method="SMC_BIC",
                          est_thres=Inf,par_no=0,rfun=NULL,pdf_fun=NULL,p_p=F,rho=NULL,vb = F){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
@@ -146,12 +146,12 @@ reforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,est_meth
 ##'
 ##'
 ##' @export
-##' @name reforest.soc
+##' @name deforest.soc
 ##' @description Adds edges to the graph to increase the minimum number of observations in models clusters, until the criteria is met and it is no longer beneficial to reintroduce any more edges. This is done in a greedy manner to optimise the log Bayesian evidence of the resulting models.
 ##'
-##' Used in UNCOVER if the reforest condition is set to "SoC".
+##' Used in UNCOVER if the deforest condition is set to "SoC".
 ##'
-##' @keywords reforest size
+##' @keywords deforest size
 ##' @param obs Covariate matrix
 ##' @param res Binary response vector
 ##' @param gra `igraph` object which contains the information of the graph of the current model
@@ -192,11 +192,11 @@ reforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,est_meth
 ##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 ##'
 ##' # We can initially run the UNCOVER algorithm with no criteria specified
-##' UN.none <- UNCOVER(X = CM,y = rv,N=1000, stop_criterion = 8,reforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+##' UN.none <- UNCOVER(X = CM,y = rv,N=1000, stop_criterion = 8,deforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 ##'
 ##' # Then we may retrospectively want to ensure that each one of our clusters
-##' # is assigned at least 10 observations using `reforest.soc`
-##' UN.soc <- reforest.soc(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],n_dag = 10, clu_al = UN.none[[1]],est_method = "SMC_BIC", est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+##' # is assigned at least 10 observations using `deforest.soc`
+##' UN.soc <- deforest.soc(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],n_dag = 10, clu_al = UN.none[[1]],est_method = "SMC_BIC", est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
 ##'
 ##' # We can then see which edges we have reintroduced and the cost that has had
 ##' # on the Bayesian evidence
@@ -205,7 +205,7 @@ reforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,est_meth
 ##' c(sum(UN.none[[2]]),sum(UN.soc[[2]]))
 ##'
 
-reforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,est_method="SMC_BIC",
+deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,est_method="SMC_BIC",
                          est_thres=Inf,par_no=0,rfun=NULL,pdf_fun=NULL,p_p=F,rho=NULL,vb = F){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
@@ -280,12 +280,12 @@ reforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,est_meth
 ##'
 ##'
 ##' @export
-##' @name reforest.maxreg
+##' @name deforest.maxreg
 ##' @description Selects the previously removed edge with the highest Bayesian evidence, and adds this edge to the graph if this edges' Bayesian evidence multiplied by a tolerance parameter (the natural logarithm of which is specified by the user) is larger than the current models Bayesian evidence. This process then repeats until it is no longer beneficial (with consideration to the tolerance parameter) to add an edge to the graph.
 ##'
-##' Used in UNCOVER if the reforest condition is set to "MaxReg".
+##' Used in UNCOVER if the deforest condition is set to "MaxReg".
 ##'
-##' @keywords reforest maximal regret
+##' @keywords deforest maximal regret
 ##' @param obs Covariate matrix
 ##' @param res Binary response vector
 ##' @param gra `igraph` object which contains the information of the graph of the current model
@@ -316,7 +316,7 @@ reforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,est_meth
 ##' `c_s` allows the user to specify information about the edges removed. For example if `c_s` is specified it must be of the form of list with each element representing information on the reintroduction of an edge. The index of this list corresponds to the index of the edges in `eps`. Furthermore, each element of the list will itself be a list of two elements, the first being the indices of the observations combined by introducing this edge and the second being the sub log Bayesian evidence of the cluster formed through this edge reintroduction. `c_s` is intended to be used to reduce computation time, and so whilst incorrect information on the observations involved in particular lists of `c_s` will not produce incorrect results, it will not have the desired time saving effect.
 ##'
 ##' For more details on the specifics of the possible values for `est_method`, see the help page of the function `lbe.gen`.
-##' @seealso [lbe.gen]
+##' @seealso [lbe.gen,UNCOVER]
 ##' @examples
 ##'
 ##' # First we generate a covariate matrix `obs` and binary response vector `res`
@@ -328,13 +328,13 @@ reforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,est_meth
 ##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 ##'
 ##' # We can initially run the UNCOVER algorithm with no criteria specified
-##' UN.none <- UNCOVER(X = CM,y = rv,N=1000, stop_criterion = 8,reforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+##' UN.none <- UNCOVER(X = CM,y = rv,N=1000, stop_criterion = 8,deforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 ##'
 ##' # Then we may retrospectively decide that we would like fewer clusters, but
 ##' # the maximum that we are willing to decrease the Bayesian evidence through
 ##' # an edge reintroduction by is `exp(1)` each time. This is achievable using
-##' # `reforest.maxreg`
-##' UN.maxreg <- reforest.maxreg(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],tau = 1, clu_al = UN.none[[1]],est_method = "SMC_BIC",est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+##' # `deforest.maxreg`
+##' UN.maxreg <- deforest.maxreg(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],tau = 1, clu_al = UN.none[[1]],est_method = "SMC_BIC",est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
 ##'
 ##' # We can then see which edges we have reintroduced and the cost that has had
 ##' # on the Bayesian evidence
@@ -343,7 +343,7 @@ reforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,est_meth
 ##' c(sum(UN.none[[2]]),sum(UN.maxreg[[2]]))
 ##'
 
-reforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_method="SMC_BIC",
+deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_method="SMC_BIC",
                             est_thres=Inf,par_no=0,rfun=NULL,pdf_fun=NULL,p_p=F,rho=NULL,vb = F){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
@@ -414,12 +414,12 @@ reforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_met
 ##'
 ##'
 ##' @export
-##' @name reforest.validation
+##' @name deforest.validation
 ##' @description Adds validation to the training data graph and updates the log Bayesian evidence, then selects the previously removed edge with the highest Bayesian evidence ratio, and adds this edge to the graph if this edges' addition gives a larger Bayesian evidence ratio than the current Bayesian evidence ratio. This process then repeats until it is no longer beneficial to add an edge to the graph.
 ##'
-##' Used in UNCOVER if the reforest condition is set to "Validation".
+##' Used in UNCOVER if the deforest condition is set to "Validation".
 ##'
-##' @keywords reforest validation
+##' @keywords deforest validation
 ##' @param obs Covariate matrix of the training data
 ##' @param obs_all Covariate matrix of training and validation data
 ##' @param res Binary response vector of the training data
@@ -446,7 +446,7 @@ reforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_met
 ##'
 ##' The names of the vertices in `gra` (and `gra_all` if provided) must correspond to the row index of the observation in `obs_all`.
 ##'
-##' `reforest.validation` first assigns the validation data to a cluster and subsequently updates each sub models log Bayesian evidence, summing to make an updated overall log Bayesian evidence. The difference between the overall log Bayesian evidence for the updated model and the training model is the new robustness statistic (`RobS`), and the edge (if any) whose reintroduction increases `RobS` the most is added back to both graphs (`gra` and `gra_all`) and subsequently both models including `RobS` are updated. If an edge is added the remaining edges are then reconsidered (with respect to `RobS`) and this process is repeated until either; it is not beneficial to add anymore edges to the graph or there are no longer any edges to reintroduce.
+##' `deforest.validation` first assigns the validation data to a cluster and subsequently updates each sub models log Bayesian evidence, summing to make an updated overall log Bayesian evidence. The difference between the overall log Bayesian evidence for the updated model and the training model is the new robustness statistic (`RobS`), and the edge (if any) whose reintroduction increases `RobS` the most is added back to both graphs (`gra` and `gra_all`) and subsequently both models including `RobS` are updated. If an edge is added the remaining edges are then reconsidered (with respect to `RobS`) and this process is repeated until either; it is not beneficial to add anymore edges to the graph or there are no longer any edges to reintroduce.
 ##'
 ##' If the clusters specified by the initial model have fixed labels then this should be specified by `clu_al`. `clu_al` must be a one of the possible labelling of the observations defined by the clusters of the graph. For example for a graph where there is only one connected component, if `clu_al` is specified it cannot be anything other than `rep(1,length(res)`.
 ##'
@@ -454,8 +454,8 @@ reforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_met
 ##'
 ##' For more details on the specifics of the possible values for `est_method`, see the help page of the function `lbe.gen`.
 ##'
-##' Finally, whilst this function can be used separately we strongly encourage specifying `reforest_criterion="Validation"` in the `UNCOVER` function instead as this ensures that each cluster created has at least one validation observation attached at the reforestation stage.
-##' @seealso [lbe.gen],[two.stage.mst]
+##' Finally, whilst this function can be used separately we strongly encourage specifying `deforest_criterion="Validation"` in the `UNCOVER` function instead as this ensures that each cluster created has at least one validation observation attached at the deforestation stage.
+##' @seealso [lbe.gen,two.stage.mst,UNCOVER]
 ##' @examples
 ##'
 ##' # First we generate a covariate matrix `obs` and binary response vector `res`
@@ -467,16 +467,16 @@ reforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_met
 ##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 ##'
 ##' # We can initially run the UNCOVER algorithm with no criteria specified
-##' UN.none <- UNCOVER(X = CM,y = rv,N=1000, mst_var = 1:2, stop_criterion = 8,reforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+##' UN.none <- UNCOVER(X = CM,y = rv,N=1000, mst_var = 1:2, stop_criterion = 8,deforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 ##'
 ##' # We may then obtain new observations and wish to use these new observations
 ##' # as validation data to possibly combine clusters. This can be achieved
-##' # through `reforest.validation`
+##' # through `deforest.validation`
 ##' CM_val <- matrix(rnorm(50),25,2)
 ##' rv_val <- sample(0:1,25,replace=T)
 ##' CM_all <- rbind(CM,CM_val)
 ##' rv_all <- c(rv,rv_val)
-##' UN.val <- reforest.validation(obs = CM,obs_all = CM_all,res = rv,res_all = rv_all,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],which_tr = 1:100,rho = 1:2,clu_al = UN.none[[1]],est_method = "SMC_BIC",est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+##' UN.val <- deforest.validation(obs = CM,obs_all = CM_all,res = rv,res_all = rv_all,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],which_tr = 1:100,rho = 1:2,clu_al = UN.none[[1]],est_method = "SMC_BIC",est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
 ##'
 ##' # We can then see which edges we have reintroduced as well as if this method
 ##' # has improved the Bayesian evidence per observation (log(Z)/n)
@@ -486,7 +486,7 @@ reforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_met
 ##'
 
 
-reforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,gra_all = NULL,which_tr=NULL,
+deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,gra_all = NULL,which_tr=NULL,
                                 rho=NULL,clu_al = NULL,c_s=NULL,est_method="SMC_BIC",
                                 est_thres=Inf,par_no=0,rfun=NULL,pdf_fun=NULL,p_p=F,vb = F){
   K <- igraph::count_components(gra)

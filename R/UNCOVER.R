@@ -19,19 +19,19 @@
 ##' @name UNCOVER
 ##' @description Generates cohorts for a data set through removal of edges from a graphical representation of the covariates. Edges are removed (or reintroduced) by considering the normalisation constant (or Bayesian evidence) of a multiplicative Bayesian logistic regression model.
 ##'
-##' The first stage of the function is concerned purely with a greedy optimisation of the Bayeisan evidence through edge manipulation. The second stage then addresses any other criteria (known as reforest conditions) expressed by the user through reintroduction of edges.
+##' The first stage of the function is concerned purely with a greedy optimisation of the Bayeisan evidence through edge manipulation. The second stage then addresses any other criteria (known as deforest conditions) expressed by the user through reintroduction of edges.
 ##'
 ##' @keywords graph cohort cluster bayesian evidence
 ##' @param X Covariate matrix
 ##' @param y Binary response vector
 ##' @param mst_var A vector specifying which variables of the covariate matrix will be used to form the graph. If not specified all variables will be used.
 ##' @param N Number of samples of the prior used for the SMC sampler. Not required if method `"BIC"` selected. If required but not specified the default value is set to `1000`.
-##' @param stop_criterion What is the maximum number of clusters allowed before we terminate the first stage and begin reforestation. If not specified the algorithm continues until the Bayesian evidence cannot be improved upon, however for time and memory purposes specifying a number is highly recommended.
-##' @param reforest_criterion Criterion in which edges are reintroduced to allow the model to satisfy. Can be one of `"NoC"`,`"SoC"`,`"MaxReg"`,`"Validation"` or `"None"`.
-##' @param split What fraction of the data should be used for training. Should only be specified if `reforest_criterion == "Validation`. Defaults to `1`.
-##' @param max_K The maximum number of clusters allowed in the final output. Should only be specified if `reforest_criterion == "NoC`. Defaults to `Inf`.
-##' @param min_size The minimum number of observations allowed for any cluster in the final model. Should only be specified if `reforest_criterion == "SoC`. Defaults to `0`.
-##' @param reg Numerical natural logarithm of the tolerance parameter. Must be positive. Should only be specified if `reforest_criterion == "MaxReg`. Defaults to `0`.
+##' @param stop_criterion What is the maximum number of clusters allowed before we terminate the first stage and begin deforestation. If not specified the algorithm continues until the Bayesian evidence cannot be improved upon, however for time and memory purposes specifying a number is highly recommended.
+##' @param deforest_criterion Criterion in which edges are reintroduced to allow the model to satisfy. Can be one of `"NoC"`,`"SoC"`,`"MaxReg"`,`"Validation"` or `"None"`.
+##' @param split What fraction of the data should be used for training. Should only be specified if `deforest_criterion == "Validation`. Defaults to `1`.
+##' @param max_K The maximum number of clusters allowed in the final output. Should only be specified if `deforest_criterion == "NoC`. Defaults to `Inf`.
+##' @param min_size The minimum number of observations allowed for any cluster in the final model. Should only be specified if `deforest_criterion == "SoC`. Defaults to `0`.
+##' @param reg Numerical natural logarithm of the tolerance parameter. Must be positive. Should only be specified if `deforest_criterion == "MaxReg`. Defaults to `0`.
 ##' @param SMC_method Method to be used to estimate the log Bayesian evidence of the newly formed sub-models, can be one of `"SMC"`,`"SMC_BIC"` or `"BIC"`
 ##' @param SMC_thres The threshold for which the number of observations needs to exceed to consider using BIC as an estimator. Only applies if method `"SMC_BIC"` is selected. Defaults to `Inf` if not specified.
 ##' @param rprior Function to sample from the prior. Must only have two arguments, `p_num` and `di` (Number of prior samples to generate and the number of dimensions of a single sample respectively).
@@ -41,23 +41,23 @@
 ##' @return Either a list or a list of two lists. See details.
 ##' @details Assumes a Bayesian logistic regression model for each cohort, with the overall model being a product of these sub-models.
 ##'
-##' A minimum spanning tree graph is first constructed from a subset of the covariates. Then at each iteration, each edge in the current graph is checked to see if removal to split a cohort is beneficial, and then either we selected the optimal edge to remove or we concluded it is not beneficial to remove any more edges. At the end of each iteration we also check the set of removed edges to see if it beneficial to reintroduce any previously removed edges. After this process has ended we then reintroduce edges in the removed set specifically to meet the criteria set by the user in the most optimal manner possible through a greedy approach. For more details see the help pages of `lbe.gen`,`one.stage.mst`,`two.stage.mst`,`remove.edge`,`reforest.noc`,`reforest.soc`,`reforest.maxreg`,`reforest.validation` and the paper *UNCOVER*.
+##' A minimum spanning tree graph is first constructed from a subset of the covariates. Then at each iteration, each edge in the current graph is checked to see if removal to split a cohort is beneficial, and then either we selected the optimal edge to remove or we concluded it is not beneficial to remove any more edges. At the end of each iteration we also check the set of removed edges to see if it beneficial to reintroduce any previously removed edges. After this process has ended we then reintroduce edges in the removed set specifically to meet the criteria set by the user in the most optimal manner possible through a greedy approach. For more details see the help pages of `lbe.gen`,`one.stage.mst`,`two.stage.mst`,`remove.edge`,`deforest.noc`,`deforest.soc`,`deforest.maxreg`,`deforest.validation` and the paper *UNCOVER*.
 ##'
-##' The graph can be undergo reforestation to meet 5 possible criteria:
+##' The graph can be undergo deforestation to meet 5 possible criteria:
 ##'
-##' 1. `"NoC"`: Number of Clusters - we specify a maximum number of clusters (`max_K`) we can tolerate in the final output of the algorithm. See `reforest.noc` for more details.
+##' 1. `"NoC"`: Number of Clusters - we specify a maximum number of clusters (`max_K`) we can tolerate in the final output of the algorithm. See `deforest.noc` for more details.
 ##'
-##' 2. `"SoC"`: Size of Clusters - we specify a minimum number of observations (`min_size`) we can tolerate being assigned to a cluster in the final output of the algorithm. See `reforest.soc` for more details.
+##' 2. `"SoC"`: Size of Clusters - we specify a minimum number of observations (`min_size`) we can tolerate being assigned to a cluster in the final output of the algorithm. See `deforest.soc` for more details.
 ##'
-##' 3. `"MaxReg"`: Maximal Regret - we give a maximum tolerlance (`exp(reg)`) that we allow the Bayesian evidence to decrease by by reintroducing an edge. See `reforest.maxreg` for more details.
+##' 3. `"MaxReg"`: Maximal Regret - we give a maximum tolerlance (`exp(reg)`) that we allow the Bayesian evidence to decrease by by reintroducing an edge. See `deforest.maxreg` for more details.
 ##'
-##' 4. `"Validation"`: Validation Data - we split (using `split`) the data into training and validation data, apply the first stage of the algorithm on the training data and the introduce the validation data for the reforestation stage. See `reforest.valaidation` for more details.
+##' 4. `"Validation"`: Validation Data - we split (using `split`) the data into training and validation data, apply the first stage of the algorithm on the training data and the introduce the validation data for the deforestation stage. See `deforest.valaidation` for more details.
 ##'
-##' 5. `"None"`: No Criteria Specified - we do not go through the second reforestation stage of the algorithm.
+##' 5. `"None"`: No Criteria Specified - we do not go through the second deforestation stage of the algorithm.
 ##'
 ##' For more details on the specifics of the possible values for `SMC_method`, see the help page of the function `lbe.gen`.
 ##'
-##' If any reforestation criterion other than `"Validation"` is chosen, then the output will be a list of the following:
+##' If any deforestation criterion other than `"Validation"` is chosen, then the output will be a list of the following:
 ##'
 ##' 1. Cluster Allocation - A vector indicating which cluster each observation belongs to.
 ##'
@@ -69,9 +69,9 @@
 ##'
 ##' 5. Edges Removed - A matrix of the edges removed, expressed as the two vertices in the graph that the edge connected.
 ##'
-##' If the reforestation criterion chosen is `"Validation"`, then we produce a list of two lists. The first is the list given above for only the training data, and the second is the list given above for both the training data and the valaidation data combined.
+##' If the deforestation criterion chosen is `"Validation"`, then we produce a list of two lists. The first is the list given above for only the training data, and the second is the list given above for both the training data and the valaidation data combined.
 ##'
-##' @seealso [lbe.gen,one.stage.mst,two.stage.mst,remove.edge,reforest.noc,reforest.soc,reforest.maxreg,reforest.validation]
+##' @seealso [lbe.gen,one.stage.mst,two.stage.mst,remove.edge,deforest.noc,deforest.soc,deforest.maxreg,deforest.validation]
 ##' @examples
 ##'
 ##' # First we generate a covariate matrix `X` and binary response vector `y`
@@ -79,12 +79,12 @@
 ##' rv <- sample(0:1,100,replace=T)
 ##'
 ##' # We can then run our algorithm to see what cohorts are selected for each
-##' # of the different reforestation criteria
-##' UN.none <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", SMC_thres = 30,verbose = F)
-##' UN.noc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "NoC", max_K = 3, SMC_thres = 30,verbose = F)
-##' UN.soc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "SoC", min_size = 10, SMC_thres = 30,verbose = F)
-##' UN.maxreg <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "MaxReg", reg = 1, SMC_thres = 30,verbose = F)
-##' UN.validation <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "Validation", split = 0.8, SMC_thres = 30,verbose = F)
+##' # of the different deforestation criteria
+##' UN.none <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "None", SMC_thres = 30,verbose = F)
+##' UN.noc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "NoC", max_K = 3, SMC_thres = 30,verbose = F)
+##' UN.soc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "SoC", min_size = 10, SMC_thres = 30,verbose = F)
+##' UN.maxreg <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "MaxReg", reg = 1, SMC_thres = 30,verbose = F)
+##' UN.validation <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "Validation", split = 0.8, SMC_thres = 30,verbose = F)
 ##' clu_al_mat <- rbind(UN.none[[1]],UN.noc[[1]],UN.soc[[1]],UN.maxreg[[1]],UN.validation[[2]][[1]])
 ##' # We can create a matrix where each entry shows in how many of the methods
 ##' # did the indexed observations belong to the same cluster
@@ -107,12 +107,12 @@
 ##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(1,di),sigma=diag(di)))}
 ##'
 ##' # We then can run UNCOVER using this prior and compare to the standard result
-##' UN.none.2 <- UNCOVER(X = CM,y = rv, stop_criterion = 8, reforest_criterion = "None", SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+##' UN.none.2 <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "None", SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 ##' c(sum(UN.none[[2]]),sum(UN.none.2[[2]]))
 
 
 UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
-                    reforest_criterion="None",split=1,max_K=Inf,min_size=0,
+                    deforest_criterion="None",split=1,max_K=Inf,min_size=0,
                     reg=0,SMC_method="SMC_BIC",SMC_thres=30,rprior=NULL,
                     prior_pdf=NULL,plot_progress=F,verbose = T){
   if((!is.null(rprior)&is.null(prior_pdf))|(is.null(rprior)&!is.null(prior_pdf))){
@@ -129,7 +129,7 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
   if(is.null(mst_var)){
     mst_var <- 1:ncol(X)
   }
-  if(reforest_criterion=="Validation"){
+  if(deforest_criterion=="Validation"){
     samp <- sort(sample((1:length(y)),round(length(y)*split)))
     g_val <- two.stage.mst(obs_mat = X,tr_ind = samp,mst_sub = mst_var)
     g <- g_val[[1]]
@@ -148,7 +148,7 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
   edge_rem <- c()
   system_save <- vector(mode = "list",length=1)
   combine_save <- list()
-  if(reforest_criterion=="NoC" | reforest_criterion=="SoC"){
+  if(deforest_criterion=="NoC" | deforest_criterion=="SoC"){
     model_selection <- list(z,logZ,g,K,edge_rem)
   }
   m <- 1
@@ -165,7 +165,7 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
         message("")
         message(green(paste0("Assessing the removal of edges from connected component ",k)))
       }
-      if(reforest_criterion=="Validation"){
+      if(deforest_criterion=="Validation"){
         system_save[[k]] <- list(z,logZ,g,c(),g_all)
       } else{
         system_save[[k]] <- list(z,logZ,g,c())
@@ -177,7 +177,7 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
           }
           next
         }
-        if(reforest_criterion=="Validation"){
+        if(deforest_criterion=="Validation"){
           g_temp <- delete_edges(g_all,E(g_all)[get.edge.ids(g_all,get.edgelist(g)[i,])])
           z_temp <- components(g_temp)$membership
           if(!identical(sort(unique(z_temp[-samp])),as.numeric(1:(K+1)))){
@@ -189,7 +189,7 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
         }
         er_temp <- remove.edge(gra = g,j = i,clu_al = z,lbe = logZ,obs = X,res = y,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf)
         if(sum(er_temp[[2]])>sum(system_save[[k]][[2]])){
-          if(reforest_criterion=="Validation"){
+          if(deforest_criterion=="Validation"){
             system_save[[k]] <- c(er_temp,list(get.edgelist(g)[i,]),list(g_temp))
           } else{
             system_save[[k]] <- c(er_temp,list(get.edgelist(g)[i,]))
@@ -217,7 +217,7 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
     logZ <- system_save[[k_change]][[2]]
     g <- system_save[[k_change]][[3]]
     edge_rem <- rbind(edge_rem,system_save[[k_change]][[4]])
-    if(reforest_criterion=="Validation"){
+    if(deforest_criterion=="Validation"){
       g_all <- system_save[[k_change]][[5]]
     }
     if(plot_progress){
@@ -233,15 +233,15 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
         system_save[[k]][[2]][K+1] <- logZ[K+1]
         system_save[[k]][[2]][k_change] <- logZ[k_change]
         system_save[[k]][[3]] <- delete_edges(system_save[[k]][[3]],E(system_save[[k]][[3]])[get.edge.ids(system_save[[k]][[3]],edge_rem[nrow(edge_rem),])])
-        if(reforest_criterion=="Validation"){
+        if(deforest_criterion=="Validation"){
           system_save[[k]][[5]] <- delete_edges(system_save[[k]][[5]],E(system_save[[k]][[5]])[get.edge.ids(system_save[[k]][[5]],edge_rem[nrow(edge_rem),])])
         }
       }
     }
     K <- K+1
     system_save[[K]] <- vector(mode = "list",length=1)
-    if(reforest_criterion=="NoC" | reforest_criterion=="SoC"){
-      if((K<=max_K & reforest_criterion=="NoC" & sum(logZ)>sum(model_selection[[2]])) | (all(table(z)>=min_size) & reforest_criterion=="SoC" & sum(logZ)>sum(model_selection[[2]]))){
+    if(deforest_criterion=="NoC" | deforest_criterion=="SoC"){
+      if((K<=max_K & deforest_criterion=="NoC" & sum(logZ)>sum(model_selection[[2]])) | (all(table(z)>=min_size) & deforest_criterion=="SoC" & sum(logZ)>sum(model_selection[[2]]))){
         model_selection <- list(z,logZ,g,K,edge_rem)
       }
     }
@@ -286,14 +286,14 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
             system_save[[k]][[2]][edge_z[1]] <- combine_save[[cut_comb]][[2]]
             system_save[[k]][[2]] <- system_save[[k]][[2]][-edge_z[2]]
             system_save[[k]][[3]] <- add_edges(system_save[[k]][[3]],as.numeric(edge_rem[cut_comb,]))
-            if(reforest_criterion=="Validation"){
+            if(deforest_criterion=="Validation"){
               system_save[[k]][[5]] <- add_edges(system_save[[k]][[5]],as.numeric(edge_rem[cut_comb,]))
             }
           }
           logZ[edge_z[1]] <- combine_save[[cut_comb]][[2]]
           logZ <- logZ[-edge_z[2]]
           g <- add_edges(g,edge_rem[cut_comb,])
-          if(reforest_criterion=="Validation"){
+          if(deforest_criterion=="Validation"){
             g_all <- add_edges(g_all,edge_rem[cut_comb,])
           }
           edge_rem <- edge_rem[-cut_comb,,drop=F]
@@ -307,8 +307,8 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
             message("")
             message(green("Reassessing the reintroduction of edges which have been removed"))
           }
-          if(reforest_criterion=="NoC" | reforest_criterion=="SoC"){
-            if((K<=max_K & reforest_criterion=="NoC" & sum(logZ)>sum(model_selection[[2]])) | (all(table(z)>=min_size) & reforest_criterion=="SoC" & sum(logZ)>sum(model_selection[[2]]))){
+          if(deforest_criterion=="NoC" | deforest_criterion=="SoC"){
+            if((K<=max_K & deforest_criterion=="NoC" & sum(logZ)>sum(model_selection[[2]])) | (all(table(z)>=min_size) & deforest_criterion=="SoC" & sum(logZ)>sum(model_selection[[2]]))){
               model_selection <- list(z,logZ,g,K,edge_rem)
             }
           }
@@ -325,12 +325,12 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
     message("")
     message("Reforestation Stage")
   }
-  if(reforest_criterion=="NoC"){
+  if(deforest_criterion=="NoC"){
     if(verbose){
       message("")
       message("Assessing the reintroduction of edges which have been removed")
     }
-    pnoc <- reforest.noc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,K_dag = max_K,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
+    pnoc <- deforest.noc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,K_dag = max_K,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
     if(sum(model_selection[[2]])>sum(pnoc[[2]])){
       if(plot_progress){
         pairs(X[,mst_var],pch=as.character(y),col=model_selection[[1]],cex=0.5)
@@ -347,12 +347,12 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
       return(pnoc)
     }
   }
-  if(reforest_criterion=="SoC"){
+  if(deforest_criterion=="SoC"){
     if(verbose){
       message("")
       message("Assessing the reintroduction of edges which have been removed")
     }
-    psoc <- reforest.soc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,n_dag = min_size,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
+    psoc <- deforest.soc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,n_dag = min_size,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
     if(sum(model_selection[[2]])>sum(psoc[[2]])){
       if(plot_progress){
         pairs(X[,mst_var],pch=as.character(y),col=model_selection[[1]],cex=0.5)
@@ -369,7 +369,7 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
       return(psoc)
     }
   }
-  if(reforest_criterion=="None"){
+  if(deforest_criterion=="None"){
     if(plot_progress){
       pairs(X[,mst_var],pch=as.character(y),col=model_selection[[1]],cex=0.5)
     }
@@ -379,23 +379,23 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
                 "Number of Clusters" = K,
                 "Edges Removed" = edge_rem))
   }
-  if(reforest_criterion=="MaxReg"){
+  if(deforest_criterion=="MaxReg"){
     if(verbose){
       message("")
       message("Assessing the reintroduction of edges which have been removed")
     }
-    pmaxreg <- reforest.maxreg(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,tau = reg,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
+    pmaxreg <- deforest.maxreg(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,tau = reg,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
     if(plot_progress){
       pairs(X[,mst_var],pch=as.character(y),col=pmaxreg[[1]],cex=0.5)
     }
     return(pmaxreg)
   }
-  if(reforest_criterion=="Validation"){
+  if(deforest_criterion=="Validation"){
     if(verbose){
       message("")
       message("Assessing the reintroduction of edges which have been removed")
     }
-    pval <- reforest.validation(obs = X,obs_all = X_all,res = y,res_all = y_all,gra = g,lbe = logZ,eps = edge_rem,gra_all = g_all,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
+    pval <- deforest.validation(obs = X,obs_all = X_all,res = y,res_all = y_all,gra = g,lbe = logZ,eps = edge_rem,gra_all = g_all,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
     if(plot_progress){
       pairs(X_all[,mst_var],pch=as.character(y_all),col=pval[[1]],cex=0.5)
     }
