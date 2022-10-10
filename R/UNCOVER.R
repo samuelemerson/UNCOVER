@@ -323,7 +323,7 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
   }
   if(verbose){
     message("")
-    message("Reforestation Stage")
+    message("Deforestation Stage")
   }
   if(deforest_criterion=="NoC"){
     if(verbose){
