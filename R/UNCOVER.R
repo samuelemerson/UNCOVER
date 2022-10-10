@@ -397,7 +397,7 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
     }
     pval <- deforest.validation(obs = X,obs_all = X_all,res = y,res_all = y_all,gra = g,lbe = logZ,eps = edge_rem,gra_all = g_all,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
     if(plot_progress){
-      pairs(X_all[,mst_var],pch=as.character(y_all),col=pval[[1]],cex=0.5)
+      pairs(X_all[,mst_var],pch=as.character(y_all),col=pval[[2]][[1]],cex=0.5)
     }
     return(pval)
   }
