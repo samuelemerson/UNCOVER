@@ -69,6 +69,8 @@ Assumes a Bayesian logistic regression model for each cohort, with the overall m
 
 A minimum spanning tree graph is first constructed from a subset of the covariates. Then at each iteration, each edge in the current graph is checked to see if removal to split a cohort is beneficial, and then either we selected the optimal edge to remove or we concluded it is not beneficial to remove any more edges. At the end of each iteration we also check the set of removed edges to see if it beneficial to reintroduce any previously removed edges. After this process has ended we then reintroduce edges in the removed set specifically to meet the criteria set by the user in the most optimal manner possible through a greedy approach. For more details see the help pages of `lbe.gen`,`one.stage.mst`,`two.stage.mst`,`remove.edge`,`deforest.noc`,`deforest.soc`,`deforest.maxreg`,`deforest.validation` and the paper *UNCOVER*.
 
+If `rprior` and `prior_pdf` are not specified then the default prior is a standard multivariate normal.
+
 The graph can be undergo deforestation to meet 5 possible criteria:
 
 1. `"NoC"`: Number of Clusters - we specify a maximum number of clusters (`max_K`) we can tolerate in the final output of the algorithm. See `deforest.noc` for more details.
