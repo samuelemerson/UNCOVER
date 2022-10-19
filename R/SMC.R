@@ -36,7 +36,8 @@
 ##' @return A list consisting of; weighted posterior samples (the samples and weights are given in separate lists) and the log Bayesian evidence of the full posterior.
 ##' @details The default setting is going from prior to full posterior. If using samples from a partial posterior instead of prior samples then `in_set` and `logZ` should be provided. If the samples from the partial posterior are weighted samples then `w` should also be provided. If the full posterior is not the desired output then the specific bridging distribution (partial posterior) required must be specified by the observations wish are to added to the starting partial posterior (i.e. `add_set` is required).
 ##'
-##' Details of the internal mechanisms of the SMC sampler such as the Metropolis-Hastings MCMC resample move can be found in *UNCOVER paper*
+##' Details of the internal mechanisms of the SMC sampler such as the Metropolis-Hastings MCMC resample move can be found in *UNCOVER paper* and Chopin (2002).
+##' @references Chopin, N. (2002). A sequential particle filter method for static models. Biometrika, 89(3), 539-552.
 ##' @examples
 ##'
 ##' # First we generate a design matrix X and binary response vector y
