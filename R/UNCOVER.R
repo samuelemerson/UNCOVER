@@ -247,7 +247,7 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
     K <- K+1
     system_save[[K]] <- vector(mode = "list",length=1)
     if(deforest_criterion=="NoC" | deforest_criterion=="SoC" | deforest_criterion=="Balanced"){
-      unbal_clu <- sapply(1:K,FUN = function(u,res,clu_al,ups){all(table(factor(res[which(clu_al==k)],levels=0:1))>=ups)},res=y,clu_al=z,ups=n_min_class)
+      unbal_clu <- sapply(1:K,FUN = function(u,res,clu_al,ups){all(table(factor(res[which(clu_al==u)],levels=0:1))>=ups)},res=y,clu_al=z,ups=n_min_class)
       if((K<=max_K & deforest_criterion=="NoC" & sum(logZ)>sum(model_selection[[2]])) | (all(table(z)>=min_size) & deforest_criterion=="SoC" & sum(logZ)>sum(model_selection[[2]])) | (all(unbal_clu) & deforest_criterion=="Balanced" & sum(logZ)>sum(model_selection[[2]]))){
         model_selection <- list(z,logZ,g,K,edge_rem)
       }
@@ -315,7 +315,7 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
             message(green("Reassessing the reintroduction of edges which have been removed"))
           }
           if(deforest_criterion=="NoC" | deforest_criterion=="SoC" | deforest_criterion=="Balanced"){
-            unbal_clu <- sapply(1:K,FUN = function(u,res,clu_al,ups){all(table(factor(res[which(clu_al==k)],levels=0:1))>=ups)},res=y,clu_al=z,ups=n_min_class)
+            unbal_clu <- sapply(1:K,FUN = function(u,res,clu_al,ups){all(table(factor(res[which(clu_al==u)],levels=0:1))>=ups)},res=y,clu_al=z,ups=n_min_class)
             if((K<=max_K & deforest_criterion=="NoC" & sum(logZ)>sum(model_selection[[2]])) | (all(table(z)>=min_size) & deforest_criterion=="SoC" & sum(logZ)>sum(model_selection[[2]]))| (all(unbal_clu) & deforest_criterion=="Balanced" & sum(logZ)>sum(model_selection[[2]]))){
               model_selection <- list(z,logZ,g,K,edge_rem)
             }
