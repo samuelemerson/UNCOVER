@@ -86,7 +86,8 @@ deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,est_meth
   }
   j <- 1
   if(vb){
-    message("Assessing the reintroduction of edges which have been removed")
+    message("")
+    message(green("Assessing the reintroduction of edges which have been removed"))
   }
   while(j <= nrow(eps)){
     edge_clu_al <- sort(clu_al[match(eps[j,],V(gra)$name)])
@@ -97,9 +98,6 @@ deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,est_meth
       txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
     }
     if(j==nrow(eps)){
-      if(vb){
-        message("")
-      }
       lbe_comb.1 <- sapply(c_s,FUN = function(u){u[[2]]})
       lbe_comb.2 <- apply(eps,MARGIN = 1,FUN = function(u,lZ,ca,cg){sum(lZ[-ca[match(u,V(cg)$name)]])},lZ = lbe,ca = clu_al,cg = gra)
       lbe_comb <- lbe_comb.1 + lbe_comb.2
@@ -216,7 +214,8 @@ deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,est_meth
   }
   j <- 1
   if(vb){
-    message("Assessing the reintroduction of edges which have been removed")
+    message("")
+    message(green("Assessing the reintroduction of edges which have been removed"))
   }
   while(j <= nrow(eps)){
     edge_clu_al <- sort(clu_al[match(eps[j,],V(gra)$name)])
@@ -227,9 +226,6 @@ deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,est_meth
       txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
     }
     if(j==nrow(eps)){
-      if(vb){
-        message("")
-      }
       lbe_comb.1 <- sapply(c_s,FUN = function(u){u[[2]]})
       lbe_comb.2 <- apply(eps,MARGIN = 1,FUN = function(u,lZ,ca,cg){sum(lZ[-ca[match(u,V(cg)$name)]])},lZ = lbe, ca = clu_al,cg = gra)
       lbe_comb <- lbe_comb.1 + lbe_comb.2
@@ -354,7 +350,8 @@ deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_met
   }
   j <- 1
   if(vb){
-    message("Assessing the reintroduction of edges which have been removed")
+    message("")
+    message(green("Assessing the reintroduction of edges which have been removed"))
   }
   while(j <= nrow(eps)){
     edge_clu_al <- sort(clu_al[match(eps[j,],V(gra)$name)])
@@ -365,9 +362,6 @@ deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,est_met
       txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
     }
     if(j==nrow(eps)){
-      if(vb){
-        message("")
-      }
       lbe_comb.1 <- sapply(c_s,FUN = function(u){u[[2]]})
       lbe_comb.2 <- apply(eps,MARGIN = 1,FUN = function(u,lZ,ca,cg){sum(lZ[-ca[match(u,V(cg)$name)]])},lZ = lbe,ca = clu_al,cg = gra)
       lbe_comb <- lbe_comb.1 + lbe_comb.2
@@ -514,7 +508,7 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,gra_all = NU
   c_s_all <- vector(mode="list",length=nrow(eps))
   if(vb){
     message("")
-    message("Assessing the reintroduction of edges which have been removed")
+    message(green("Assessing the reintroduction of edges which have been removed"))
   }
   while(j <= nrow(eps)){
     edge_clu_al <- sort(clu_al_all[as.numeric(eps[j,])])

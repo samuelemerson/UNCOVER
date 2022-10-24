@@ -328,10 +328,6 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
     message("Deforestation Stage")
   }
   if(deforest_criterion=="NoC"){
-    if(verbose){
-      message("")
-      message("Assessing the reintroduction of edges which have been removed")
-    }
     pnoc <- deforest.noc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,K_dag = max_K,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
     if(sum(model_selection[[2]])>sum(pnoc[[2]])){
       if(plot_progress){
@@ -350,10 +346,6 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
     }
   }
   if(deforest_criterion=="SoC"){
-    if(verbose){
-      message("")
-      message("Assessing the reintroduction of edges which have been removed")
-    }
     psoc <- deforest.soc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,n_dag = min_size,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
     if(sum(model_selection[[2]])>sum(psoc[[2]])){
       if(plot_progress){
@@ -382,10 +374,6 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
                 "Edges Removed" = edge_rem))
   }
   if(deforest_criterion=="MaxReg"){
-    if(verbose){
-      message("")
-      message("Assessing the reintroduction of edges which have been removed")
-    }
     pmaxreg <- deforest.maxreg(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,tau = reg,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
     if(plot_progress){
       pairs(X[,mst_var],pch=as.character(y),col=pmaxreg[[1]],cex=0.5)
@@ -393,10 +381,6 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
     return(pmaxreg)
   }
   if(deforest_criterion=="Validation"){
-    if(verbose){
-      message("")
-      message("Assessing the reintroduction of edges which have been removed")
-    }
     pval <- deforest.validation(obs = X,obs_all = X_all,res = y,res_all = y_all,gra = g,lbe = logZ,eps = edge_rem,gra_all = g_all,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
     if(plot_progress){
       pairs(X_all[,mst_var],pch=as.character(y_all),col=pval[[2]][[1]],cex=0.5)
