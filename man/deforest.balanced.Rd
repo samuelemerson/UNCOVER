@@ -91,9 +91,9 @@ pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 UN.none <- UNCOVER(X = CM,y = rv,N=1000, stop_criterion = 8,deforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 
 # Then we may retrospectively want to ensure that each one of our clusters
-# has at least 2 observations with response in the minority class (of their
+# has at least 1 observation with response in the minority class (of their
 # cluster) using `deforest.balanced`
-UN.balanced <- deforest.balanced(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],ups = 2, clu_al = UN.none[[1]],est_method = "SMC_BIC", est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+UN.balanced <- deforest.balanced(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],ups = 1, clu_al = UN.none[[1]],est_method = "SMC_BIC", est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
 
 # We can then see which edges we have reintroduced and the cost that has had
 # on the Bayesian evidence
@@ -104,10 +104,9 @@ c(sum(UN.none[[2]]),sum(UN.balanced[[2]]))
 # The amount of edges introduced in general should increase the more
 # imbalanced the overall dataset is.
 
-CM.2 <- matrix(rnorm(200),100,2)
-rv.2 <- sample(0:1,100,replace=T,prob=c(0.9,0.1))
-UN.none.2 <- UNCOVER(X = CM.2,y = rv.2,N=1000, stop_criterion = 8,deforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
-UN.balanced.2 <- deforest.balanced(obs = CM.2,res = rv.2,gra = UN.none.2[[3]],lbe = UN.none.2[[2]],eps = UN.none.2[[5]],ups = 2, clu_al = UN.none.2[[1]],est_method = "SMC_BIC", est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+rv.2 <- sample(0:1,100,replace=T,prob=c(0.8,0.2))
+UN.none.2 <- UNCOVER(X = CM,y = rv.2,N=1000, stop_criterion = 8,deforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+UN.balanced.2 <- deforest.balanced(obs = CM,res = rv.2,gra = UN.none.2[[3]],lbe = UN.none.2[[2]],eps = UN.none.2[[5]],ups = 1, clu_al = UN.none.2[[1]],est_method = "SMC_BIC", est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
 UN.none.2[[5]]
 UN.balanced.2[[5]]
 c(sum(UN.none.2[[2]]),sum(UN.balanced.2[[2]]))
