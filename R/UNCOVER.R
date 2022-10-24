@@ -27,11 +27,12 @@
 ##' @param mst_var A vector specifying which variables of the covariate matrix will be used to form the graph. If not specified all variables will be used.
 ##' @param N Number of samples of the prior used for the SMC sampler. Not required if method `"BIC"` selected. If required but not specified the default value is set to `1000`.
 ##' @param stop_criterion What is the maximum number of clusters allowed before we terminate the first stage and begin deforestation. If not specified the algorithm continues until the Bayesian evidence cannot be improved upon, however for time and memory purposes specifying a number is highly recommended.
-##' @param deforest_criterion Criterion in which edges are reintroduced to allow the model to satisfy. Can be one of `"NoC"`,`"SoC"`,`"MaxReg"`,`"Validation"` or `"None"`.
+##' @param deforest_criterion Criterion in which edges are reintroduced to allow the model to satisfy. Can be one of `"NoC"`,`"SoC"`,`"MaxReg"`,`"Validation"`, `"Balanced"` or `"None"`.
 ##' @param split What fraction of the data should be used for training. Should only be specified if `deforest_criterion == "Validation`. Defaults to `1`.
 ##' @param max_K The maximum number of clusters allowed in the final output. Should only be specified if `deforest_criterion == "NoC`. Defaults to `Inf`.
 ##' @param min_size The minimum number of observations allowed for any cluster in the final model. Should only be specified if `deforest_criterion == "SoC`. Defaults to `0`.
 ##' @param reg Numerical natural logarithm of the tolerance parameter. Must be positive. Should only be specified if `deforest_criterion == "MaxReg`. Defaults to `0`.
+##' @param n_min_class The minimum number of observations in any cluster that has an associated response in the minority class of that cluster. Defaults to `0`.
 ##' @param SMC_method Method to be used to estimate the log Bayesian evidence of the newly formed sub-models, can be one of `"SMC"`,`"SMC_BIC"` or `"BIC"`
 ##' @param SMC_thres The threshold for which the number of observations needs to exceed to consider using BIC as an estimator. Only applies if method `"SMC_BIC"` is selected. Defaults to `Inf` if not specified.
 ##' @param rprior Function to sample from the prior. Must only have two arguments, `p_num` and `di` (Number of prior samples to generate and the number of dimensions of a single sample respectively).
@@ -41,11 +42,11 @@
 ##' @return Either a list or a list of two lists. See details.
 ##' @details Assumes a Bayesian logistic regression model for each cohort, with the overall model being a product of these sub-models.
 ##'
-##' A minimum spanning tree graph is first constructed from a subset of the covariates. Then at each iteration, each edge in the current graph is checked to see if removal to split a cohort is beneficial, and then either we selected the optimal edge to remove or we concluded it is not beneficial to remove any more edges. At the end of each iteration we also check the set of removed edges to see if it beneficial to reintroduce any previously removed edges. After this process has ended we then reintroduce edges in the removed set specifically to meet the criteria set by the user in the most optimal manner possible through a greedy approach. For more details see the help pages of `lbe.gen`,`one.stage.mst`,`two.stage.mst`,`remove.edge`,`deforest.noc`,`deforest.soc`,`deforest.maxreg`,`deforest.validation` and the paper *UNCOVER*.
+##' A minimum spanning tree graph is first constructed from a subset of the covariates. Then at each iteration, each edge in the current graph is checked to see if removal to split a cohort is beneficial, and then either we selected the optimal edge to remove or we concluded it is not beneficial to remove any more edges. At the end of each iteration we also check the set of removed edges to see if it beneficial to reintroduce any previously removed edges. After this process has ended we then reintroduce edges in the removed set specifically to meet the criteria set by the user in the most optimal manner possible through a greedy approach. For more details see the help pages of `lbe.gen`,`one.stage.mst`,`two.stage.mst`,`remove.edge`,`deforest.noc`,`deforest.soc`,`deforest.maxreg`,`deforest.validation`, `deforest.balanced` and the paper *UNCOVER*.
 ##'
 ##' If `rprior` and `prior_pdf` are not specified then the default prior is a standard multivariate normal.
 ##'
-##' The graph can be undergo deforestation to meet 5 possible criteria:
+##' The graph can be undergo deforestation to meet 6 possible criteria:
 ##'
 ##' 1. `"NoC"`: Number of Clusters - we specify a maximum number of clusters (`max_K`) we can tolerate in the final output of the algorithm. See `deforest.noc` for more details.
 ##'
@@ -55,7 +56,9 @@
 ##'
 ##' 4. `"Validation"`: Validation Data - we split (using `split`) the data into training and validation data, apply the first stage of the algorithm on the training data and the introduce the validation data for the deforestation stage. See `deforest.valaidation` for more details.
 ##'
-##' 5. `"None"`: No Criteria Specified - we do not go through the second deforestation stage of the algorithm.
+##' 5. `"Balanced"`: Balanced Response Class Within Clusters - We specify a minimum number of observations (`n_min_class`) in a cluster that have the minority response class associated to them (the minimum response class is determined for each cluster).
+##'
+##' 6. `"None"`: No Criteria Specified - we do not go through the second deforestation stage of the algorithm.
 ##'
 ##' For more details on the specifics of the possible values for `SMC_method`, see the help page of the function `lbe.gen`.
 ##'
@@ -73,7 +76,7 @@
 ##'
 ##' If the deforestation criterion chosen is `"Validation"`, then we produce a list of two lists. The first is the list given above for only the training data, and the second is the list given above for both the training data and the valaidation data combined.
 ##'
-##' @seealso [lbe.gen,one.stage.mst,two.stage.mst,remove.edge,deforest.noc,deforest.soc,deforest.maxreg,deforest.validation]
+##' @seealso [lbe.gen,one.stage.mst,two.stage.mst,remove.edge,deforest.noc,deforest.soc,deforest.maxreg,deforest.validation,deforest.balanced]
 ##' @examples
 ##'
 ##' # First we generate a covariate matrix `X` and binary response vector `y`
@@ -87,20 +90,21 @@
 ##' UN.soc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "SoC", min_size = 10, SMC_thres = 30,verbose = F)
 ##' UN.maxreg <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "MaxReg", reg = 1, SMC_thres = 30,verbose = F)
 ##' UN.validation <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "Validation", split = 0.8, SMC_thres = 30,verbose = F)
-##' clu_al_mat <- rbind(UN.none[[1]],UN.noc[[1]],UN.soc[[1]],UN.maxreg[[1]],UN.validation[[2]][[1]])
+##' UN.balanced <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "Balanced", n_min_class = 2, SMC_thres = 30,verbose = F)
+##' clu_al_mat <- rbind(UN.none[[1]],UN.noc[[1]],UN.soc[[1]],UN.maxreg[[1]],UN.validation[[2]][[1]],UN.balanced[[1]])
 ##' # We can create a matrix where each entry shows in how many of the methods
 ##' # did the indexed observations belong to the same cluster
 ##' obs_con_mat <- matrix(0,100,100)
 ##' for(i in 1:100){
 ##' for(j in 1:100){
-##' obs_con_mat[i,j] <- length(which(clu_al_mat[,i]-clu_al_mat[,j]==0))/5
+##' obs_con_mat[i,j] <- length(which(clu_al_mat[,i]-clu_al_mat[,j]==0))/6
 ##' obs_con_mat[j,i] <- obs_con_mat[i,j]
 ##' }
 ##' }
 ##' obs_con_mat
 ##' # We can also view the outputted overall Bayesian evidence of the five
 ##' # models as well
-##' c(sum(UN.none[[2]]),sum(UN.noc[[2]]),sum(UN.soc[[2]]),sum(UN.maxreg[[2]]),sum(UN.validation[[2]][[2]]))
+##' c(sum(UN.none[[2]]),sum(UN.noc[[2]]),sum(UN.soc[[2]]),sum(UN.maxreg[[2]]),sum(UN.validation[[2]][[2]]),sum(UN.balanced[[2]]))
 ##'
 ##' # If we don't assume the prior for the regression coefficients is a
 ##' # standard normal but instead a multivariate normal with mean (1,1) and the
@@ -115,8 +119,8 @@
 
 UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
                     deforest_criterion="None",split=1,max_K=Inf,min_size=0,
-                    reg=0,SMC_method="SMC_BIC",SMC_thres=30,rprior=NULL,
-                    prior_pdf=NULL,plot_progress=F,verbose = T){
+                    reg=0,n_min_class = 0,SMC_method="SMC_BIC",SMC_thres=30,
+                    rprior=NULL,prior_pdf=NULL,plot_progress=F,verbose = T){
   if((!is.null(rprior)&is.null(prior_pdf))|(is.null(rprior)&!is.null(prior_pdf))){
     stop("Both sampling function and probability density function of the prior are required")
   }
@@ -150,7 +154,7 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
   edge_rem <- c()
   system_save <- vector(mode = "list",length=1)
   combine_save <- list()
-  if(deforest_criterion=="NoC" | deforest_criterion=="SoC"){
+  if(deforest_criterion=="NoC" | deforest_criterion=="SoC" | deforest_criterion=="Balanced"){
     model_selection <- list(z,logZ,g,K,edge_rem)
   }
   m <- 1
@@ -242,8 +246,9 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
     }
     K <- K+1
     system_save[[K]] <- vector(mode = "list",length=1)
-    if(deforest_criterion=="NoC" | deforest_criterion=="SoC"){
-      if((K<=max_K & deforest_criterion=="NoC" & sum(logZ)>sum(model_selection[[2]])) | (all(table(z)>=min_size) & deforest_criterion=="SoC" & sum(logZ)>sum(model_selection[[2]]))){
+    if(deforest_criterion=="NoC" | deforest_criterion=="SoC" | deforest_criterion=="Balanced"){
+      unbal_clu <- sapply(1:K,FUN = function(u,res,clu_al,ups){all(table(res[which(clu_al==k)])>=ups)},res=y,clu_al=z,ups=n_min_class)
+      if((K<=max_K & deforest_criterion=="NoC" & sum(logZ)>sum(model_selection[[2]])) | (all(table(z)>=min_size) & deforest_criterion=="SoC" & sum(logZ)>sum(model_selection[[2]])) | (all(unbal_clu) & deforest_criterion=="Balanced" & sum(logZ)>sum(model_selection[[2]]))){
         model_selection <- list(z,logZ,g,K,edge_rem)
       }
     }
@@ -309,8 +314,9 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
             message("")
             message(green("Reassessing the reintroduction of edges which have been removed"))
           }
-          if(deforest_criterion=="NoC" | deforest_criterion=="SoC"){
-            if((K<=max_K & deforest_criterion=="NoC" & sum(logZ)>sum(model_selection[[2]])) | (all(table(z)>=min_size) & deforest_criterion=="SoC" & sum(logZ)>sum(model_selection[[2]]))){
+          if(deforest_criterion=="NoC" | deforest_criterion=="SoC" | deforest_criterion=="Balanced"){
+            unbal_clu <- sapply(1:K,FUN = function(u,res,clu_al,ups){all(table(res[which(clu_al==k)])>=ups)},res=y,clu_al=z,ups=n_min_class)
+            if((K<=max_K & deforest_criterion=="NoC" & sum(logZ)>sum(model_selection[[2]])) | (all(table(z)>=min_size) & deforest_criterion=="SoC" & sum(logZ)>sum(model_selection[[2]]))| (all(unbal_clu) & deforest_criterion=="Balanced" & sum(logZ)>sum(model_selection[[2]]))){
               model_selection <- list(z,logZ,g,K,edge_rem)
             }
           }
@@ -361,6 +367,24 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
         pairs(X[,mst_var],pch=as.character(y),col=psoc[[1]],cex=0.5)
       }
       return(psoc)
+    }
+  }
+  if(deforest_criterion=="Balanced"){
+    pbal <- deforest.balanced(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,ups = n_min_class,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
+    if(sum(model_selection[[2]])>sum(pbal[[2]])){
+      if(plot_progress){
+        pairs(X[,mst_var],pch=as.character(y),col=model_selection[[1]],cex=0.5)
+      }
+      return(list("Cluster Allocation" = model_selection[[1]],
+                  "Log Marginal Likelihoods" = model_selection[[2]],
+                  "Graph" = model_selection[[3]],
+                  "Number of Clusters" = model_selection[[4]],
+                  "Edges Removed" = model_selection[[5]]))
+    } else{
+      if(plot_progress){
+        pairs(X[,mst_var],pch=as.character(y),col=pbal[[1]],cex=0.5)
+      }
+      return(pbal)
     }
   }
   if(deforest_criterion=="None"){

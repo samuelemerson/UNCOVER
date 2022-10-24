@@ -7,9 +7,9 @@
 ##
 
 
-################################
-## Pruning Criteria Functions ##
-################################
+######################################
+## Deforestation Criteria Functions ##
+######################################
 
 
 ##' Reintroducing edges to a graph to reduce the number of clusters to the maximal amount specified
@@ -169,11 +169,11 @@ deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,est_meth
 ##' @return A list consisting of; the cluster allocation vector of the new model, the resulting Bayesian evidence vector for the new model, an `igraph` object containing information on the new graph, the number of clusters in the model and the edges that have been removed from the graph to achieve this model.
 ##' @details Requires a minimum spanning forest graph which defines components for a multiplicative Bayesian logistic regression model, and the edges removed to achieve this graph.
 ##'
-##' For each edge previously removed the log Bayesian evidence `lbe` is estimated for the model obtained by reintroducing said edge. The optimal edge of this group is then selected and if this either showcases an improvement on the current model or the minimum size of all clusters in the current model is below the minimum size of cluster allowed then we reintroduce this edge to the graph and update the model. If added the remaining edges are then reconsidered and this process is repeated until either; the criterion is met and it is not beneficial to add anymore edges to the graph or there are no longer any edges to reintroduce. We highlight here that if an edge is reintroduced and it does not benefit the overall model then at least one cluster which does not meet the criteria must be being combined.
+##' For each edge previously removed the log Bayesian evidence `lbe` is estimated for the model obtained by reintroducing said edge. The set of edges in then narrowed down by only considering edges which improve the model through their reintroduction or combine a cluster which currently fails the criteria. The optimal edge of this group is then selected, then we reintroduce this edge to the graph and update the model. If added the remaining edges are then reconsidered and this process is repeated until either; the criterion is met and it is not beneficial to add anymore edges to the graph or there are no longer any edges to reintroduce. We stress here that if an edge is reintroduced and it does not benefit the overall model then at least one cluster which does not meet the criteria must be being combined.
 ##'
-##' If the vertices of graph `g` are specifically named then elements of the matrix `eps` should not be numeric and instead be the names of the vertices involved.
+##' If the vertices of graph `gra` are specifically named then elements of the matrix `eps` should not be numeric and instead be the names of the vertices involved.
 ##'
-##' If the clusters specified by the initial model have fixed labels then this should be specified by `clu_al`. `clu_al` must be a one of the possible labelling of the observations defined by the clusters of the graph. For example for a graph where there is only one connected component, if `clu_al` is specified it cannot be anything other than `rep(1,length(res)`.
+##' If the clusters specified by the initial model have fixed labels then this should be specified by `clu_al`. `clu_al` must be one of the possible labeling of the observations defined by the clusters of the graph. For example for a graph where there is only one connected component, if `clu_al` is specified it cannot be anything other than `rep(1,length(res))`.
 ##'
 ##' `c_s` allows the user to specify information about the edges removed. For example if `c_s` is specified it must be of the form of list with each element representing information on the reintroduction of an edge. The index of this list corresponds to the index of the edges in `eps`. Furthermore, each element of the list will itself be a list of two elements, the first being the indices of the observations combined by introducing this edge and the second being the sub log Bayesian evidence of the cluster formed through this edge reintroduction. `c_s` is intended to be used to reduce computation time, and so whilst incorrect information on the observations involved in particular lists of `c_s` will not produce incorrect results, it will not have the desired time saving effect.
 ##'
@@ -582,3 +582,150 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,gra_all = NU
                                 "Edges Removed" = eps)))
 }
 
+##' Reintroducing edges to a graph in order to ensure the minority response class is above a specified threshold in all clusters
+##'
+##' @export
+##' @name deforest.balanced
+##' @description Adds edges to the graph to increase the minority response class in models clusters, until the criteria is met and it is no longer beneficial to reintroduce any more edges. This is done in a greedy manner to optimise the log Bayesian evidence of the resulting models.
+##'
+##' Used in UNCOVER if the deforest condition is set to "Balanced".
+##'
+##' @keywords deforest balanced response
+##' @param obs Covariate matrix
+##' @param res Binary response vector
+##' @param gra `igraph` object which contains the information of the graph of the current model
+##' @param lbe A vector detailing the log Bayesian evidences of all the sub-models defined by the separated components of `gra`
+##' @param eps A 2-column matrix of edges previously removed. Rows correspond to edges and edges should be expressed as the two vertices the edge connects.
+##' @param ups The minimum number of observations in any cluster that has an associated response in the minority class of that cluster
+##' @param clu_al A vector detailing the cluster allocation of each observation. If not specified the function will generate this vector.
+##' @param c_s A list of length `nrow(eps)`. See details more information. Does not need to be specified.
+##' @param est_method Method to be used to estimate the log Bayesian evidence of the newly formed sub-models, can be one of `"SMC"`,`"SMC_BIC"` or `"BIC"`
+##' @param est_thres The threshold for which the number of observations needs to exceed to consider using BIC as an estimator. Only applies if method `"SMC_BIC"` is selected. Defaults to `Inf` if not specified.
+##' @param par_no Number of samples of the prior used for the SMC sampler. Not required if method `"BIC"` selected.
+##' @param rfun Function to sample from the prior. Must only have two arguments, `p_n` and `di` (Number of prior samples to generate and the number of dimensions of a single sample respectively).
+##' @param pdf_fun Probability Density Function of the prior. Must only have two arguments, `th` and `di` (a vector or matrix of regression coefficients samples and the number of dimensions of a single sample respectively).
+##' @param p_p Do you want to plot the output of the clustering each time an edge is reintroduced?
+##' @param rho Only applies if `p_p` is `TRUE`. A vector specifying which variables of the covariate matrix to plot.
+##' @param vb Do you want the progress of the algorithm to be shown?
+##' @return A list consisting of; the cluster allocation vector of the new model, the resulting Bayesian evidence vector for the new model, an `igraph` object containing information on the new graph, the number of clusters in the model and the edges that have been removed from the graph to achieve this model.
+##' @details Requires a minimum spanning forest graph which defines components for a multiplicative Bayesian logistic regression model, and the edges removed to achieve this graph.
+##'
+##' For each edge previously removed the log Bayesian evidence `lbe` is estimated for the model obtained by reintroducing said edge. The set of edges in then narrowed down by only considering edges which improve the model through their reintroduction or combine a cluster which currently fails the criteria. The optimal edge of this group is then selected, then we reintroduce this edge to the graph and update the model. If added the remaining edges are then reconsidered and this process is repeated until either; the criterion is met and it is not beneficial to add anymore edges to the graph or there are no longer any edges to reintroduce. We stress here that if an edge is reintroduced and it does not benefit the overall model then at least one cluster which does not meet the criteria must be being combined.
+##'
+##' If the vertices of graph `gra` are specifically named then elements of the matrix `eps` should not be numeric and instead be the names of the vertices involved.
+##'
+##' If the clusters specified by the initial model have fixed labels then this should be specified by `clu_al`. `clu_al` must be one of the possible labeling of the observations defined by the clusters of the graph. For example for a graph where there is only one connected component, if `clu_al` is specified it cannot be anything other than `rep(1,length(res))`.
+##'
+##' `c_s` allows the user to specify information about the edges removed. For example if `c_s` is specified it must be of the form of list with each element representing information on the reintroduction of an edge. The index of this list corresponds to the index of the edges in `eps`. Furthermore, each element of the list will itself be a list of two elements, the first being the indices of the observations combined by introducing this edge and the second being the sub log Bayesian evidence of the cluster formed through this edge reintroduction. `c_s` is intended to be used to reduce computation time, and so whilst incorrect information on the observations involved in particular lists of `c_s` will not produce incorrect results, it will not have the desired time saving effect.
+##'
+##' For more details on the specifics of the possible values for `est_method`, see the help page of the function `lbe.gen`.
+##' @seealso [lbe.gen,UNCOVER]
+##' @examples
+##'
+##' # First we generate a covariate matrix `obs` and binary response vector `res`
+##' CM <- matrix(rnorm(200),100,2)
+##' rv <- sample(0:1,100,replace=T)
+##'
+##' # Assuming the prior for the regression coefficients is a standard normal
+##' pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
+##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
+##'
+##' # We can initially run the UNCOVER algorithm with no criteria specified
+##' UN.none <- UNCOVER(X = CM,y = rv,N=1000, stop_criterion = 8,deforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+##'
+##' # Then we may retrospectively want to ensure that each one of our clusters
+##' # has at least 2 observations with response in the minority class (of their
+##' # cluster) using `deforest.balanced`
+##' UN.balanced <- deforest.balanced(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],ups = 2, clu_al = UN.none[[1]],est_method = "SMC_BIC", est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+##'
+##' # We can then see which edges we have reintroduced and the cost that has had
+##' # on the Bayesian evidence
+##' UN.none[[5]]
+##' UN.balanced[[5]]
+##' c(sum(UN.none[[2]]),sum(UN.balanced[[2]]))
+##'
+##' # The amount of edges introduced in general should increase the more
+##' # imbalanced the overall dataset is.
+##'
+##' CM.2 <- matrix(rnorm(200),100,2)
+##' rv.2 <- sample(0:1,100,replace=T,prob=c(0.9,0.1))
+##' UN.none.2 <- UNCOVER(X = CM.2,y = rv.2,N=1000, stop_criterion = 8,deforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+##' UN.balanced.2 <- deforest.balanced(obs = CM.2,res = rv.2,gra = UN.none.2[[3]],lbe = UN.none.2[[2]],eps = UN.none.2[[5]],ups = 2, clu_al = UN.none.2[[1]],est_method = "SMC_BIC", est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+##' UN.none.2[[5]]
+##' UN.balanced.2[[5]]
+##' c(sum(UN.none.2[[2]]),sum(UN.balanced.2[[2]]))
+##'
+
+deforest.balanced <- function(obs,res,gra,lbe,eps,ups,clu_al=NULL,c_s=NULL,est_method="SMC_BIC",
+                              est_thres=Inf,par_no=0,rfun=NULL,pdf_fun=NULL,p_p=F,rho=NULL,vb = F){
+  K <- igraph::count_components(gra)
+  if(is.null(clu_al)){
+    clu_al <- igraph::components(gra)$membership
+  }
+  if(is.null(c_s)){
+    c_s <- vector(mode="list",length=nrow(eps))
+  }
+  j <- 1
+  if(vb){
+    message("")
+    message(green("Assessing the reintroduction of edges which have been removed"))
+  }
+  while(j <= nrow(eps)){
+    edge_clu_al <- sort(clu_al[match(eps[j,],V(gra)$name)])
+    if(!identical(c_s[[j]][[1]],which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2]))){
+      c_s[[j]] <- list(which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2]),lbe.gen(method = est_method,thres = est_thres,obs_mat = obs[which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2]),,drop=F],res_vec = res[which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2])],p_num = par_no,rpri = rfun,p_pdf = pdf_fun))
+    }
+    if(vb){
+      txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
+    }
+    if(j==nrow(eps)){
+      lbe_comb.1 <- sapply(c_s,FUN = function(u){u[[2]]})
+      lbe_comb.2 <- apply(eps,MARGIN = 1,FUN = function(u,lZ,ca,cg){sum(lZ[-ca[match(u,V(cg)$name)]])},lZ = lbe, ca = clu_al,cg = gra)
+      lbe_comb <- lbe_comb.1 + lbe_comb.2
+      unbal_clu <- c()
+      for(k in 1:K){
+        if(any(table(res[which(clu_al==k)])<ups)){
+          unbal_clu <- c(unbal_clu,k)
+        }
+      }
+      unbal_bool <- apply(eps,MARGIN = 1,FUN = function(u,ca,uc,cg){ca[match(u,V(cg)$name)[1]]%in%uc | ca[match(u,V(cg)$name)[2]]%in%uc},ca=clu_al,uc=unbal_clu,cg=gra)
+      unbal_bool <- unbal_bool | lbe_comb>sum(lbe)
+      if(any(unbal_bool)){
+        lbe_comb[which(!unbal_bool)] <- -Inf
+        cut_comb <- which.max(lbe_comb)
+        edge_clu_al <- sort(clu_al[match(eps[cut_comb,],V(gra)$name)])
+        if(vb){
+          message("")
+          message(blue(paste0("Combining connected components ",edge_clu_al[1]," and ",edge_clu_al[2])))
+        }
+        clu_al[which(clu_al==edge_clu_al[2])] <- edge_clu_al[1]
+        for(k in (edge_clu_al[2]+1):K){
+          clu_al[which(clu_al==k)] <- k-1
+        }
+        lbe[edge_clu_al[1]] <- c_s[[cut_comb]][[2]]
+        lbe <- lbe[-edge_clu_al[2]]
+        gra <- igraph::add_edges(gra,eps[cut_comb,])
+        eps <- eps[-cut_comb,,drop=F]
+        c_s[[cut_comb]] <- c()
+        K <- K-1
+        if(p_p){
+          if(is.null(rho)){
+            rho <- 1:ncol(obs)
+          }
+          pairs(obs[,rho],pch=as.character(res),col=clu_al,cex=0.5)
+        }
+        j <- 0
+        if(nrow(eps)!=0 & vb){
+          message("")
+          message(green("Reassessing the reintroduction of edges which have been removed"))
+        }
+      }
+    }
+    j <- j+1
+  }
+  return(list("Cluster Allocation" = clu_al,
+              "Log Marginal Likelihoods" = lbe,
+              "Graph" = gra,
+              "Number of Clusters" = K,
+              "Edges Removed" = eps))
+}
