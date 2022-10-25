@@ -81,12 +81,12 @@ MIBIS.Z <- function(X,y,sampl,prior_pdf,add_set=NULL,in_set=NULL,w=NULL,logZ=0){
   X <- as.matrix(X)
   N <- nrow(sampl)
   p <- ncol(X)
-  if(length(unique(w))==1){
+  if(anyDuplicated(sampl)==0){
     samp_t <- w
     samp_i <- 1:N
-    isne <- F
+    isne <- FALSE
   } else{
-    isne <- T
+    isne <- TRUE
   }
   add_set <- add_set[sample(1:length(add_set),length(add_set))]
   for(i in 1:length(add_set)){
@@ -95,7 +95,7 @@ MIBIS.Z <- function(X,y,sampl,prior_pdf,add_set=NULL,in_set=NULL,w=NULL,logZ=0){
     w <- w_new
     if(isne){
       w_hat <- aggregate(w~.,data = data.frame(sampl,w),FUN=sum)$w
-      wsq <- sum(sum(w_hat^2))
+      wsq <- sum(w_hat^2)
     } else{
       wsq <- sum((w[samp_i]*samp_t)^2)
     }
@@ -108,7 +108,7 @@ MIBIS.Z <- function(X,y,sampl,prior_pdf,add_set=NULL,in_set=NULL,w=NULL,logZ=0){
       ss <- cov.wt(sampl,wt=w,method = "ML")
       mu <- ss$center
       Sigma <- ss$cov
-      samp <- sample(1:N,N,prob = w,replace = T)
+      samp <- sample(1:N,N,prob = w,replace = TRUE)
       sampl <- sampl[samp,]
       w <- rep(1,N)
       BC <- mvnfast::rmvn(N,mu = mu, sigma=Sigma)
@@ -122,13 +122,87 @@ MIBIS.Z <- function(X,y,sampl,prior_pdf,add_set=NULL,in_set=NULL,w=NULL,logZ=0){
       samp_t <- table(samp)
       samp_i <- match(as.integer(names(samp_t)),samp)
       if(isne){
-        isne <- F
+        isne <- FALSE
       }
     }
     in_set <- c(in_set,add_set[i])
   }
   return(list(sampl,w,logZ))
 }
+
+MIBIS.Z2 <- function(X,y,sampl,prior_pdf,add_set=NULL,in_set=NULL){
+  X <- as.matrix(X)
+  p <- ncol(X)
+  if(is.null(add_set)){
+    add_set <- setdiff(1:length(y),in_set)
+  }
+  if(is.matrix(sampl)) {
+    N <- nrow(sampl)
+    w <- rep(1,nrow(sampl))
+    logZ <- 0
+    if(anyDuplicated(sampl)==0){
+      samp_t <- w
+      samp_i <- 1:N
+      isne <- FALSE
+    } else{
+      isne <- TRUE
+    }
+  } else {
+    isne <- FALSE
+    N <- nrow(sampl$sampl)
+    w <- sampl$w
+    logZ <- sampl$logZ
+    samp_t <- sampl$samp_t
+    samp_i <- sampl$samp_i
+    sampl <- sampl$sampl
+  }
+  add_set <- add_set[sample(1:length(add_set),length(add_set))]
+  for(i in 1:length(add_set)){
+    w_new <- w*as.vector(((1+exp(-X[add_set[i],]%*%t(sampl)))^(-y[add_set[i]]))*((1+exp(X[add_set[i],]%*%t(sampl)))^(y[add_set[i]]-1)))
+    logZ <- logZ + log(sum(w_new)) - log(sum(w))
+    w <- w_new
+    if(isne){
+      w_hat <- aggregate(w~.,data = data.frame(sampl,w),FUN=sum)$w
+      wsq <- sum(w_hat^2)
+    } else{
+      wsq <- sum((w[samp_i]*samp_t)^2)
+    }
+    if(wsq==0){
+      ESS <- 0
+    } else{
+      ESS <- (sum(w)^2)/wsq
+    }
+    if(ESS < N/2){
+      ss <- cov.wt(sampl,wt=w,method = "ML")
+      mu <- ss$center
+      Sigma <- ss$cov
+      samp <- sample(1:N,N,prob = w,replace = TRUE)
+      sampl <- sampl[samp,]
+      w <- rep(1,N)
+      BC <- mvnfast::rmvn(N,mu = mu, sigma=Sigma)
+      Log_1 <- log(1+exp(X[c(in_set,add_set[i]),]%*%t(BC)))*(y[c(in_set,add_set[i])]-1) + log(1+exp(-X[c(in_set,add_set[i]),]%*%t(BC)))*(-y[c(in_set,add_set[i])])
+      Log_1 <- colSums(Log_1) + log(prior_pdf(th = BC,di = p)) + log(mvnfast::dmvn(sampl,mu=mu,sigma=Sigma))
+      Log_2 <- log(1+exp(X[c(in_set,add_set[i]),]%*%t(sampl)))*(y[c(in_set,add_set[i])]-1) + log(1+exp(-X[c(in_set,add_set[i]),]%*%t(sampl)))*(-y[c(in_set,add_set[i])])
+      Log_2 <- colSums(Log_2) + log(prior_pdf(th = sampl,di = p)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
+      A <- Log_1 - Log_2 - log(runif(length(Log_1)))
+      sampl[which(A>0),] <- BC[which(A>0),]
+      samp[which(A>0)] <- (N+1):(N+length(which(A>0)))
+      samp_t <- table(samp)
+      samp_i <- match(as.integer(names(samp_t)),samp)
+      if(isne){
+        isne <- FALSE
+      }
+    }
+    in_set <- c(in_set,add_set[i])
+  }
+  return(list(sampl = sampl,
+              w = w,
+              logZ = logZ,
+              samp_t = samp_t,
+              samp_i = samp_i))
+}
+
+
 
 ##' Log Bayesian evidence generator
 ##'
