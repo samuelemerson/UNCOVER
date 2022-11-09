@@ -38,7 +38,7 @@ Estimates the log Bayesian evidence (log(Z)) of a Bayesian logistic regression m
 \details{
 log(Z) is estimated using three possible methods:
 
-1. `"SMC"`: Estimates log(Z) using an SMC sampler. See `MIBIS.Z` for more details.
+1. `"SMC"`: Estimates log(Z) using an SMC sampler. See `IBIS.Z` for more details.
 
 2. `"SMC_BIC"`: Initially tries to estimate log(Z) using BIC but will revert to using an SMC sampler if the data is linearly separable. Also reverts to using an SMC sampler if the number of observations is below a certain threshold. Recommended method and is set as default.
 
@@ -76,7 +76,7 @@ sapply(1000:1001,FUN = function(u,covm,resv,ps,pf){lbe.gen(method="SMC_BIC",thre
 
 }
 \seealso{
-[MIBIS.Z]
+[IBIS.Z]
 }
 \keyword{carlo}
 \keyword{monte}

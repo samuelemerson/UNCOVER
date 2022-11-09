@@ -51,7 +51,9 @@ UNCOVER(
 
 \item{SMC_thres}{The threshold for which the number of observations needs to exceed to consider using BIC as an estimator. Only applies if method `"SMC_BIC"` is selected. Defaults to `Inf` if not specified.}
 
-\item{rprior}{Function to sample from the prior. Must only have two arguments, `p_num` and `di` (Number of prior samples to generate and the number of dimensions of a single sample respectively).}
+\item{rprior}{Function to sample from the prior. Must only have two
+arguments, `p_num` and `di` (Number of prior samples to generate and the
+number of dimensions of a single sample respectively).}
 
 \item{prior_pdf}{Probability Density Function of the prior. Must only have two arguments, `th` and `di` (a vector or matrix of regression coefficients samples and the number of dimensions of a single sample respectively).}
 

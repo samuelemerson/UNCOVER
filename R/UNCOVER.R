@@ -35,7 +35,9 @@
 ##' @param n_min_class The minimum number of observations in any cluster that has an associated response in the minority class of that cluster. Defaults to `0`.
 ##' @param SMC_method Method to be used to estimate the log Bayesian evidence of the newly formed sub-models, can be one of `"SMC"`,`"SMC_BIC"` or `"BIC"`
 ##' @param SMC_thres The threshold for which the number of observations needs to exceed to consider using BIC as an estimator. Only applies if method `"SMC_BIC"` is selected. Defaults to `Inf` if not specified.
-##' @param rprior Function to sample from the prior. Must only have two arguments, `p_num` and `di` (Number of prior samples to generate and the number of dimensions of a single sample respectively).
+##' @param rprior Function to sample from the prior. Must only have two
+##' arguments, `p_num` and `di` (Number of prior samples to generate and the
+##' number of dimensions of a single sample respectively).
 ##' @param prior_pdf Probability Density Function of the prior. Must only have two arguments, `th` and `di` (a vector or matrix of regression coefficients samples and the number of dimensions of a single sample respectively).
 ##' @param plot_progress Do you want to plot the output of the clustering each time an edge is removed or reintroduced?
 ##' @param verbose Do you want the progress of the algorithm to be shown?
