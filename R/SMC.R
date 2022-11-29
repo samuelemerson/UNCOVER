@@ -54,6 +54,11 @@
 ##' @param in_set Vector of observation indices already added to give the
 ##' starting bridging distribution. If the starting 'bridging' distribution is
 ##' the prior then this should not be specified.
+##' @param ess Threshold: if the effective sample size of the particle weights
+##' falls below this value then a resample move step is triggered. Defaults to
+##' `N/2`.
+##' @param n_move Number of Metropolis-Hastings steps to apply each time a
+##' resample move step is triggered. Defaults to 1.
 ##' @return A list consisting of; weighted posterior samples (the samples and
 ##' weights are given in separate lists), the log Bayesian evidence of the final
 ##' partial posterior (the full posterior if `add_set` is not specified) and the
@@ -75,6 +80,10 @@
 ##' Details of the internal mechanisms of the SMC sampler such as the
 ##' Metropolis-Hastings MCMC resample move can be found in *UNCOVER paper* and
 ##' Chopin (2002).
+##'
+##' Note that decreasing `ess` and increasing `n_move` will lead to a more
+##' accurate estimate of the Bayesian evidence, but at the cost of increased
+##' computational time.
 ##' @references Chopin, N. (2002). A sequential particle filter method for
 ##' static models. Biometrika, 89(3), 539-552.
 ##' @examples
@@ -125,7 +134,7 @@
 ##' weight_fade.4 <- colorRampPalette(c('white','green'))(100)[as.numeric(cut(unique_weights.4,breaks = 100))]
 ##' pairs(rbind(unique_samp,unique_samp.3,unique_samp.4),col=c(weight_fade,weight_fade.3,weight_fade.4))
 
-IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,add_set=NULL,in_set=NULL){
+IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,add_set=NULL,in_set=NULL,ess=NULL,n_move=1){
   if(is.null(sampl) & (is.null(rprior)|is.null(N))){
     stop("Either specify weighted samples and their current log Bayesian evidence or a prior function to generate samples along with the number of samples")
   }
@@ -149,6 +158,9 @@ IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,add_set=NULL,in_s
     dup_tab <- sampl$duplication_table
     sampl <- sampl$samples
   }
+  if(is.null(ess)){
+    ess <- N/2
+  }
   add_set <- add_set[sample(1:length(add_set),length(add_set))]
   for(i in 1:length(add_set)){
     w_new <- w*as.vector(((1+exp(-X[add_set[i],]%*%t(sampl)))^(-y[add_set[i]]))*((1+exp(X[add_set[i],]%*%t(sampl)))^(y[add_set[i]]-1)))
@@ -160,21 +172,25 @@ IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,add_set=NULL,in_s
     } else{
       ESS <- (sum(w)^2)/wsq
     }
-    if(ESS < N/2){
+    if(ESS < ess){
       ss <- cov.wt(sampl,wt=w,method = "ML")
       mu <- ss$center
       Sigma <- ss$cov
-      samp <- sample(1:N,N,prob = w,replace = TRUE)
+      samp <- sample(as.integer(names(dup_tab)),N,prob = w[as.integer(names(dup_tab))]*dup_tab,replace = TRUE)
       sampl <- sampl[samp,]
       w <- rep(1,N)
-      BC <- mvnfast::rmvn(N,mu = mu, sigma=Sigma)
-      Log_1 <- log(1+exp(X[c(in_set,add_set[i]),]%*%t(BC)))*(y[c(in_set,add_set[i])]-1) + log(1+exp(-X[c(in_set,add_set[i]),]%*%t(BC)))*(-y[c(in_set,add_set[i])])
-      Log_1 <- colSums(Log_1) + log(prior_pdf(th = BC,di = p)) + log(mvnfast::dmvn(sampl,mu=mu,sigma=Sigma))
-      Log_2 <- log(1+exp(X[c(in_set,add_set[i]),]%*%t(sampl)))*(y[c(in_set,add_set[i])]-1) + log(1+exp(-X[c(in_set,add_set[i]),]%*%t(sampl)))*(-y[c(in_set,add_set[i])])
-      Log_2 <- colSums(Log_2) + log(prior_pdf(th = sampl,di = p)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
-      A <- Log_1 - Log_2 - log(runif(length(Log_1)))
-      sampl[which(A>0),] <- BC[which(A>0),]
-      samp[which(A>0)] <- (N+1):(N+length(which(A>0)))
+      A.all <- rep(FALSE,N)
+      for(j in 1:n_move){
+        BC <- mvnfast::rmvn(N,mu = mu, sigma=Sigma)
+        Log_1 <- log(1+exp(X[c(in_set,add_set[i]),]%*%t(BC)))*(y[c(in_set,add_set[i])]-1) + log(1+exp(-X[c(in_set,add_set[i]),]%*%t(BC)))*(-y[c(in_set,add_set[i])])
+        Log_1 <- colSums(Log_1) + log(prior_pdf(th = BC,di = p)) + log(mvnfast::dmvn(sampl,mu=mu,sigma=Sigma))
+        Log_2 <- log(1+exp(X[c(in_set,add_set[i]),]%*%t(sampl)))*(y[c(in_set,add_set[i])]-1) + log(1+exp(-X[c(in_set,add_set[i]),]%*%t(sampl)))*(-y[c(in_set,add_set[i])])
+        Log_2 <- colSums(Log_2) + log(prior_pdf(th = sampl,di = p)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
+        A <- Log_1 - Log_2 - log(runif(length(Log_1)))
+        A.all <- A.all | (A>0)
+        sampl[which(A>0),] <- BC[which(A>0),]
+      }
+      samp[which(A.all)] <- (N+1):(N+length(which(A.all)))
       dup_tab <- table(samp)
       names(dup_tab) <- as.character(match(as.integer(names(dup_tab)),samp))
     }
@@ -193,27 +209,43 @@ IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,add_set=NULL,in_s
 ##'
 ##' @export
 ##' @name lbe.gen
-##' @description Estimates the log Bayesian evidence (log(Z)) of a Bayesian logistic regression model.
+##' @description Estimates the log Bayesian evidence (log(Z)) of a Bayesian
+##' logistic regression model.
 ##'
 ##' @keywords sequential monte carlo
-##' @param method Method to be used to estimate log(Z), can be one of `"SMC"`,`"SMC_BIC"` or `"BIC"`
-##' @param thres The threshold for which the number of observations needs to exceed to consider using BIC as an estimator. Only applies if method `"SMC_BIC"` is selected. Defaults to infinity if not specified.
+##' @param method Method to be used to estimate log(Z), can be one of `"SMC"`,
+##' `"SMC_BIC"` or `"BIC"`
+##' @param thres The threshold for which the number of observations needs to
+##' exceed to consider using BIC as an estimator. Only applies if method
+##' `"SMC_BIC"` is selected. Defaults to infinity if not specified.
 ##' @param obs_mat Covariate matrix
 ##' @param res_vec Binary response vector
-##' @param p_num Number of samples of the prior used for the SMC sampler. Not required if method `"BIC"` selected.
-##' @param rpri Function to sample from the prior. Must only have two arguments, `p_n` and `di` (Number of prior samples to generate and the number of dimensions of a single sample respectively).
-##' @param p_pdf Probability Density Function of the prior. Must only have two arguments, `th` and `di` (a vector or matrix of regression coefficients samples and the number of dimensions of a single sample respectively).
+##' @param p_num Number of samples of the prior used for the SMC sampler. Not
+##' required if method `"BIC"` selected.
+##' @param rpri Function to sample from the prior. Must only have two arguments,
+##' `p_n` and `di` (Number of prior samples to generate and the number of
+##' dimensions of a single sample respectively).
+##' @param p_pdf Probability Density Function of the prior. Must only have two
+##' arguments, `th` and `di` (a vector or matrix of regression coefficients
+##' samples and the number of dimensions of a single sample respectively).
 ##' @return An estimation of the log Bayesian evidence
 ##' @details log(Z) is estimated using three possible methods:
 ##'
-##' 1. `"SMC"`: Estimates log(Z) using an SMC sampler. See `IBIS.Z` for more details.
+##' 1. `"SMC"`: Estimates log(Z) using an SMC sampler. See `IBIS.Z` for more
+##' details.
 ##'
-##' 2. `"SMC_BIC"`: Initially tries to estimate log(Z) using BIC but will revert to using an SMC sampler if the data is linearly separable. Also reverts to using an SMC sampler if the number of observations is below a certain threshold. Recommended method and is set as default.
+##' 2. `"SMC_BIC"`: Initially tries to estimate log(Z) using BIC but will revert
+##' to using an SMC sampler if the data is linearly separable. Also reverts to
+##' using an SMC sampler if the number of observations is below a certain
+##' threshold. Recommended method and is set as default.
 ##'
-##' 3. `"BIC"`: Estimates log(Z) with the Bayesian Information Criterion (BIC). Does not require prior specification but only advisable if the number of observations is large.
+##' 3. `"BIC"`: Estimates log(Z) with the Bayesian Information Criterion (BIC).
+##' Does not require prior specification but only advisable if the number of
+##' observations is large.
 ##' @examples
 ##'
-##' # First we generate a covariate matrix `obs_mat` and binary response vector `res_vec`
+##' # First we generate a covariate matrix `obs_mat` and binary response vector
+##' # `res_vec`
 ##' CM <- matrix(rnorm(2000),1000,2)
 ##' rv <- sample(0:1,1000,replace=T)
 ##'
@@ -243,7 +275,7 @@ IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,add_set=NULL,in_s
 ##'
 ##'@seealso [IBIS.Z]
 
-lbe.gen <- function(method="SMC_BIC",thres=Inf,obs_mat,res_vec,p_num=0,rpri=NULL,p_pdf=NULL){
+lbe.gen <- function(method="SMC_BIC",thres=Inf,obs_mat,res_vec,p_num=0,rpri=NULL,p_pdf=NULL,subs = NULL){
   opts <- c("SMC","SMC_BIC","BIC")
   if(!(method%in%opts)){
     stop("Method is not supported")
@@ -251,8 +283,134 @@ lbe.gen <- function(method="SMC_BIC",thres=Inf,obs_mat,res_vec,p_num=0,rpri=NULL
   if(method!="BIC" & (is.null(rpri) | is.null(p_pdf))){
     stop("Both sampling function and probability density function of the prior are required for this method")
   }
+  if(is.null(subs)){
+    subs <- length(res_vec)
+  }
+  if(length(subs)<thres){
+    cache_pref <- "Small"
+  } else{
+    ss_imp <- max(worst_set_subset[1,]) - abs(2*length(subs) - length(res_vec))
+    bs_imp <- length(subs) - min(worst_set_big[1,])
+    if(ss_imp < 0 & bs_imp < 0){
+      cache_pref <- "None"
+    } else if(ss_imp >= bs_imp){
+      cache_pref <- "Subset"
+    } else{
+      cache_pref <- "Big"
+    }
+  }
   if(method=="BIC"){
-    return(-BIC(glm(res_vec~.,family="binomial",data=data.frame(obs_mat,res_vec)))/2)
+    if(cache_pref=="Small"){
+      return(memo.BIC.small(subs,obs_mat,res_vec)$BIC)
+    } else{
+      if(length(cache_subset$keys())==0){
+        max_sub <- c()
+      } else{
+        max_sub <- c()
+        for(i in cache_subset$keys()){
+          mem <- cache_subset$get(u)$indices
+          if(length(mem)>length(max_sub)){
+            if(identical(mem,wl[1:length(mem)])){
+              max_sub <- mem
+            }
+          }
+        }
+      }
+    }
+    if(cache_pref=="None"){
+      if(length(max_sub)==0){
+        return(no.memo.BIC(subs,obs_mat,res_vec)$BIC)
+      } else{
+        coeffs <- memo.BIC.subset(max_sub,obs_mat,res_vec)$coeffs
+        return(no.memo.BIC.(subs,obs_mat,res_vec,coeffs)$BIC)
+      }
+    }
+    if(cache_pref=="Subset"){
+      if(cache_subset$size()==max_cache_size){
+        drop_ind <- which.max(worst_set_subset[1,])
+        cache_subset$remove(worst_set_subset[2,drop_ind])
+        worst_set_subset[,drop_ind] <- c(length(res_vec) + 1,"")
+      }
+      if(length(max_sub)==0 | length(max_sub)==length(subs)){
+        temp <- memo.BIC.subset(subs,obs_mat,res_vec)$BIC
+      } else{
+        coeffs <- memo.BIC.subset(max_sub,obs_mat,res_vec)$coeffs
+        temp <- memo.BIC.subset(subs,obs_mat,res_vec,coeffs)$BIC
+      }
+      worst_set_subset[,which.max(worst_set_subset[1,])] <- c(abs(2*length(subs) - length(res_vec)),cache_subset$keys()[length(cache_subset$keys())])
+      return(temp)
+    }
+    if(cache_pref=="Big"){
+      if(cache_big$size()==max_cache_size){
+        drop_ind <- which.min(worst_set_big[1,])
+        cache_big$remove(worst_set_big[2,drop_ind])
+        worst_set_big[,drop_ind] <- c(0,"")
+      }
+      if(length(max_sub)==0 | length(max_sub)==length(subs)){
+        temp <- memo.BIC.subset(subs,obs_mat,res_vec)$BIC
+      } else{
+        coeffs <- memo.BIC.subset(max_sub,obs_mat,res_vec)$coeffs
+        temp <- memo.BIC.subset(subs,obs_mat,res_vec,coeffs)$BIC
+      }
+      worst_set_subset[,which.min(worst_set_subset[1,])] <- c(abs(2*length(subs) - length(res_vec)),cache_subset$keys()[length(cache_subset$keys())])
+      return(temp)
+    }
+    else{
+      #keys <- get("_cache", envir=environment(memo.BIC.subset))$keys()
+      if(length(cache_subset$keys())==0){
+        max_sub <- c()
+      } else{
+        max_sub <- c()
+        for(i in cache_subset$keys()){
+          mem <- cache_subset$get(u)$indices
+          if(length(mem)>length(max_sub)){
+            if(identical(mem,wl[1:length(mem)])){
+              max_sub <- mem
+            }
+          }
+        }
+      }
+      if(cache_subset$size()<max_cache_size){
+        if(length(max_sub)==0 | length(max_sub)==length(subs)){
+          temp <- memo.BIC.subset(subs,obs_mat,res_vec)$BIC
+          if(length(max_sub)==0){
+            worst_set_subset[,cache_subset$size()] <- c(abs(2*length(subs) - length(res_vec)),cache_subset$keys()[length(cache_subset$keys())])
+            worst_set_big[,cache_subset$size()] <- c(length(subs),cache_subset$keys()[length(cache_subset$keys())])
+          }
+        } else{
+          coeffs <- memo.BIC.subset(max_sub,obs_mat,res_vec)$coeffs
+          temp <- memo.BIC.subset(subs,obs_mat,res_vec,coeffs)$BIC
+          worst_set_subset[,cache_subset$size()] <- c(abs(2*length(subs) - length(res_vec)),cache_subset$keys()[length(cache_subset$keys())])
+          worst_set_big[,cache_subset$size()] <- c(length(subs),cache_subset$keys()[length(cache_subset$keys())])
+        }
+        if(cache_subset$size()==max_cache_size){
+          cache_big <- cache_subset
+          memo.BIC.big <- memoise::memoise(no.memo.BIC,cache = cache_big,omit_args = c("X","y","coeff_start"))
+        }
+      }
+      if(max(part_out)==0){
+        if(abs(2*length(subs) - length(res_vec))<subset_max){
+          return(memo.BIC.subset(subs,obs_mat,res_vec)$BIC)
+        } else if(length(subs) > big_min){
+          return(memo.BIC.big(subs,obs_mat,res_vec)$BIC)
+        } else{
+          return(no.memo.BIC(subs,obs_mat,res_vec)$BIC)
+        }
+      } else if(max(part_out)==length(subs)){
+        return(memo.BIC.subset(subs,obs_mat,res_vec)$BIC)
+      } else{
+        part_idx <- which.max(part_out)
+        seen_before <- (get("_cache", envir=environment(memo.BIC.subset))$get(keys[part_idx]))$value[[1]]
+        if(abs(2*length(subs) - length(res_vec))<subset_max){
+          return(memo.BIC.subset(subs,obs_mat,res_vec,seen_before)$BIC)
+        } else if(length(subs) > big_min){
+          return(memo.BIC.big(subs,obs_mat,res_vec,seen_before)$BIC)
+        } else{
+          return(no.memo.BIC(subs,obs_mat,res_vec,seen_before)$BIC)
+        }
+      }
+    }
+    #return(-BIC(glm(res_vec~.,family="binomial",data=data.frame(obs_mat,res_vec)))/2)
   } else{
     logZ <- T
     if(method=="SMC_BIC" & length(res_vec)>=thres){

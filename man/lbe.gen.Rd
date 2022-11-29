@@ -11,42 +11,59 @@ lbe.gen(
   res_vec,
   p_num = 0,
   rpri = NULL,
-  p_pdf = NULL
+  p_pdf = NULL,
+  subs = NULL
 )
 }
 \arguments{
-\item{method}{Method to be used to estimate log(Z), can be one of `"SMC"`,`"SMC_BIC"` or `"BIC"`}
+\item{method}{Method to be used to estimate log(Z), can be one of `"SMC"`,
+`"SMC_BIC"` or `"BIC"`}
 
-\item{thres}{The threshold for which the number of observations needs to exceed to consider using BIC as an estimator. Only applies if method `"SMC_BIC"` is selected. Defaults to infinity if not specified.}
+\item{thres}{The threshold for which the number of observations needs to
+exceed to consider using BIC as an estimator. Only applies if method
+`"SMC_BIC"` is selected. Defaults to infinity if not specified.}
 
 \item{obs_mat}{Covariate matrix}
 
 \item{res_vec}{Binary response vector}
 
-\item{p_num}{Number of samples of the prior used for the SMC sampler. Not required if method `"BIC"` selected.}
+\item{p_num}{Number of samples of the prior used for the SMC sampler. Not
+required if method `"BIC"` selected.}
 
-\item{rpri}{Function to sample from the prior. Must only have two arguments, `p_n` and `di` (Number of prior samples to generate and the number of dimensions of a single sample respectively).}
+\item{rpri}{Function to sample from the prior. Must only have two arguments,
+`p_n` and `di` (Number of prior samples to generate and the number of
+dimensions of a single sample respectively).}
 
-\item{p_pdf}{Probability Density Function of the prior. Must only have two arguments, `th` and `di` (a vector or matrix of regression coefficients samples and the number of dimensions of a single sample respectively).}
+\item{p_pdf}{Probability Density Function of the prior. Must only have two
+arguments, `th` and `di` (a vector or matrix of regression coefficients
+samples and the number of dimensions of a single sample respectively).}
 }
 \value{
 An estimation of the log Bayesian evidence
 }
 \description{
-Estimates the log Bayesian evidence (log(Z)) of a Bayesian logistic regression model.
+Estimates the log Bayesian evidence (log(Z)) of a Bayesian
+logistic regression model.
 }
 \details{
 log(Z) is estimated using three possible methods:
 
-1. `"SMC"`: Estimates log(Z) using an SMC sampler. See `IBIS.Z` for more details.
+1. `"SMC"`: Estimates log(Z) using an SMC sampler. See `IBIS.Z` for more
+details.
 
-2. `"SMC_BIC"`: Initially tries to estimate log(Z) using BIC but will revert to using an SMC sampler if the data is linearly separable. Also reverts to using an SMC sampler if the number of observations is below a certain threshold. Recommended method and is set as default.
+2. `"SMC_BIC"`: Initially tries to estimate log(Z) using BIC but will revert
+to using an SMC sampler if the data is linearly separable. Also reverts to
+using an SMC sampler if the number of observations is below a certain
+threshold. Recommended method and is set as default.
 
-3. `"BIC"`: Estimates log(Z) with the Bayesian Information Criterion (BIC). Does not require prior specification but only advisable if the number of observations is large.
+3. `"BIC"`: Estimates log(Z) with the Bayesian Information Criterion (BIC).
+Does not require prior specification but only advisable if the number of
+observations is large.
 }
 \examples{
 
-# First we generate a covariate matrix `obs_mat` and binary response vector `res_vec`
+# First we generate a covariate matrix `obs_mat` and binary response vector
+# `res_vec`
 CM <- matrix(rnorm(2000),1000,2)
 rv <- sample(0:1,1000,replace=T)
 

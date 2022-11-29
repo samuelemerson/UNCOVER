@@ -12,7 +12,9 @@ IBIS.Z(
   N = NULL,
   prior_pdf,
   add_set = NULL,
-  in_set = NULL
+  in_set = NULL,
+  ess = NULL,
+  n_move = 1
 )
 }
 \arguments{
@@ -47,6 +49,13 @@ posterior this should not be specified.}
 \item{in_set}{Vector of observation indices already added to give the
 starting bridging distribution. If the starting 'bridging' distribution is
 the prior then this should not be specified.}
+
+\item{ess}{Threshold: if the effective sample size of the particle weights
+falls below this value then a resample move step is triggered. Defaults to
+`N/2`.}
+
+\item{n_move}{Number of Metropolis-Hastings steps to apply each time a
+resample move step is triggered. Defaults to 1.}
 }
 \value{
 A list consisting of; weighted posterior samples (the samples and
@@ -84,6 +93,10 @@ the final partial posterior but not in the initial partial posterior (i.e.
 Details of the internal mechanisms of the SMC sampler such as the
 Metropolis-Hastings MCMC resample move can be found in *UNCOVER paper* and
 Chopin (2002).
+
+Note that decreasing `ess` and increasing `n_move` will lead to a more
+accurate estimate of the Bayesian evidence, but at the cost of increased
+computational time.
 }
 \examples{
 
