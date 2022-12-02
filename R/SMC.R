@@ -202,7 +202,167 @@ IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,add_set=NULL,in_s
               duplication_table = dup_tab[order(as.integer(names(dup_tab)))]))
 }
 
+##' SMC sampler function using reverse iterated batch importance sampling
+##'
+##'
+##' @export
+##' @name RIBIS.Z
+##' @description This function uses a reverse iterated batch importance sampling
+##' scheme with batch size one to go from one bridging distribution to another
+##' by removing observations from the posterior. We assume a Bayesian logistic
+##' regression model.
+##'
+##' Used in UNCOVER to generate the log sub-Bayesian evidence of partitioned
+##' models, however the weighted samples can also be used for posterior inference.
+##'
+##'
+##' @keywords sequential monte carlo
+##' @param X Design matrix
+##' @param y Binary response vector
+##' @param sampl A named list containing; `samples` - A matrix of samples from
+##' the starting partial posterior, `weights` - the samples associated weights,
+##' `log_Bayesian_evidence` - the log Bayesian evidence of the partial posterior
+##' and `duplication_table` - a table where the names in the table refer to the
+##' indices of the unique samples of the partial posterior and the elements of
+##' the table indicate how many duplicates of this unique sample there are. If
+##' starting from the prior this argument should be ignored.
+##' @param prior_pdf Probability Density Function of the prior. Must only have
+##' two arguments, `th` and `di` (a vector or matrix of regression coefficients
+##' samples and the number of dimensions of a single sample respectively).
+##' @param drop_set Vector of observation indices to be removed to arrive at the
+##' desired bridging distribution.
+##' @param in_set Vector of observation indices already added to give the
+##' starting bridging distribution.
+##' @param ess Threshold: if the effective sample size of the particle weights
+##' falls below this value then a resample move step is triggered. Defaults to
+##' `N/2`.
+##' @param n_move Number of Metropolis-Hastings steps to apply each time a
+##' resample move step is triggered. Defaults to 1.
+##' @return A list consisting of; weighted posterior samples (the samples and
+##' weights are given in separate lists), the log Bayesian evidence of the final
+##' partial posterior and the duplication table of the outputted posterior
+##' samples.
+##' @details If the samples from the partial posterior are not weighted samples
+##' then the `weights` element of the `sampl` list should be
+##' `rep(1,nrow(sampl$samples))`. If the samples provided in `sampl` are all
+##' unique then the `duplication_table` element of `sampl` should be a table of
+##' `sample$weights = rep(1,nrow(sampl$samples))`.
+##'
+##' Details of the internal mechanisms of the SMC sampler such as the
+##' Metropolis-Hastings MCMC resample move can be found in *UNCOVER paper* and
+##' Chopin (2002).
+##'
+##' Note that decreasing `ess` and increasing `n_move` will lead to a more
+##' accurate estimate of the Bayesian evidence, but at the cost of increased
+##' computational time.
+##' @references Chopin, N. (2002). A sequential particle filter method for
+##' static models. Biometrika, 89(3), 539-552.
+##' @examples
+##'
+##' # First we generate a design matrix X and binary response vector y
+##' DM <- cbind(rep(1,100),matrix(rnorm(200),100,2))
+##' rv <- sample(0:1,100,replace=T)
+##'
+##' # We assume the prior for the regression coefficients is a standard normal
+##' pr_samp <- function(p_num,di){return(rmvn(p_num,rep(0,di),diag(di)))}
+##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
+##'
+##' # Now we can obtain 1000 samples from the posterior using only 1000 samples
+##' # from the prior
+##' out.1 <- IBIS.Z(X = DM,y = rv,rprior = pr_samp,N = 1000,prior_pdf = pr_fun)
+##' unique_ind <- as.numeric(names(out.1$duplication_table))
+##' unique_samp <- out.1$samples[unique_ind,]
+##' unique_weights <- out.1$weights[unique_ind]
+##' weight_fade <- colorRampPalette(c('white','black'))(100)[as.numeric(cut(unique_weights,breaks = 100))]
+##' pairs(unique_samp,col = weight_fade)
+##' out.1$log_Bayesian_evidence
+##'
+##' # If we then wished to remove 25 of those observations from our posterior
+##' out.2 <- RIBIS.Z(X = DM,y = rv,sampl = out.1,prior_pdf = pr_fun,drop_set=100:76,in_set = 1:100)
+##' unique_ind.2 <- as.numeric(names(out.2$duplication_table))
+##' unique_samp.2 <- out.2$samples[unique_ind.2,]
+##' unique_weights.2 <- out.2$weights[unique_ind.2]
+##' weight_fade.2 <- colorRampPalette(c('white','black'))(100)[as.numeric(cut(unique_weights.2,breaks = 100))]
+##' pairs(unique_samp.2,col = weight_fade.2)
+##' out.2$log_Bayesian_evidence
+##'
+##' # we can also compare this method to standard iterated batch importance
+##' # sampling
+##' out.3 <- IBIS.Z(X = DM,y = rv,rprior = pr_samp,N = 1000,prior_pdf = pr_fun,add_set = 1:50)
+##' unique_ind.3 <- as.numeric(names(out.3$duplication_table))
+##' unique_samp.3 <- out.3$samples[unique_ind.3,]
+##' unique_weights.3 <- out.3$weights[unique_ind.3]
+##' weight_fade.3 <- colorRampPalette(c('white','red'))(100)[as.numeric(cut(unique_weights.3,breaks = 100))]
+##' out.4 <- RIBIS.Z(X = DM,y = rv,sampl = out.1,prior_pdf = pr_fun,drop_set = 100:51,in_set = 1:100)
+##' unique_ind.4 <- as.numeric(names(out.4$duplication_table))
+##' unique_samp.4 <- out.4$samples[unique_ind.4,]
+##' unique_weights.4 <- out.4$weights[unique_ind.4]
+##' weight_fade.4 <- colorRampPalette(c('white','green'))(100)[as.numeric(cut(unique_weights.4,breaks = 100))]
+##' pairs(rbind(unique_samp.3,unique_samp.4),col=c(weight_fade.3,weight_fade.4))
 
+
+RIBIS.Z <- function(X,y,sampl,prior_pdf,drop_set,in_set,ess=NULL,n_move=1){
+  drop_vec <- in_vec <- rep(0,length(y))
+  drop_vec[drop_set] <- 1
+  in_vec[in_set] <- 1
+  X <- as.matrix(X)
+  p <- ncol(X)
+  if(sum(drop_vec*in_vec)!=length(drop_set)){
+    stop("drop_set must be a subset of in_set")
+  }
+  N <- nrow(sampl$samples)
+  if(is.null(ess)){
+    ess <- N/2
+  }
+  w <- sampl$weights
+  logZ <- sampl$log_Bayesian_evidence
+  dup_tab <- sampl$duplication_table
+  sampl <- sampl$samples
+  drop_set <- drop_set[sample(1:length(drop_set),length(drop_set))]
+  for(i in 1:length(drop_set)){
+    w_new <- w*as.vector(((1+exp(-X[drop_set[i],]%*%t(sampl)))^(y[drop_set[i]]))*((1+exp(X[drop_set[i],]%*%t(sampl)))^(1-y[drop_set[i]])))
+    logZ <- logZ + log(sum(w_new)) - log(sum(w))
+    w <- w_new
+    wsq <- sum((w[as.integer(names(dup_tab))]*dup_tab)^2)
+    if(wsq==Inf){
+      ESS <- 0
+    } else{
+      ESS <- (sum(w)^2)/wsq
+    }
+    if(ESS < ess){
+      ss <- cov.wt(sampl,wt=w,method = "ML")
+      mu <- ss$center
+      Sigma <- ss$cov
+      samp <- sample(as.integer(names(dup_tab)),N,prob = w[as.integer(names(dup_tab))]*dup_tab,replace = TRUE)
+      sampl <- sampl[samp,]
+      w <- rep(1,N)
+      A.all <- rep(FALSE,N)
+      for(j in 1:n_move){
+        BC <- mvnfast::rmvn(N,mu = mu, sigma=Sigma)
+        if(length(setdiff(in_set,drop_set[i]))==0){
+          Log_1 <- log(prior_pdf(th = BC,di = p)) + log(mvnfast::dmvn(sampl,mu=mu,sigma=Sigma))
+          Log_2 <- log(prior_pdf(th = sampl,di = p)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
+        } else{
+          Log_1 <- log(1+exp(X[setdiff(in_set,drop_set[i]),]%*%t(BC)))*(y[setdiff(in_set,drop_set[i])]-1) + log(1+exp(-X[setdiff(in_set,drop_set[i]),]%*%t(BC)))*(-y[setdiff(in_set,drop_set[i])])
+          Log_1 <- colSums(Log_1) + log(prior_pdf(th = BC,di = p)) + log(mvnfast::dmvn(sampl,mu=mu,sigma=Sigma))
+          Log_2 <- log(1+exp(X[setdiff(in_set,drop_set[i]),]%*%t(sampl)))*(y[setdiff(in_set,drop_set[i])]-1) + log(1+exp(-X[setdiff(in_set,drop_set[i]),]%*%t(sampl)))*(-y[setdiff(in_set,drop_set[i])])
+          Log_2 <- colSums(Log_2) + log(prior_pdf(th = sampl,di = p)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
+        }
+        A <- Log_1 - Log_2 - log(runif(length(Log_1)))
+        A.all <- A.all | (A>0)
+        sampl[which(A>0),] <- BC[which(A>0),]
+      }
+      samp[which(A.all)] <- (N+1):(N+length(which(A.all)))
+      dup_tab <- table(samp)
+      names(dup_tab) <- as.character(match(as.integer(names(dup_tab)),samp))
+    }
+    in_set <- setdiff(in_set,drop_set[i])
+  }
+  return(list(samples = sampl,
+              weights = w,
+              log_Bayesian_evidence = logZ,
+              duplication_table = dup_tab[order(as.integer(names(dup_tab)))]))
+}
 
 ##' Log Bayesian evidence generator
 ##'
