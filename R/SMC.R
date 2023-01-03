@@ -319,6 +319,7 @@ RIBIS.Z <- function(X,y,sampl,prior_pdf,drop_set,in_set,ess=NULL,n_move=1){
   dup_tab <- sampl$duplication_table
   sampl <- sampl$samples
   drop_set <- drop_set[sample(1:length(drop_set),length(drop_set))]
+  ess_point <- length(in_set)
   for(i in 1:length(drop_set)){
     w_new <- w*as.vector(((1+exp(-X[drop_set[i],]%*%t(sampl)))^(y[drop_set[i]]))*((1+exp(X[drop_set[i],]%*%t(sampl)))^(1-y[drop_set[i]])))
     logZ <- logZ + log(sum(w_new)) - log(sum(w))
@@ -330,12 +331,19 @@ RIBIS.Z <- function(X,y,sampl,prior_pdf,drop_set,in_set,ess=NULL,n_move=1){
       ESS <- (sum(w)^2)/wsq
     }
     if(ESS < ess){
+      if(length(in_set)==1){
+        cont_rate <- ess_point
+      } else{
+        cont_rate <- ess_point/(length(in_set)-1)
+      }
+      ess_point <- length(in_set)-1
       ss <- cov.wt(sampl,wt=w,method = "ML")
       mu <- ss$center
       Sigma <- ss$cov
       samp <- sample(as.integer(names(dup_tab)),N,prob = w[as.integer(names(dup_tab))]*dup_tab,replace = TRUE)
       sampl <- sampl[samp,]
       w <- rep(1,N)
+      sampl <- t(((t(sampl) - mu)*sqrt(cont_rate)) + mu)
       A.all <- rep(FALSE,N)
       for(j in 1:n_move){
         BC <- mvnfast::rmvn(N,mu = mu, sigma=Sigma)
