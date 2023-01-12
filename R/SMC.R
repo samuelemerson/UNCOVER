@@ -48,10 +48,10 @@
 ##' @param prior_pdf Probability Density Function of the prior. Must only have
 ##' two arguments, `th` and `di` (a vector or matrix of regression coefficients
 ##' samples and the number of dimensions of a single sample respectively).
-##' @param add_set Vector of observation indices to be added to arrive at the
-##' desired bridging distribution. If the desired final distribution is the full
-##' posterior this should not be specified.
-##' @param in_set Vector of observation indices already added to give the
+##' @param target_set Vector of observation indices for the outputted
+##' distribution. If the desired final distribution is the full
+##' posterior this should not be specified and will be set as `1:length(y)`.
+##' @param current_set Vector of observation indices already added to give the
 ##' starting bridging distribution. If the starting 'bridging' distribution is
 ##' the prior then this should not be specified.
 ##' @param ess Threshold: if the effective sample size of the particle weights
@@ -59,23 +59,27 @@
 ##' `N/2`.
 ##' @param n_move Number of Metropolis-Hastings steps to apply each time a
 ##' resample move step is triggered. Defaults to 1.
-##' @return A list consisting of; weighted posterior samples (the samples and
+##' @return A list consisting of output and input. Output is a list consisting
+##' of; weighted posterior samples (the samples and
 ##' weights are given in separate lists), the log Bayesian evidence of the final
-##' partial posterior (the full posterior if `add_set` is not specified) and the
-##' duplication table of the outputted posterior samples.
+##' partial posterior (the full posterior if `target_set` is not specified) and the
+##' duplication table of the outputted posterior samples. Input is the inputted
+##' `target_set`.
 ##' @details The setting going from prior to full posterior can be achieved
 ##' through specification of only `X`, `y`, `rprior`, `N` and `prior_pdf`. If
 ##' using samples from a partial posterior instead of prior samples then
-##' `rprior` and `N` can be ignored but `sampl` and `in_set` should be provided.
-##' If the samples from the partial posterior are not weighted samples then the
-##' `weights` element of the `sampl` list should be `rep(1,nrow(sampl$samples))`.
-##' If the samples provided in `sampl` are all unique then the
-##' `duplication_table` element of `sampl` should be a table of
+##' `rprior` and `N` can be ignored but `sampl` and `current_set` should be
+##' provided. If the samples from the partial posterior are not weighted samples
+##' then the `weights` element of the `sampl` list should be
+##' `rep(1,nrow(sampl$samples))`. If the samples provided in `sampl` are all
+##' unique then the `duplication_table` element of `sampl` should be a table of
 ##' `sample$weights = rep(1,nrow(sampl$samples))`. If the full posterior is not
 ##' the desired output then the specific bridging distribution (partial
-##' posterior) required must be specified through the observations that are in
-##' the final partial posterior but not in the initial partial posterior (i.e.
-##' `add_set` is required).
+##' posterior) required must be specified (i.e.`target_set` is required).
+##'
+##' Note that it is possible to specify `target_set` as a subset of
+##' `current_set`. If this is selected then reverse iterated batch importance
+##' sampling will be applied through removal of observations in `current_set`.
 ##'
 ##' Details of the internal mechanisms of the SMC sampler such as the
 ##' Metropolis-Hastings MCMC resample move can be found in *UNCOVER paper* and
@@ -84,6 +88,9 @@
 ##' Note that decreasing `ess` and increasing `n_move` will lead to a more
 ##' accurate estimate of the Bayesian evidence, but at the cost of increased
 ##' computational time.
+##'
+##' `IBIS.Z` is to be used as a memoised function within `lbe.gen` and as such
+##' requires specification of the input as an output when accessing the cache.
 ##' @references Chopin, N. (2002). A sequential particle filter method for
 ##' static models. Biometrika, 89(3), 539-552.
 ##' @examples
@@ -99,12 +106,12 @@
 ##' # Now we can obtain 1000 samples from the posterior using only 1000 samples
 ##' # from the prior
 ##' out.1 <- IBIS.Z(X = DM,y = rv,rprior = pr_samp,N = 1000,prior_pdf = pr_fun)
-##' unique_ind <- as.numeric(names(out.1$duplication_table))
-##' unique_samp <- out.1$samples[unique_ind,]
-##' unique_weights <- out.1$weights[unique_ind]
+##' unique_ind <- as.numeric(names(out.1$output$duplication_table))
+##' unique_samp <- out.1$output$samples[unique_ind,]
+##' unique_weights <- out.1$output$weights[unique_ind]
 ##' weight_fade <- colorRampPalette(c('white','black'))(100)[as.numeric(cut(unique_weights,breaks = 100))]
 ##' pairs(unique_samp,col = weight_fade)
-##' out.1$log_Bayesian_evidence
+##' out.1$output$log_Bayesian_evidence
 ##'
 ##' # If we then added 100 more observations to our data set
 ##' DM.2 <- rbind(DM,cbind(rep(1,100),matrix(rnorm(200),100,2)))
@@ -112,40 +119,85 @@
 ##'
 ##' # and then wanted samples from the entire posterior instead of starting
 ##' # from the prior we can use the previous SMC sampler output
-##' out.2 <- IBIS.Z(X = DM.2,y = rv.2,sampl = out.1,prior_pdf = pr_fun,in_set = 1:100)
-##' unique_ind.2 <- as.numeric(names(out.2$duplication_table))
-##' unique_samp.2 <- out.2$samples[unique_ind.2,]
-##' unique_weights.2 <- out.2$weights[unique_ind.2]
+##' out.2 <- IBIS.Z(X = DM.2,y = rv.2,sampl = out.1$output,prior_pdf = pr_fun,current_set = 1:100)
+##' unique_ind.2 <- as.numeric(names(out.2$output$duplication_table))
+##' unique_samp.2 <- out.2$output$samples[unique_ind.2,]
+##' unique_weights.2 <- out.2$output$weights[unique_ind.2]
 ##' weight_fade.2 <- colorRampPalette(c('white','black'))(100)[as.numeric(cut(unique_weights.2,breaks = 100))]
 ##' pairs(unique_samp.2,col = weight_fade.2)
-##' out.2$log_Bayesian_evidence
+##' out.2$output$log_Bayesian_evidence
 ##'
 ##' # we can also observe roughly how the particles move when the 100 new
 ##' # observations are added in two stages
-##' out.3 <- IBIS.Z(X = DM.2,y = rv.2,sampl = out.1,prior_pdf = pr_fun,add_set = 101:150,in_set = 1:100)
-##' unique_ind.3 <- as.numeric(names(out.3$duplication_table))
-##' unique_samp.3 <- out.3$samples[unique_ind.3,]
-##' unique_weights.3 <- out.3$weights[unique_ind.3]
+##' out.3 <- IBIS.Z(X = DM.2,y = rv.2,sampl = out.1$output,prior_pdf = pr_fun,target_set = 1:150,current_set = 1:100)
+##' unique_ind.3 <- as.numeric(names(out.3$output$duplication_table))
+##' unique_samp.3 <- out.3$output$samples[unique_ind.3,]
+##' unique_weights.3 <- out.3$output$weights[unique_ind.3]
 ##' weight_fade.3 <- colorRampPalette(c('white','red'))(100)[as.numeric(cut(unique_weights.3,breaks = 100))]
-##' out.4 <- IBIS.Z(X = DM.2,y = rv.2,sampl = out.3,prior_pdf = pr_fun,in_set = 1:150)
-##' unique_ind.4 <- as.numeric(names(out.4$duplication_table))
-##' unique_samp.4 <- out.4$samples[unique_ind.4,]
-##' unique_weights.4 <- out.4$weights[unique_ind.4]
+##' out.4 <- IBIS.Z(X = DM.2,y = rv.2,sampl = out.3$output,prior_pdf = pr_fun,current_set = 1:150)
+##' unique_ind.4 <- as.numeric(names(out.4$output$duplication_table))
+##' unique_samp.4 <- out.4$output$samples[unique_ind.4,]
+##' unique_weights.4 <- out.4$output$weights[unique_ind.4]
 ##' weight_fade.4 <- colorRampPalette(c('white','green'))(100)[as.numeric(cut(unique_weights.4,breaks = 100))]
 ##' pairs(rbind(unique_samp,unique_samp.3,unique_samp.4),col=c(weight_fade,weight_fade.3,weight_fade.4))
+##'
+##' # If we wished to remove 25 observations from our original posterior
+##' out.5 <- IBIS.Z(X = DM,y = rv,sampl = out.1$output,prior_pdf = pr_fun,target_set=1:75,current_set = 1:100)
+##' unique_ind.5 <- as.numeric(names(out.5$output$duplication_table))
+##' unique_samp.5 <- out.5$output$samples[unique_ind.5,]
+##' unique_weights.5 <- out.5$output$weights[unique_ind.5]
+##' weight_fade.5 <- colorRampPalette(c('white','black'))(100)[as.numeric(cut(unique_weights.5,breaks = 100))]
+##' pairs(unique_samp.5,col = weight_fade.5)
+##' out.5$output$log_Bayesian_evidence
+##'
+##' # we can also compare this method to standard iterated batch importance
+##' # sampling
+##' out.6 <- IBIS.Z(X = DM,y = rv,rprior = pr_samp,N = 1000,prior_pdf = pr_fun,target_set = 1:50)
+##' unique_ind.6 <- as.numeric(names(out.6$output$duplication_table))
+##' unique_samp.6 <- out.6$output$samples[unique_ind.6,]
+##' unique_weights.6 <- out.6$output$weights[unique_ind.6]
+##' weight_fade.6 <- colorRampPalette(c('white','red'))(100)[as.numeric(cut(unique_weights.6,breaks = 100))]
+##' out.7 <- IBIS.Z(X = DM,y = rv,sampl = out.1$output,prior_pdf = pr_fun,target_set = 1:50,current_set = 1:100)
+##' unique_ind.7 <- as.numeric(names(out.7$output$duplication_table))
+##' unique_samp.7 <- out.7$output$samples[unique_ind.7,]
+##' unique_weights.7 <- out.7$output$weights[unique_ind.7]
+##' weight_fade.7 <- colorRampPalette(c('white','green'))(100)[as.numeric(cut(unique_weights.7,breaks = 100))]
+##' pairs(rbind(unique_samp.6,unique_samp.7),col=c(weight_fade.6,weight_fade.7))
+##' out.6$output$log_Bayesian_evidence
+##' out.7$output$log_Bayesian_evidence
+##'
+##' @seealso [lbe.gen]
 
-IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,add_set=NULL,in_set=NULL,ess=NULL,n_move=1){
+
+IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,
+                   target_set=1:length(y),current_set=NULL,ess=NULL,n_move=1){
+  if(length(target_set)==length(current_set)){
+    stop("target_set and current_set cannot be the same length")
+  }
+  if(length(target_set)>length(current_set)){
+    reverse <- FALSE
+    if(length(current_set)!=0){
+      if(sum(sort(target_set)[1:length(current_set)]-sort(current_set))!=0){
+        stop("For standard IBIS current_set must be a subset of target_set")
+      }
+    }
+  } else{
+    reverse <- TRUE
+    ess_point <- length(current_set)
+    if(length(target_set)!=0){
+      if(sum(sort(current_set)[1:length(target_set)]-sort(target_set))!=0){
+        stop("For reverse IBIS target_set must be a subset of current_set")
+      }
+    }
+  }
   if(is.null(sampl) & (is.null(rprior)|is.null(N))){
     stop("Either specify weighted samples and their current log Bayesian evidence or a prior function to generate samples along with the number of samples")
   }
-  if(!is.null(sampl) & is.null(in_set)){
-    stop("If sampl is specified you must indicate which observations have been added with in_set. If initialising with the prior please use rprior and N instead of sampl.")
+  if(!is.null(sampl) & is.null(current_set)){
+    stop("If sampl is specified you must indicate which observations have been added with current_set. If initialising with the prior please use rprior and N instead of sampl.")
   }
   X <- as.matrix(X)
   p <- ncol(X)
-  if(is.null(add_set)){
-    add_set <- setdiff(1:length(y),in_set)
-  }
   if(is.null(sampl)) {
     sampl <- rprior(N,p)
     w <- rep(1,N)
@@ -161,9 +213,19 @@ IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,add_set=NULL,in_s
   if(is.null(ess)){
     ess <- N/2
   }
-  add_set <- add_set[sample(1:length(add_set),length(add_set))]
-  for(i in 1:length(add_set)){
-    w_new <- w*as.vector(((1+exp(-X[add_set[i],]%*%t(sampl)))^(-y[add_set[i]]))*((1+exp(X[add_set[i],]%*%t(sampl)))^(y[add_set[i]]-1)))
+  if(reverse){
+    action_set <- setdiff(current_set,target_set)
+  } else{
+    action_set <- setdiff(target_set,current_set)
+  }
+  action_set <- action_set[sample(1:length(action_set),length(action_set))]
+  for(i in 1:length(action_set)){
+    w_new <- as.vector(((1+exp(-X[action_set[i],]%*%t(sampl)))^(-y[action_set[i]]))*((1+exp(X[action_set[i],]%*%t(sampl)))^(y[action_set[i]]-1)))
+    if(reverse){
+      w_new <- w/w_new
+    } else{
+      w_new <- w*w_new
+    }
     logZ <- logZ + log(sum(w_new)) - log(sum(w))
     w <- w_new
     wsq <- sum((w[as.integer(names(dup_tab))]*dup_tab)^2)
@@ -173,19 +235,42 @@ IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,add_set=NULL,in_s
       ESS <- (sum(w)^2)/wsq
     }
     if(ESS < ess){
+      if(reverse){
+        if(length(current_set)==1){
+          cont_rate <- ess_point
+        } else{
+          cont_rate <- ess_point/(length(current_set)-1)
+          ess_point <- length(current_set)-1
+        }
+      }
       ss <- cov.wt(sampl,wt=w,method = "ML")
       mu <- ss$center
       Sigma <- ss$cov
       samp <- sample(as.integer(names(dup_tab)),N,prob = w[as.integer(names(dup_tab))]*dup_tab,replace = TRUE)
       sampl <- sampl[samp,]
       w <- rep(1,N)
+      if(reverse){
+        sampl <- t(((t(sampl) - mu)*sqrt(cont_rate)) + mu)
+      }
       A.all <- rep(FALSE,N)
       for(j in 1:n_move){
         BC <- mvnfast::rmvn(N,mu = mu, sigma=Sigma)
-        Log_1 <- log(1+exp(X[c(in_set,add_set[i]),]%*%t(BC)))*(y[c(in_set,add_set[i])]-1) + log(1+exp(-X[c(in_set,add_set[i]),]%*%t(BC)))*(-y[c(in_set,add_set[i])])
-        Log_1 <- colSums(Log_1) + log(prior_pdf(th = BC,di = p)) + log(mvnfast::dmvn(sampl,mu=mu,sigma=Sigma))
-        Log_2 <- log(1+exp(X[c(in_set,add_set[i]),]%*%t(sampl)))*(y[c(in_set,add_set[i])]-1) + log(1+exp(-X[c(in_set,add_set[i]),]%*%t(sampl)))*(-y[c(in_set,add_set[i])])
-        Log_2 <- colSums(Log_2) + log(prior_pdf(th = sampl,di = p)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
+        if(reverse){
+          if(length(setdiff(current_set,action_set[i]))==0){
+            Log_1 <- log(prior_pdf(th = BC,di = p)) + log(mvnfast::dmvn(sampl,mu=mu,sigma=Sigma))
+            Log_2 <- log(prior_pdf(th = sampl,di = p)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
+          } else{
+            Log_1 <- log(1+exp(X[setdiff(current_set,action_set[i]),]%*%t(BC)))*(y[setdiff(current_set,action_set[i])]-1) + log(1+exp(-X[setdiff(current_set,action_set[i]),]%*%t(BC)))*(-y[setdiff(current_set,action_set[i])])
+            Log_1 <- colSums(Log_1) + log(prior_pdf(th = BC,di = p)) + log(mvnfast::dmvn(sampl,mu=mu,sigma=Sigma))
+            Log_2 <- log(1+exp(X[setdiff(current_set,action_set[i]),]%*%t(sampl)))*(y[setdiff(current_set,action_set[i])]-1) + log(1+exp(-X[setdiff(current_set,action_set[i]),]%*%t(sampl)))*(-y[setdiff(current_set,action_set[i])])
+            Log_2 <- colSums(Log_2) + log(prior_pdf(th = sampl,di = p)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
+          }
+        } else{
+          Log_1 <- log(1+exp(X[c(current_set,action_set[i]),]%*%t(BC)))*(y[c(current_set,action_set[i])]-1) + log(1+exp(-X[c(current_set,action_set[i]),]%*%t(BC)))*(-y[c(current_set,action_set[i])])
+          Log_1 <- colSums(Log_1) + log(prior_pdf(th = BC,di = p)) + log(mvnfast::dmvn(sampl,mu=mu,sigma=Sigma))
+          Log_2 <- log(1+exp(X[c(current_set,action_set[i]),]%*%t(sampl)))*(y[c(current_set,action_set[i])]-1) + log(1+exp(-X[c(current_set,action_set[i]),]%*%t(sampl)))*(-y[c(current_set,action_set[i])])
+          Log_2 <- colSums(Log_2) + log(prior_pdf(th = sampl,di = p)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
+        }
         A <- Log_1 - Log_2 - log(runif(length(Log_1)))
         A.all <- A.all | (A>0)
         sampl[which(A>0),] <- BC[which(A>0),]
@@ -194,12 +279,17 @@ IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,add_set=NULL,in_s
       dup_tab <- table(samp)
       names(dup_tab) <- as.character(match(as.integer(names(dup_tab)),samp))
     }
-    in_set <- c(in_set,add_set[i])
+    if(reverse){
+      current_set <- setdiff(current_set,action_set[i])
+    } else{
+      current_set <- c(current_set,action_set[i])
+    }
   }
-  return(list(samples = sampl,
-              weights = w,
-              log_Bayesian_evidence = logZ,
-              duplication_table = dup_tab[order(as.integer(names(dup_tab)))]))
+  return(list(output = list(samples = sampl,
+                            weights = w,
+                            log_Bayesian_evidence = logZ,
+                            duplication_table = dup_tab[order(as.integer(names(dup_tab)))]),
+              input = target_set))
 }
 
 ##' SMC sampler function using reverse iterated batch importance sampling
@@ -372,6 +462,58 @@ RIBIS.Z <- function(X,y,sampl,prior_pdf,drop_set,in_set,ess=NULL,n_move=1){
               duplication_table = dup_tab[order(as.integer(names(dup_tab)))]))
 }
 
+##' Log Bayesian evidence estimator through BIC, built for memoisation
+##'
+##'
+##' @export
+##' @name memo.bic
+##' @description Estimates the log Bayesian evidence (log(Z)) of a Bayesian
+##' logistic regression model using BIC.
+##'
+##' @keywords memoisation BIC
+##' @param X Covariate matrix
+##' @param y Binary response vector
+##' @param which_obs The indices of the observations in `X` that are in the
+##' model. Defaults to all observations if not specified.
+##' @param param_start Starting values for the model parameters used in the
+##' `glm` function.
+##' @return A list containing; logZ - An estimation of the log Bayesian
+##' evidence, coeffs - The coefficients produced by the glm model required for
+##' calculation of the BIC value and input - the input `which_obs`
+##' @details This function is built with memoisation in mind and is intended to
+##' be used as a supplementary function to `lbe.gen`. Producing `which_obs` as
+##' an output is used to obtain input information from keys in the cache when
+##' reviewing inputs which have been memoised.
+##'
+##' @examples
+##'
+##' # First we generate a covariate matrix `X` and binary response vector
+##' # `y`
+##' CM <- matrix(rnorm(2000000),1000000,2)
+##' rv <- sample(0:1,1000000,replace=T)
+##'
+##' # We can then estimate log(Z) using the `"BIC"` method
+##' model.1000000 <- memo.bic(X = CM,y = rv)
+##' model.1000000$logZ
+##' model.1000000$coeffs
+##'
+##' # If we are only concerned with the first 500000 observations
+##' model.500000 <- memo.bic(X = CM,y = rv, which_obs = 1:500000)
+##'
+##' # If we are then wanting the model to include the first 500001 observations,
+##' # it may be faster to use the output of model.500000
+##' system.time(memo.bic(X = CM,y = rv, which_obs = 1:500001))
+##' system.time(memo.bic(X = CM,y = rv, which_obs = 1:500001,param_start = model.500000$coeffs))
+##'
+##'@seealso [glm,BIC,lbe.gen]
+
+memo.bic <- function(X,y,which_obs=1:length(y),param_start=NULL){
+  bic_glm <- glm(y~.,family="binomial",data=data.frame(X,y)[which_obs,],start = param_start)
+  lbe <- -BIC(bic_glm)/2
+  return(list(logZ = lbe,coeffs = bic_glm$coefficients,input = which_obs))
+}
+
+
 ##' Log Bayesian evidence generator
 ##'
 ##'
@@ -443,7 +585,8 @@ RIBIS.Z <- function(X,y,sampl,prior_pdf,drop_set,in_set,ess=NULL,n_move=1){
 ##'
 ##'@seealso [IBIS.Z]
 
-lbe.gen <- function(method="SMC_BIC",thres=Inf,obs_mat,res_vec,p_num=0,rpri=NULL,p_pdf=NULL,subs = NULL){
+lbe.gen <- function(method="SMC_BIC",thres=Inf,obs_mat,res_vec,p_num=0,rpri=NULL,
+                    p_pdf=NULL,subs = NULL,efs = length(res_vec)/2,nm = 1){
   opts <- c("SMC","SMC_BIC","BIC")
   if(!(method%in%opts)){
     stop("Method is not supported")
@@ -451,6 +594,87 @@ lbe.gen <- function(method="SMC_BIC",thres=Inf,obs_mat,res_vec,p_num=0,rpri=NULL
   if(method!="BIC" & (is.null(rpri) | is.null(p_pdf))){
     stop("Both sampling function and probability density function of the prior are required for this method")
   }
+  cache_search_fun_bic <- function(u,cb,oi){
+    c_ind <- cb$get(u)$input
+    lci <- length(c_ind)
+    loi <- length(obs_ind)
+    if(lci==loi){
+      if(sum(c_ind - obs_ind)==0){
+        return(lci-loi)
+      } else{
+        return(Inf)
+      }
+    }
+    if(lci<loi){
+      if(sum(c_ind - obs_ind[1:lci])==0){
+        return(loi-lci)
+      } else{
+        return(Inf)
+      }
+    }
+    if(lci>loi){
+      if(sum(c_ind[1:loi] - obs_ind)==0){
+        return(lci-loi)
+      } else{
+        return(Inf)
+      }
+    }
+  }
+  cache_search_fun_smc <- function(u,cs,oi){
+    c_ind <- cs$get(u)$input
+    lci <- length(c_ind)
+    loi <- length(obs_ind)
+    if(lci==loi){
+      if(sum(c_ind - obs_ind)==0){
+        return(lci-loi)
+      } else{
+        return(Inf)
+      }
+    }
+    if(lci<loi){
+      if(sum(c_ind - obs_ind[1:lci])==0){
+        return(loi-lci)
+      } else{
+        return(Inf)
+      }
+    }
+    if(lci>loi){
+      if(sum(c_ind[1:loi] - obs_ind)==0){
+        return(loi-lci)
+      } else{
+        return(Inf)
+      }
+    }
+  }
+  if(method=="BIC"){
+    if(length(res_vec)<memo_thres | length(cache_bic$keys())==0){
+      logZ <- memo.bic(X = obs_mat, y = res_vec, which_obs = obs_ind)$logZ
+    } else{
+      sub_size <- sapply(cache_bic$keys(),FUN = cache_search_fun_bic,cb = cache_bic,oi = obs_ind)
+      if(min(sub_size)==0){
+        logZ <- memo.bic(X = obs_mat, y = res_vec, which_obs = obs_ind)$logZ
+      } else{
+        bic.start <- memo.bic(X = obs_mat, y = res_vec, which_obs = cache_bic$get(cache_bic$keys()[which.min(sub_size)])$input)$coeffs
+        logZ <- memo.bic(X = obs_mat, y = res_vec, which_obs = obs_ind,param_start = bic.start)$logZ
+      }
+    }
+  }
+  if(method=="SMC"){
+    if(length(res_vec)<memo_thres | length(cache_smc$keys())==0){
+      logZ <- IBIS.Z(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,rprior = rpri,N = p_num,prior_pdf = p_pdf,add_set = obs_ind,ess = efs,n_move = nm)$log_Bayesian_evidence
+    } else{
+      sub_size <- sapply(cache_smc$keys(),FUN = cache_search_fun_smc,cs = cache_smc,oi = obs_ind)
+      if(min(sub_size)==0){
+        logZ <- IBIS.Z(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,rprior = rpri,N = p_num,prior_pdf = p_pdf,add_set = obs_ind,ess = efs,n_move = nm)$log_Bayesian_evidence
+      } else{
+        if(sub_size[which.min(abs(sub_size))]>0){
+          IBIS.sub <- IBIS.Z(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,rprior = rpri,N = p_num,prior_pdf = p_pdf,target_indices = cache_smc$get(cache_smc$keys()[which.min(abs(sub_size))])$input,ess = efs,n_move = nm)$output
+          logZ <- IBIS.Z(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,sampl = IBIS.sub,prior_pdf = p_pdf,target_indices = obs_ind,ess = efs,n_move = nm)$output$log_Bayesian_evidence
+        }
+      }
+    }
+  }
+
   if(is.null(subs)){
     subs <- length(res_vec)
   }

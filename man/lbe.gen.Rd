@@ -12,7 +12,9 @@ lbe.gen(
   p_num = 0,
   rpri = NULL,
   p_pdf = NULL,
-  subs = NULL
+  subs = NULL,
+  efs = length(res_vec)/2,
+  nm = 1
 )
 }
 \arguments{

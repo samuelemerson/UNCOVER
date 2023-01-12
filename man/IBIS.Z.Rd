@@ -11,8 +11,8 @@ IBIS.Z(
   rprior = NULL,
   N = NULL,
   prior_pdf,
-  add_set = NULL,
-  in_set = NULL,
+  target_set = 1:length(y),
+  current_set = NULL,
   ess = NULL,
   n_move = 1
 )
@@ -42,11 +42,11 @@ argument should be ignored.}
 two arguments, `th` and `di` (a vector or matrix of regression coefficients
 samples and the number of dimensions of a single sample respectively).}
 
-\item{add_set}{Vector of observation indices to be added to arrive at the
-desired bridging distribution. If the desired final distribution is the full
-posterior this should not be specified.}
+\item{target_set}{Vector of observation indices for the outputted
+distribution. If the desired final distribution is the full
+posterior this should not be specified and will be set as `1:length(y)`.}
 
-\item{in_set}{Vector of observation indices already added to give the
+\item{current_set}{Vector of observation indices already added to give the
 starting bridging distribution. If the starting 'bridging' distribution is
 the prior then this should not be specified.}
 
@@ -58,10 +58,12 @@ falls below this value then a resample move step is triggered. Defaults to
 resample move step is triggered. Defaults to 1.}
 }
 \value{
-A list consisting of; weighted posterior samples (the samples and
+A list consisting of output and input. Output is a list consisting
+of; weighted posterior samples (the samples and
 weights are given in separate lists), the log Bayesian evidence of the final
-partial posterior (the full posterior if `add_set` is not specified) and the
-duplication table of the outputted posterior samples.
+partial posterior (the full posterior if `target_set` is not specified) and the
+duplication table of the outputted posterior samples. Input is the inputted
+`target_set`.
 }
 \description{
 This function uses an iterated batch importance sampling scheme
@@ -79,16 +81,18 @@ models, however the weighted samples can also be used for posterior inference.
 The setting going from prior to full posterior can be achieved
 through specification of only `X`, `y`, `rprior`, `N` and `prior_pdf`. If
 using samples from a partial posterior instead of prior samples then
-`rprior` and `N` can be ignored but `sampl` and `in_set` should be provided.
-If the samples from the partial posterior are not weighted samples then the
-`weights` element of the `sampl` list should be `rep(1,nrow(sampl$samples))`.
-If the samples provided in `sampl` are all unique then the
-`duplication_table` element of `sampl` should be a table of
+`rprior` and `N` can be ignored but `sampl` and `current_set` should be
+provided. If the samples from the partial posterior are not weighted samples
+then the `weights` element of the `sampl` list should be
+`rep(1,nrow(sampl$samples))`. If the samples provided in `sampl` are all
+unique then the `duplication_table` element of `sampl` should be a table of
 `sample$weights = rep(1,nrow(sampl$samples))`. If the full posterior is not
 the desired output then the specific bridging distribution (partial
-posterior) required must be specified through the observations that are in
-the final partial posterior but not in the initial partial posterior (i.e.
-`add_set` is required).
+posterior) required must be specified (i.e.`target_set` is required).
+
+Note that it is possible to specify `target_set` as a subset of
+`current_set`. If this is selected then reverse iterated batch importance
+sampling will be applied through removal of observations in `current_set`.
 
 Details of the internal mechanisms of the SMC sampler such as the
 Metropolis-Hastings MCMC resample move can be found in *UNCOVER paper* and
@@ -97,6 +101,9 @@ Chopin (2002).
 Note that decreasing `ess` and increasing `n_move` will lead to a more
 accurate estimate of the Bayesian evidence, but at the cost of increased
 computational time.
+
+`IBIS.Z` is to be used as a memoised function within `lbe.gen` and as such
+requires specification of the input as an output when accessing the cache.
 }
 \examples{
 
@@ -111,12 +118,12 @@ pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 # Now we can obtain 1000 samples from the posterior using only 1000 samples
 # from the prior
 out.1 <- IBIS.Z(X = DM,y = rv,rprior = pr_samp,N = 1000,prior_pdf = pr_fun)
-unique_ind <- as.numeric(names(out.1$duplication_table))
-unique_samp <- out.1$samples[unique_ind,]
-unique_weights <- out.1$weights[unique_ind]
+unique_ind <- as.numeric(names(out.1$output$duplication_table))
+unique_samp <- out.1$output$samples[unique_ind,]
+unique_weights <- out.1$output$weights[unique_ind]
 weight_fade <- colorRampPalette(c('white','black'))(100)[as.numeric(cut(unique_weights,breaks = 100))]
 pairs(unique_samp,col = weight_fade)
-out.1$log_Bayesian_evidence
+out.1$output$log_Bayesian_evidence
 
 # If we then added 100 more observations to our data set
 DM.2 <- rbind(DM,cbind(rep(1,100),matrix(rnorm(200),100,2)))
@@ -124,31 +131,60 @@ rv.2 <- c(rv,sample(0:1,100,replace=T))
 
 # and then wanted samples from the entire posterior instead of starting
 # from the prior we can use the previous SMC sampler output
-out.2 <- IBIS.Z(X = DM.2,y = rv.2,sampl = out.1,prior_pdf = pr_fun,in_set = 1:100)
-unique_ind.2 <- as.numeric(names(out.2$duplication_table))
-unique_samp.2 <- out.2$samples[unique_ind.2,]
-unique_weights.2 <- out.2$weights[unique_ind.2]
+out.2 <- IBIS.Z(X = DM.2,y = rv.2,sampl = out.1$output,prior_pdf = pr_fun,current_set = 1:100)
+unique_ind.2 <- as.numeric(names(out.2$output$duplication_table))
+unique_samp.2 <- out.2$output$samples[unique_ind.2,]
+unique_weights.2 <- out.2$output$weights[unique_ind.2]
 weight_fade.2 <- colorRampPalette(c('white','black'))(100)[as.numeric(cut(unique_weights.2,breaks = 100))]
 pairs(unique_samp.2,col = weight_fade.2)
-out.2$log_Bayesian_evidence
+out.2$output$log_Bayesian_evidence
 
 # we can also observe roughly how the particles move when the 100 new
 # observations are added in two stages
-out.3 <- IBIS.Z(X = DM.2,y = rv.2,sampl = out.1,prior_pdf = pr_fun,add_set = 101:150,in_set = 1:100)
-unique_ind.3 <- as.numeric(names(out.3$duplication_table))
-unique_samp.3 <- out.3$samples[unique_ind.3,]
-unique_weights.3 <- out.3$weights[unique_ind.3]
+out.3 <- IBIS.Z(X = DM.2,y = rv.2,sampl = out.1$output,prior_pdf = pr_fun,target_set = 1:150,current_set = 1:100)
+unique_ind.3 <- as.numeric(names(out.3$output$duplication_table))
+unique_samp.3 <- out.3$output$samples[unique_ind.3,]
+unique_weights.3 <- out.3$output$weights[unique_ind.3]
 weight_fade.3 <- colorRampPalette(c('white','red'))(100)[as.numeric(cut(unique_weights.3,breaks = 100))]
-out.4 <- IBIS.Z(X = DM.2,y = rv.2,sampl = out.3,prior_pdf = pr_fun,in_set = 1:150)
-unique_ind.4 <- as.numeric(names(out.4$duplication_table))
-unique_samp.4 <- out.4$samples[unique_ind.4,]
-unique_weights.4 <- out.4$weights[unique_ind.4]
+out.4 <- IBIS.Z(X = DM.2,y = rv.2,sampl = out.3$output,prior_pdf = pr_fun,current_set = 1:150)
+unique_ind.4 <- as.numeric(names(out.4$output$duplication_table))
+unique_samp.4 <- out.4$output$samples[unique_ind.4,]
+unique_weights.4 <- out.4$output$weights[unique_ind.4]
 weight_fade.4 <- colorRampPalette(c('white','green'))(100)[as.numeric(cut(unique_weights.4,breaks = 100))]
 pairs(rbind(unique_samp,unique_samp.3,unique_samp.4),col=c(weight_fade,weight_fade.3,weight_fade.4))
+
+# If we wished to remove 25 observations from our original posterior
+out.5 <- IBIS.Z(X = DM,y = rv,sampl = out.1$output,prior_pdf = pr_fun,target_set=1:75,current_set = 1:100)
+unique_ind.5 <- as.numeric(names(out.5$output$duplication_table))
+unique_samp.5 <- out.5$output$samples[unique_ind.5,]
+unique_weights.5 <- out.5$output$weights[unique_ind.5]
+weight_fade.5 <- colorRampPalette(c('white','black'))(100)[as.numeric(cut(unique_weights.5,breaks = 100))]
+pairs(unique_samp.5,col = weight_fade.5)
+out.5$output$log_Bayesian_evidence
+
+# we can also compare this method to standard iterated batch importance
+# sampling
+out.6 <- IBIS.Z(X = DM,y = rv,rprior = pr_samp,N = 1000,prior_pdf = pr_fun,target_set = 1:50)
+unique_ind.6 <- as.numeric(names(out.6$output$duplication_table))
+unique_samp.6 <- out.6$output$samples[unique_ind.6,]
+unique_weights.6 <- out.6$output$weights[unique_ind.6]
+weight_fade.6 <- colorRampPalette(c('white','red'))(100)[as.numeric(cut(unique_weights.6,breaks = 100))]
+out.7 <- IBIS.Z(X = DM,y = rv,sampl = out.1$output,prior_pdf = pr_fun,target_set = 1:50,current_set = 1:100)
+unique_ind.7 <- as.numeric(names(out.7$output$duplication_table))
+unique_samp.7 <- out.7$output$samples[unique_ind.7,]
+unique_weights.7 <- out.7$output$weights[unique_ind.7]
+weight_fade.7 <- colorRampPalette(c('white','green'))(100)[as.numeric(cut(unique_weights.7,breaks = 100))]
+pairs(rbind(unique_samp.6,unique_samp.7),col=c(weight_fade.6,weight_fade.7))
+out.6$output$log_Bayesian_evidence
+out.7$output$log_Bayesian_evidence
+
 }
 \references{
 Chopin, N. (2002). A sequential particle filter method for
 static models. Biometrika, 89(3), 539-552.
+}
+\seealso{
+[lbe.gen]
 }
 \keyword{carlo}
 \keyword{monte}
