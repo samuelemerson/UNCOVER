@@ -17,68 +17,142 @@
 ##'
 ##' @export
 ##' @name UNCOVER
-##' @description Generates cohorts for a data set through removal of edges from a graphical representation of the covariates. Edges are removed (or reintroduced) by considering the normalisation constant (or Bayesian evidence) of a multiplicative Bayesian logistic regression model.
+##' @description Generates cohorts for a data set through removal of edges from
+##' a graphical representation of the covariates. Edges are removed (or
+##' reintroduced) by considering the normalisation constant (or Bayesian
+##' evidence) of a multiplicative Bayesian logistic regression model.
 ##'
-##' The first stage of the function is concerned purely with a greedy optimisation of the Bayeisan evidence through edge manipulation. The second stage then addresses any other criteria (known as deforest conditions) expressed by the user through reintroduction of edges.
+##' The first stage of the function is concerned purely with a greedy
+##' optimisation of the Bayeisan evidence through edge manipulation. The second
+##' stage then addresses any other criteria (known as deforest conditions)
+##' expressed by the user through reintroduction of edges.
 ##'
 ##' @keywords graph cohort cluster bayesian evidence
 ##' @param X Covariate matrix
 ##' @param y Binary response vector
-##' @param mst_var A vector specifying which variables of the covariate matrix will be used to form the graph. If not specified all variables will be used.
-##' @param N Number of samples of the prior used for the SMC sampler. Not required if method `"BIC"` selected. If required but not specified the default value is set to `1000`.
-##' @param stop_criterion What is the maximum number of clusters allowed before we terminate the first stage and begin deforestation. If not specified the algorithm continues until the Bayesian evidence cannot be improved upon, however for time and memory purposes specifying a number is highly recommended.
-##' @param deforest_criterion Criterion in which edges are reintroduced to allow the model to satisfy. Can be one of `"NoC"`,`"SoC"`,`"MaxReg"`,`"Validation"`, `"Balanced"` or `"None"`.
-##' @param split What fraction of the data should be used for training. Should only be specified if `deforest_criterion == "Validation`. Defaults to `1`.
-##' @param max_K The maximum number of clusters allowed in the final output. Should only be specified if `deforest_criterion == "NoC`. Defaults to `Inf`.
-##' @param min_size The minimum number of observations allowed for any cluster in the final model. Should only be specified if `deforest_criterion == "SoC`. Defaults to `0`.
-##' @param reg Numerical natural logarithm of the tolerance parameter. Must be positive. Should only be specified if `deforest_criterion == "MaxReg`. Defaults to `0`.
-##' @param n_min_class The minimum number of observations in any cluster that has an associated response in the minority class of that cluster. Defaults to `0`.
-##' @param SMC_method Method to be used to estimate the log Bayesian evidence of the newly formed sub-models, can be one of `"SMC"`,`"SMC_BIC"` or `"BIC"`
-##' @param SMC_thres The threshold for which the number of observations needs to exceed to consider using BIC as an estimator. Only applies if method `"SMC_BIC"` is selected. Defaults to `Inf` if not specified.
+##' @param mst_var A vector specifying which variables of the covariate matrix
+##' will be used to form the graph. If not specified all variables will be used.
+##' @param N Number of samples of the prior used for the SMC sampler. Not
+##' required if method `"BIC"` selected. If required but not specified the
+##' default value is set to `1000`.
+##' @param stop_criterion What is the maximum number of clusters allowed before
+##' we terminate the first stage and begin deforestation. If not specified the
+##' algorithm continues until the Bayesian evidence cannot be improved upon,
+##' however for time and memory purposes specifying a number is highly
+##' recommended.
+##' @param deforest_criterion Criterion in which edges are reintroduced to allow
+##' the model to satisfy. Can be one of `"NoC"`,`"SoC"`,`"MaxReg"`,
+##' `"Validation"`, `"Balanced"` or `"None"`.
+##' @param split What fraction of the data should be used for training. Should
+##' only be specified if `deforest_criterion == "Validation`. Defaults to `1`.
+##' @param max_K The maximum number of clusters allowed in the final output.
+##' Should only be specified if `deforest_criterion == "NoC`. Defaults to `Inf`.
+##' @param min_size The minimum number of observations allowed for any cluster
+##' in the final model. Should only be specified if
+##' `deforest_criterion == "SoC`. Defaults to `0`.
+##' @param reg Numerical natural logarithm of the tolerance parameter. Must be
+##' positive. Should only be specified if `deforest_criterion == "MaxReg`.
+##' Defaults to `0`.
+##' @param n_min_class The minimum number of observations in any cluster that
+##' has an associated response in the minority class of that cluster. Defaults
+##' to `0`.
+##' @param SMC_thres The threshold for which the number of observations needs to
+##' exceed to consider using BIC as an estimator. Defaults to 30 if not
+##' specified.
+##' @param BIC_memo_thres The threshold for when it is deemed worthwhile to
+##' check the cache of function `memo.bic` for similar observation indices.
+##' Defaults to never checking the cache.
+##' @param SMC_memo_thres The threshold for when it is deemed worthwhile to
+##' check the cache of function `IBIS.Z` for similar observation indices.
+##' Defaults to never checking the cache.
 ##' @param rprior Function to sample from the prior. Must only have two
 ##' arguments, `p_num` and `di` (Number of prior samples to generate and the
 ##' number of dimensions of a single sample respectively).
-##' @param prior_pdf Probability Density Function of the prior. Must only have two arguments, `th` and `di` (a vector or matrix of regression coefficients samples and the number of dimensions of a single sample respectively).
-##' @param plot_progress Do you want to plot the output of the clustering each time an edge is removed or reintroduced?
+##' @param prior_pdf Probability Density Function of the prior. Must only have
+##' two arguments, `th` and `di` (a vector or matrix of regression coefficients
+##' samples and the number of dimensions of a single sample respectively).
+##' @param ess Threshold: if the effective sample size of the particle weights
+##' falls below this value then a resample move step is triggered. Defaults to
+##' `N/2`. See `IBIS.Z` for details.
+##' @param n_move Number of Metropolis-Hastings steps to apply each time a
+##' resample move step is triggered. Defaults to 1. See `IBIS.Z` for details.
+##' @param plot_progress Do you want to plot the output of the clustering each
+##' time an edge is removed or reintroduced?
 ##' @param verbose Do you want the progress of the algorithm to be shown?
 ##' @return Either a list or a list of two lists. See details.
-##' @details Assumes a Bayesian logistic regression model for each cohort, with the overall model being a product of these sub-models.
+##' @details Assumes a Bayesian logistic regression model for each cohort, with
+##' the overall model being a product of these sub-models.
 ##'
-##' A minimum spanning tree graph is first constructed from a subset of the covariates. Then at each iteration, each edge in the current graph is checked to see if removal to split a cohort is beneficial, and then either we selected the optimal edge to remove or we concluded it is not beneficial to remove any more edges. At the end of each iteration we also check the set of removed edges to see if it beneficial to reintroduce any previously removed edges. After this process has ended we then reintroduce edges in the removed set specifically to meet the criteria set by the user in the most optimal manner possible through a greedy approach. For more details see the help pages of `lbe.gen`,`one.stage.mst`,`two.stage.mst`,`remove.edge`,`deforest.noc`,`deforest.soc`,`deforest.maxreg`,`deforest.validation`, `deforest.balanced` and the paper *UNCOVER*.
+##' A minimum spanning tree graph is first constructed from a subset of the
+##' covariates. Then at each iteration, each edge in the current graph is
+##' checked to see if removal to split a cohort is beneficial, and then either
+##' we selected the optimal edge to remove or we concluded it is not beneficial
+##' to remove any more edges. At the end of each iteration we also check the set
+##' of removed edges to see if it beneficial to reintroduce any previously
+##' removed edges. After this process has ended we then reintroduce edges in the
+##' removed set specifically to meet the criteria set by the user in the most
+##' optimal manner possible through a greedy approach. For more details see the
+##' help pages of `lbe.gen`,`one.stage.mst`,`two.stage.mst`,`remove.edge`,
+##' `deforest.noc`,`deforest.soc`,`deforest.maxreg`,`deforest.validation`,
+##' `deforest.balanced` and the paper *UNCOVER*.
 ##'
-##' If `rprior` and `prior_pdf` are not specified then the default prior is a standard multivariate normal.
+##' If `rprior` and `prior_pdf` are not specified then the default prior is a
+##' standard multivariate normal.
 ##'
 ##' The graph can be undergo deforestation to meet 6 possible criteria:
 ##'
-##' 1. `"NoC"`: Number of Clusters - we specify a maximum number of clusters (`max_K`) we can tolerate in the final output of the algorithm. See `deforest.noc` for more details.
+##' 1. `"NoC"`: Number of Clusters - we specify a maximum number of clusters
+##' (`max_K`) we can tolerate in the final output of the algorithm. See
+##' `deforest.noc` for more details.
 ##'
-##' 2. `"SoC"`: Size of Clusters - we specify a minimum number of observations (`min_size`) we can tolerate being assigned to a cluster in the final output of the algorithm. See `deforest.soc` for more details.
+##' 2. `"SoC"`: Size of Clusters - we specify a minimum number of observations
+##' (`min_size`) we can tolerate being assigned to a cluster in the final output
+##' of the algorithm. See `deforest.soc` for more details.
 ##'
-##' 3. `"MaxReg"`: Maximal Regret - we give a maximum tolerlance (`exp(reg)`) that we allow the Bayesian evidence to decrease by by reintroducing an edge. See `deforest.maxreg` for more details.
+##' 3. `"MaxReg"`: Maximal Regret - we give a maximum tolerlance (`exp(reg)`)
+##' that we allow the Bayesian evidence to decrease by by reintroducing an edge.
+##' See `deforest.maxreg` for more details.
 ##'
-##' 4. `"Validation"`: Validation Data - we split (using `split`) the data into training and validation data, apply the first stage of the algorithm on the training data and the introduce the validation data for the deforestation stage. See `deforest.valaidation` for more details.
+##' 4. `"Validation"`: Validation Data - we split (using `split`) the data into
+##' training and validation data, apply the first stage of the algorithm on the
+##' training data and the introduce the validation data for the deforestation
+##' stage. See `deforest.valaidation` for more details.
 ##'
-##' 5. `"Balanced"`: Balanced Response Class Within Clusters - We specify a minimum number of observations (`n_min_class`) in a cluster that have the minority response class associated to them (the minimum response class is determined for each cluster).
+##' 5. `"Balanced"`: Balanced Response Class Within Clusters - We specify a
+##' minimum number of observations (`n_min_class`) in a cluster that have the
+##' minority response class associated to them (the minimum response class is
+##' determined for each cluster).
 ##'
-##' 6. `"None"`: No Criteria Specified - we do not go through the second deforestation stage of the algorithm.
+##' 6. `"None"`: No Criteria Specified - we do not go through the second
+##' deforestation stage of the algorithm.
 ##'
-##' For more details on the specifics of the possible values for `SMC_method`, see the help page of the function `lbe.gen`.
+##' For more details on the specifics of the possible values for `SMC_method`,
+##' see the help page of the function `lbe.gen`.
 ##'
-##' If any deforestation criterion other than `"Validation"` is chosen, then the output will be a list of the following:
+##' If any deforestation criterion other than `"Validation"` is chosen, then the
+##' output will be a list of the following:
 ##'
-##' 1. Cluster Allocation - A vector indicating which cluster each observation belongs to.
+##' 1. Cluster Allocation - A vector indicating which cluster each observation
+##' belongs to.
 ##'
-##' 2. Log Marginal Likelihoods - A vector of the log Bayesian evidences (or log marginal likelihoods) of each of the clusters. The sum of this vector will be the log Bayesian evidence of the overall model.
+##' 2. Log Marginal Likelihoods - A vector of the log Bayesian evidences (or log
+##' marginal likelihoods) of each of the clusters. The sum of this vector will
+##' be the log Bayesian evidence of the overall model.
 ##'
 ##' 3. Graph - The final graph of the data.
 ##'
-##' 4. Number of Clusters - Total number of clusters (or cohorts) in the final output.
+##' 4. Number of Clusters - Total number of clusters (or cohorts) in the final
+##' output.
 ##'
-##' 5. Edges Removed - A matrix of the edges removed, expressed as the two vertices in the graph that the edge connected.
+##' 5. Edges Removed - A matrix of the edges removed, expressed as the two
+##' vertices in the graph that the edge connected.
 ##'
-##' If the deforestation criterion chosen is `"Validation"`, then we produce a list of two lists. The first is the list given above for only the training data, and the second is the list given above for both the training data and the valaidation data combined.
+##' If the deforestation criterion chosen is `"Validation"`, then we produce a
+##' list of two lists. The first is the list given above for only the training
+##' data, and the second is the list given above for both the training data and
+##' the valaidation data combined.
 ##'
-##' @seealso [lbe.gen,one.stage.mst,two.stage.mst,remove.edge,deforest.noc,deforest.soc,deforest.maxreg,deforest.validation,deforest.balanced]
+##' @seealso [lbe.gen,one.stage.mst,two.stage.mst,remove.edge,deforest.noc,deforest.soc,deforest.maxreg,deforest.validation,deforest.balanced,IBIS.Z,memo.bic]
 ##' @examples
 ##'
 ##' # First we generate a covariate matrix `X` and binary response vector `y`
@@ -121,8 +195,9 @@
 
 UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
                     deforest_criterion="None",split=1,max_K=Inf,min_size=0,
-                    reg=0,n_min_class = 0,SMC_method="SMC_BIC",SMC_thres=30,
-                    rprior=NULL,prior_pdf=NULL,plot_progress=F,verbose = T){
+                    reg=0,n_min_class = 0,SMC_thres=30,BIC_memo_thres = Inf,
+                    SMC_memo_thres = Inf,rprior=NULL,prior_pdf=NULL,ess=N/2,
+                    n_move=1,plot_progress=F,verbose = T){
   if((!is.null(rprior)&is.null(prior_pdf))|(is.null(rprior)&!is.null(prior_pdf))){
     stop("Both sampling function and probability density function of the prior are required")
   }
@@ -149,10 +224,16 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
   } else{
     g <- one.stage.mst(obs = X,rho = mst_var)
   }
+  depth_g <- V(g)$name[dfs(g,get_diameter(g)[1])$order]
+  edge_rank <- matrix(0,length(E(g)),2)
+  for(i in 2:length(depth_g)){
+    pot_edg <- V(g)$name[neighbors(g,depth_g[i])]
+    edge_rank[i-1,] <- c(depth_g[i],pot_edg[which(pot_edg %in% depth_g[1:i])])
+  }
   n <- length(y)
   K <- 1
   z <- rep(1,n)
-  logZ <- lbe.gen(method = SMC_method,thres = SMC_thres,obs_mat = X,res_vec = y,p_num = N,rpri = rprior,p_pdf = prior_pdf)
+  logZ <- lbe.gen(thres = SMC_thres,obs_mat = X,res_vec = y,memo_thres_bic = BIC_memo_thres,memo_thres_smc = SMC_memo_thres,p_num = N,rpri = rprior,p_pdf = prior_pdf,efs = ess,nm = n_move)
   edge_rem <- c()
   system_save <- vector(mode = "list",length=1)
   combine_save <- list()
@@ -178,10 +259,17 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
       } else{
         system_save[[k]] <- list(z,logZ,g,c())
       }
-      for(i in 1:length(E(g))){
+      for(q in 1:nrow(edge_rank)){
+        i <- get.edge.ids(g,edge_rank[q,])
+        if(i==0){
+          if(verbose){
+            txtProgressBar(min=1,max=nrow(edge_rank),initial=q,style=3)
+          }
+          next
+        }
         if(z[get.edgelist(g,names=F)[i,]][1]!=k){
           if(verbose){
-            txtProgressBar(min=1,max=length(E(g)),initial=i,style=3)
+            txtProgressBar(min=1,max=nrow(edge_rank),initial=q,style=3)
           }
           next
         }
@@ -190,12 +278,12 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
           z_temp <- components(g_temp)$membership
           if(!identical(sort(unique(z_temp[-samp])),as.numeric(1:(K+1)))){
             if(verbose){
-              txtProgressBar(min=1,max=length(E(g)),initial=i,style=3)
+              txtProgressBar(min=1,max=nrow(edge_rank),initial=q,style=3)
             }
             next
           }
         }
-        er_temp <- remove.edge(gra = g,j = i,clu_al = z,lbe = logZ,obs = X,res = y,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf)
+        er_temp <- remove.edge(gra = g,j = i,clu_al = z,lbe = logZ,obs = X,res = y,est_thres = SMC_thres,mtb = BIC_memo_thres,mts = SMC_memo_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,efsamp = ess,methas = n_move)
         if(sum(er_temp[[2]])>sum(system_save[[k]][[2]])){
           if(deforest_criterion=="Validation"){
             system_save[[k]] <- c(er_temp,list(get.edgelist(g)[i,]),list(g_temp))
@@ -204,7 +292,7 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
           }
         }
         if(verbose){
-          txtProgressBar(min=1,max=length(E(g)),initial=i,style=3)
+          txtProgressBar(min=1,max=nrow(edge_rank),initial=q,style=3)
         }
       }
       if(verbose){
@@ -262,7 +350,7 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
     while(j <= nrow(edge_rem)){
       edge_z <- sort(z[match(edge_rem[j,],V(g)$name)])
       if(!identical(combine_save[[j]][[1]],which(z==edge_z[1]| z==edge_z[2]))){
-        combine_save[[j]] <- list(which(z==edge_z[1]| z==edge_z[2]),lbe.gen(method = SMC_method,thres = SMC_thres,obs_mat = X[which(z==edge_z[1]| z==edge_z[2]),,drop=F],res_vec = y[which(z==edge_z[1]| z==edge_z[2])],p_num = N,rpri = rprior,p_pdf = prior_pdf))
+        combine_save[[j]] <- list(which(z==edge_z[1]| z==edge_z[2]),lbe.gen(thres = SMC_thres,obs_mat = X,res_vec = y,obs_ind = which(z==edge_z[1]| z==edge_z[2]),p_num = N,rpri = rprior,p_pdf = prior_pdf,memo_thres_bic = BIC_memo_thres,memo_thres_smc = SMC_memo_thres,efs = ess,nm = n_move))
       }
       if(verbose){
         txtProgressBar(min=1,max=nrow(edge_rem)+1,initial=j+1,style=3)
@@ -336,7 +424,7 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
     message("Deforestation Stage")
   }
   if(deforest_criterion=="NoC"){
-    pnoc <- deforest.noc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,K_dag = max_K,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
+    pnoc <- deforest.noc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,K_dag = max_K,clu_al = z,c_s = combine_save,est_thres = SMC_thres,mtb = BIC_memo_thres,mts = SMC_memo_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,efsamp = ess,methas = n_move,p_p = plot_progress,rho = mst_var,vb = verbose)
     if(sum(model_selection[[2]])>sum(pnoc[[2]])){
       if(plot_progress){
         pairs(X[,mst_var],pch=as.character(y),col=model_selection[[1]],cex=0.5)
@@ -354,7 +442,7 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
     }
   }
   if(deforest_criterion=="SoC"){
-    psoc <- deforest.soc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,n_dag = min_size,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
+    psoc <- deforest.soc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,n_dag = min_size,clu_al = z,c_s = combine_save,est_thres = SMC_thres,mtb = BIC_memo_thres,mts = SMC_memo_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,efsamp = ess,methas = n_move,p_p = plot_progress,rho = mst_var,vb = verbose)
     if(sum(model_selection[[2]])>sum(psoc[[2]])){
       if(plot_progress){
         pairs(X[,mst_var],pch=as.character(y),col=model_selection[[1]],cex=0.5)
@@ -372,7 +460,7 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
     }
   }
   if(deforest_criterion=="Balanced"){
-    pbal <- deforest.balanced(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,ups = n_min_class,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
+    pbal <- deforest.balanced(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,ups = n_min_class,clu_al = z,c_s = combine_save,est_thres = SMC_thres,mtb = BIC_memo_thres,mts = SMC_memo_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,efsamp = ess,methas = n_move,p_p = plot_progress,rho = mst_var,vb = verbose)
     if(sum(model_selection[[2]])>sum(pbal[[2]])){
       if(plot_progress){
         pairs(X[,mst_var],pch=as.character(y),col=model_selection[[1]],cex=0.5)
@@ -400,14 +488,14 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
                 "Edges Removed" = edge_rem))
   }
   if(deforest_criterion=="MaxReg"){
-    pmaxreg <- deforest.maxreg(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,tau = reg,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
+    pmaxreg <- deforest.maxreg(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,tau = reg,clu_al = z,c_s = combine_save,est_thres = SMC_thres,mtb = BIC_memo_thres,mts = SMC_memo_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,efsamp = ess,methas = n_move,p_p = plot_progress,rho = mst_var,vb = verbose)
     if(plot_progress){
       pairs(X[,mst_var],pch=as.character(y),col=pmaxreg[[1]],cex=0.5)
     }
     return(pmaxreg)
   }
   if(deforest_criterion=="Validation"){
-    pval <- deforest.validation(obs = X,obs_all = X_all,res = y,res_all = y_all,gra = g,lbe = logZ,eps = edge_rem,gra_all = g_all,clu_al = z,c_s = combine_save,est_method = SMC_method,est_thres = SMC_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,p_p = plot_progress,rho = mst_var,vb = verbose)
+    pval <- deforest.validation(obs = X,obs_all = X_all,res = y,res_all = y_all,gra = g,lbe = logZ,eps = edge_rem,gra_all = g_all,clu_al = z,c_s = combine_save,est_thres = SMC_thres,mtb = BIC_memo_thres,mts = SMC_memo_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,efsamp = ess,methas = n_move,p_p = plot_progress,rho = mst_var,vb = verbose)
     if(plot_progress){
       pairs(X_all[,mst_var],pch=as.character(y_all),col=pval[[2]][[1]],cex=0.5)
     }

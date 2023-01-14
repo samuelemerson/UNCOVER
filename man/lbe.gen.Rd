@@ -5,32 +5,41 @@
 \title{Log Bayesian evidence generator}
 \usage{
 lbe.gen(
-  method = "SMC_BIC",
-  thres = Inf,
   obs_mat,
   res_vec,
-  p_num = 0,
-  rpri = NULL,
-  p_pdf = NULL,
-  subs = NULL,
-  efs = length(res_vec)/2,
+  obs_ind = 1:length(res_vec),
+  thres = 30,
+  memo_thres_bic = Inf,
+  memo_thres_smc = Inf,
+  p_num = 1000,
+  rpri,
+  p_pdf,
+  efs = p_num/2,
   nm = 1
 )
 }
 \arguments{
-\item{method}{Method to be used to estimate log(Z), can be one of `"SMC"`,
-`"SMC_BIC"` or `"BIC"`}
-
-\item{thres}{The threshold for which the number of observations needs to
-exceed to consider using BIC as an estimator. Only applies if method
-`"SMC_BIC"` is selected. Defaults to infinity if not specified.}
-
 \item{obs_mat}{Covariate matrix}
 
 \item{res_vec}{Binary response vector}
 
-\item{p_num}{Number of samples of the prior used for the SMC sampler. Not
-required if method `"BIC"` selected.}
+\item{obs_ind}{Vector of indices indicating which observations are in the
+model. Defaults to all observations.}
+
+\item{thres}{The threshold for which the number of observations needs to
+exceed to consider using BIC as an estimator. Defaults to 30 if not
+specified.}
+
+\item{memo_thres_bic}{The threshold for when it is deemed worthwhile to
+check the cache of function `memo.bic` for similar observation indices.
+Defaults to never checking the cache.}
+
+\item{memo_thres_smc}{The threshold for when it is deemed worthwhile to
+check the cache of function `IBIS.Z` for similar observation indices.
+Defaults to never checking the cache.}
+
+\item{p_num}{Number of samples of the prior used for the SMC sampler.
+Default value is 1000 samples.}
 
 \item{rpri}{Function to sample from the prior. Must only have two arguments,
 `p_n` and `di` (Number of prior samples to generate and the number of
@@ -39,6 +48,13 @@ dimensions of a single sample respectively).}
 \item{p_pdf}{Probability Density Function of the prior. Must only have two
 arguments, `th` and `di` (a vector or matrix of regression coefficients
 samples and the number of dimensions of a single sample respectively).}
+
+\item{efs}{Threshold: if the effective sample size of the particle weights
+falls below this value then a resample move step is triggered. Defaults to
+`p_num/2`. See `IBIS.Z` for details.}
+
+\item{nm}{Number of Metropolis-Hastings steps to apply each time a
+resample move step is triggered. Defaults to 1. See `IBIS.Z` for details.}
 }
 \value{
 An estimation of the log Bayesian evidence
@@ -50,17 +66,24 @@ logistic regression model.
 \details{
 log(Z) is estimated using three possible methods:
 
-1. `"SMC"`: Estimates log(Z) using an SMC sampler. See `IBIS.Z` for more
-details.
+1. `"SMC"`: Estimates log(Z) using an SMC sampler. In order to achieve this
+set `thres = Inf`. See `IBIS.Z` for more details.
 
 2. `"SMC_BIC"`: Initially tries to estimate log(Z) using BIC but will revert
 to using an SMC sampler if the data is linearly separable. Also reverts to
 using an SMC sampler if the number of observations is below a certain
 threshold. Recommended method and is set as default.
 
-3. `"BIC"`: Estimates log(Z) with the Bayesian Information Criterion (BIC).
-Does not require prior specification but only advisable if the number of
-observations is large.
+3. `"BIC"`: Always tries to estimate log(Z) using the
+Bayesian Information Criterion (BIC). Only reverts to an SMC sampler if the
+data is linearly separable. In order to achieve this set `thres = 0`. Only
+advisable if the number of observations is large.
+
+`memo_thres_bic` is recommended to be high as the computation time spent
+searching for a similar previous run of `memo.bic` is likely to be much
+higher than running `memo.bic` from scratch when the number of observations
+isn't extremely high. `memo_thres_smc` should be specified much lower as
+the running the SMC sampler function is much more costly.
 }
 \examples{
 
@@ -69,13 +92,13 @@ observations is large.
 CM <- matrix(rnorm(2000),1000,2)
 rv <- sample(0:1,1000,replace=T)
 
-# We can then estimate log(Z) using the `"BIC"` method
-lbe.gen(method = "BIC",obs_mat = CM,res_vec = rv)
-
 # If we assume the prior for the regression coefficients is a standard
 # normal
 pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
 pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
+
+# We can then estimate log(Z) using the `"BIC"` method
+lbe.gen(obs_mat = CM,res_vec = rv,thres = 0,rpri = pr_samp, p_pdf = pr_fun)
 
 # If we suspect that the data might be linearly separable
 lbe.gen(method = "SMC_BIC",obs_mat = CM,res_vec = rv,p_num = 500, rpri = pr_samp, p_pdf = pr_fun)

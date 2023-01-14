@@ -13,11 +13,14 @@ deforest.soc(
   n_dag,
   clu_al = NULL,
   c_s = NULL,
-  est_method = "SMC_BIC",
-  est_thres = Inf,
-  par_no = 0,
+  est_thres = 30,
+  mtb = Inf,
+  mts = Inf,
+  par_no = 1000,
   rfun = NULL,
   pdf_fun = NULL,
+  efsamp = par_no/2,
+  methas = 1,
   p_p = F,
   rho = NULL,
   vb = F
@@ -28,36 +31,68 @@ deforest.soc(
 
 \item{res}{Binary response vector}
 
-\item{gra}{`igraph` object which contains the information of the graph of the current model}
+\item{gra}{`igraph` object which contains the information of the graph of
+the current model}
 
-\item{lbe}{A vector detailing the log Bayesian evidences of all the sub-models defined by the separated components of `gra`}
+\item{lbe}{A vector detailing the log Bayesian evidences of all the
+sub-models defined by the separated components of `gra`}
 
-\item{eps}{A 2-column matrix of edges previously removed. Rows correspond to edges and edges should be expressed as the two vertices the edge connects.}
+\item{eps}{A 2-column matrix of edges previously removed. Rows correspond to
+edges and edges should be expressed as the two vertices the edge connects.}
 
-\item{n_dag}{The minimum number of observations allowed for any cluster in the final model}
+\item{n_dag}{The minimum number of observations allowed for any cluster in
+the final model}
 
-\item{clu_al}{A vector detailing the cluster allocation of each observation. If not specified the function will generate this vector.}
+\item{clu_al}{A vector detailing the cluster allocation of each observation.
+If not specified the function will generate this vector.}
 
-\item{c_s}{A list of length `nrow(eps)`. See details more information. Does not need to be specified.}
+\item{c_s}{A list of length `nrow(eps)`. See details more information. Does
+not need to be specified.}
 
-\item{est_method}{Method to be used to estimate the log Bayesian evidence of the newly formed sub-models, can be one of `"SMC"`,`"SMC_BIC"` or `"BIC"`}
+\item{est_thres}{The threshold for which the number of observations needs to
+exceed to consider using BIC as an estimator. Defaults to 30 if not
+specified.}
 
-\item{est_thres}{The threshold for which the number of observations needs to exceed to consider using BIC as an estimator. Only applies if method `"SMC_BIC"` is selected. Defaults to `Inf` if not specified.}
+\item{mtb}{The threshold for when it is deemed worthwhile to
+check the cache of function `memo.bic` for similar observation indices.
+Defaults to never checking the cache. See `lbe.gen` for details.}
 
-\item{par_no}{Number of samples of the prior used for the SMC sampler. Not required if method `"BIC"` selected.}
+\item{mts}{The threshold for when it is deemed worthwhile to
+check the cache of function `IBIS.Z` for similar observation indices.
+Defaults to never checking the cache. See `lbe.gen` for details.}
 
-\item{rfun}{Function to sample from the prior. Must only have two arguments, `p_n` and `di` (Number of prior samples to generate and the number of dimensions of a single sample respectively).}
+\item{par_no}{Number of samples of the prior used for the SMC sampler.
+Default value is 1000 samples.}
 
-\item{pdf_fun}{Probability Density Function of the prior. Must only have two arguments, `th` and `di` (a vector or matrix of regression coefficients samples and the number of dimensions of a single sample respectively).}
+\item{rfun}{Function to sample from the prior. Must only have two arguments,
+`p_n` and `di` (Number of prior samples to generate and the number of
+dimensions of a single sample respectively).}
 
-\item{p_p}{Do you want to plot the output of the clustering each time an edge is reintroduced?}
+\item{pdf_fun}{Probability Density Function of the prior. Must only have two
+arguments, `th` and `di` (a vector or matrix of regression coefficients
+samples and the number of dimensions of a single sample respectively).}
 
-\item{rho}{Only applies if `p_p` is `TRUE`. A vector specifying which variables of the covariate matrix to plot.}
+\item{efsamp}{Threshold: if the effective sample size of the particle
+weights falls below this value then a resample move step is triggered.
+Defaults to `p_num/2`. See `IBIS.Z` for details.}
+
+\item{methas}{Number of Metropolis-Hastings steps to apply each time a
+resample move step is triggered. Defaults to 1. See `IBIS.Z` for details.}
+
+\item{p_p}{Do you want to plot the output of the clustering each time an
+edge is reintroduced?}
+
+\item{rho}{Only applies if `p_p` is `TRUE`. A vector specifying which
+variables of the covariate matrix to plot.}
 
 \item{vb}{Do you want the progress of the algorithm to be shown?}
 }
 \value{
-A list consisting of; the cluster allocation vector of the new model, the resulting Bayesian evidence vector for the new model, an `igraph` object containing information on the new graph, the number of clusters in the model and the edges that have been removed from the graph to achieve this model.
+A list consisting of; the cluster allocation vector of the new
+model, the resulting Bayesian evidence vector for the new model, an `igraph`
+object containing information on the new graph, the number of clusters in
+the model and the edges that have been removed from the graph to achieve
+this model.
 }
 \description{
 Adds edges to the graph to increase the minimum number of observations in models clusters, until the criteria is met and it is no longer beneficial to reintroduce any more edges. This is done in a greedy manner to optimise the log Bayesian evidence of the resulting models.
@@ -65,17 +100,47 @@ Adds edges to the graph to increase the minimum number of observations in models
 Used in UNCOVER if the deforest condition is set to "SoC".
 }
 \details{
-Requires a minimum spanning forest graph which defines components for a multiplicative Bayesian logistic regression model, and the edges removed to achieve this graph.
+Requires a minimum spanning forest graph which defines components
+for a multiplicative Bayesian logistic regression model, and the edges
+removed to achieve this graph.
 
-For each edge previously removed the log Bayesian evidence `lbe` is estimated for the model obtained by reintroducing said edge. The set of edges in then narrowed down by only considering edges which improve the model through their reintroduction or combine a cluster which currently fails the criteria. The optimal edge of this group is then selected, then we reintroduce this edge to the graph and update the model. If added the remaining edges are then reconsidered and this process is repeated until either; the criterion is met and it is not beneficial to add anymore edges to the graph or there are no longer any edges to reintroduce. We stress here that if an edge is reintroduced and it does not benefit the overall model then at least one cluster which does not meet the criteria must be being combined.
+For each edge previously removed the log Bayesian evidence `lbe` is
+estimated for the model obtained by reintroducing said edge. The set of
+edges in then narrowed down by only considering edges which improve the
+model through their reintroduction or combine a cluster which currently
+fails the criteria. The optimal edge of this group is then selected, then we
+reintroduce this edge to the graph and update the model. If added the
+remaining edges are then reconsidered and this process is repeated until
+either; the criterion is met and it is not beneficial to add anymore edges
+to the graph or there are no longer any edges to reintroduce. We stress here
+that if an edge is reintroduced and it does not benefit the overall model
+then at least one cluster which does not meet the criteria must be being
+combined.
 
-If the vertices of graph `gra` are specifically named then elements of the matrix `eps` should not be numeric and instead be the names of the vertices involved.
+If the vertices of graph `gra` are specifically named then elements of the
+matrix `eps` should not be numeric and instead be the names of the vertices
+involved.
 
-If the clusters specified by the initial model have fixed labels then this should be specified by `clu_al`. `clu_al` must be one of the possible labeling of the observations defined by the clusters of the graph. For example for a graph where there is only one connected component, if `clu_al` is specified it cannot be anything other than `rep(1,length(res))`.
+If the clusters specified by the initial model have fixed labels then this
+should be specified by `clu_al`. `clu_al` must be one of the possible
+labeling of the observations defined by the clusters of the graph. For
+example for a graph where there is only one connected component, if `clu_al`
+is specified it cannot be anything other than `rep(1,length(res))`.
 
-`c_s` allows the user to specify information about the edges removed. For example if `c_s` is specified it must be of the form of list with each element representing information on the reintroduction of an edge. The index of this list corresponds to the index of the edges in `eps`. Furthermore, each element of the list will itself be a list of two elements, the first being the indices of the observations combined by introducing this edge and the second being the sub log Bayesian evidence of the cluster formed through this edge reintroduction. `c_s` is intended to be used to reduce computation time, and so whilst incorrect information on the observations involved in particular lists of `c_s` will not produce incorrect results, it will not have the desired time saving effect.
+`c_s` allows the user to specify information about the edges removed. For
+example if `c_s` is specified it must be of the form of list with each
+element representing information on the reintroduction of an edge. The index
+of this list corresponds to the index of the edges in `eps`. Furthermore,
+each element of the list will itself be a list of two elements, the first
+being the indices of the observations combined by introducing this edge and
+the second being the sub log Bayesian evidence of the cluster formed through
+this edge reintroduction. `c_s` is intended to be used to reduce computation
+time, and so whilst incorrect information on the observations involved in
+particular lists of `c_s` will not produce incorrect results, it will not
+have the desired time saving effect.
 
-For more details on the specifics of the possible values for `est_method`, see the help page of the function `lbe.gen`.
+For more details on the specifics of the possible methods for log Bayesian
+evidence estimation, see the help page of the function `lbe.gen`.
 }
 \examples{
 

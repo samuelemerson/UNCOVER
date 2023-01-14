@@ -22,23 +22,48 @@
 ##' Used in UNCOVER to check if the removal of certain edges is beneficial to the model.
 ##'
 ##' @keywords edge removal
-##' @param gra `igraph` object which contains the information of the graph of the current model
+##' @param gra `igraph` object which contains the information of the graph of
+##' the current model
 ##' @param j Index of the edge which will be removed from the graph
-##' @param clu_al A vector detailing the cluster allocation of each observation. If not specified the function will generate this vector.
-##' @param lbe A vector detailing the log Bayesian evidences of all the sub-models defined by the separated components of `gra`
+##' @param clu_al A vector detailing the cluster allocation of each observation.
+##' If not specified the function will generate this vector.
+##' @param lbe A vector detailing the log Bayesian evidences of all the
+##' sub-models defined by the separated components of `gra`
 ##' @param obs Covariate matrix
 ##' @param res Binary response vector
-##' @param est_method Method to be used to estimate the log Bayesian evidence of the newly formed sub-models, can be one of `"SMC"`,`"SMC_BIC"` or `"BIC"`
-##' @param est_thres The threshold for which the number of observations needs to exceed to consider using BIC as an estimator. Only applies if method `"SMC_BIC"` is selected. Defaults to infinity if not specified.
-##' @param par_no Number of samples of the prior used for the SMC sampler. Not required if method `"BIC"` selected.
-##' @param rfun Function to sample from the prior. Must only have two arguments, `p_n` and `di` (Number of prior samples to generate and the number of dimensions of a single sample respectively).
-##' @param pdf_fun Probability Density Function of the prior. Must only have two arguments, `th` and `di` (a vector or matrix of regression coefficients samples and the number of dimensions of a single sample respectively).
-##' @return A list consisting of; the cluster allocation vector of the new model, the resulting Bayesian evidence vector for the new model and an `igraph` object containing information on the new graph.
-##' @details Requires a minimum spanning forest graph which defines components for a multiplicative Bayesian logistic regression model. `lbe.gen` should be used to obtain the log Bayesian evidence of this initial model before this function is used.
+##' @param est_thres The threshold for which the number of observations needs to
+##' exceed to consider using BIC as an estimator. Defaults to 30 if not
+##' specified.
+##' @param mtb The threshold for when it is deemed worthwhile to
+##' check the cache of function `memo.bic` for similar observation indices.
+##' Defaults to never checking the cache. See `lbe.gen` for details.
+##' @param mts The threshold for when it is deemed worthwhile to
+##' check the cache of function `IBIS.Z` for similar observation indices.
+##' Defaults to never checking the cache. See `lbe.gen` for details.
+##' @param par_no Number of samples of the prior used for the SMC sampler.
+##' Defaults to 1000 if not specified.
+##' @param rfun Function to sample from the prior. Must only have two arguments,
+##' `p_n` and `di` (Number of prior samples to generate and the number of
+##' dimensions of a single sample respectively).
+##' @param pdf_fun Probability Density Function of the prior. Must only have two
+##' arguments, `th` and `di` (a vector or matrix of regression coefficients
+##' samples and the number of dimensions of a single sample respectively).
+##' @param efsamp Threshold: if the effective sample size of the particle weights
+##' falls below this value then a resample move step is triggered. Defaults to
+##' `p_num/2`. See `IBIS.Z` for details.
+##' @param methas Number of Metropolis-Hastings steps to apply each time a
+##' resample move step is triggered. Defaults to 1. See `IBIS.Z` for details.
+##' @return A list consisting of; the cluster allocation vector of the new
+##' model, the resulting Bayesian evidence vector for the new model and an
+##' `igraph` object containing information on the new graph.
+##' @details Requires a minimum spanning forest graph which defines components
+##' for a multiplicative Bayesian logistic regression model. `lbe.gen` should be
+##' used to obtain the log Bayesian evidence of this initial model before this
+##' function is used.
 ##'
-##' If the clusters specified by the initial model have fixed labels then this should be specified by `clu_al`. `clu_al` must be a one of the possible labelling of the observations defined by the clusters of the graph. For example for a graph where there is only one connected component, if `clu_al` is specified it cannot be anything other than `rep(1,length(res)`.
+##' If the clusters specified by the initial model have fixed labels then this should be specified by `clu_al`. `clu_al` must be a one of the possible labeling of the observations defined by the clusters of the graph. For example for a graph where there is only one connected component, if `clu_al` is specified it cannot be anything other than `rep(1,length(res)`.
 ##'
-##' For more details on the specifics of the possible values for `est_method`, see the help page of the function `lbe.gen`.
+##' For more details on the specifics of the possible estimation methods, see the help page of the function `lbe.gen`.
 ##'
 ##' @seealso [lbe.gen]
 ##' @examples
@@ -58,11 +83,11 @@
 ##'
 ##' # Then we can generate the log Bayesian evidence for this one component
 ##' # model
-##' lZ <- lbe.gen(method = "SMC_BIC",thres = 30,obs_mat = CM,res_vec = rv,p_num = 500, rpri = pr_samp, p_pdf = pr_fun)
+##' lZ <- lbe.gen(obs_mat = CM,res_vec = rv, rpri = pr_samp, p_pdf = pr_fun)
 ##' lZ
 ##'
 ##' # If we wished to remove the first edge in the graph we would have
-##' er <- remove.edge(gra = gra_CM, j = 1, lbe = lZ, obs = CM, res = rv, est_method = "SMC_BIC", par_no = 500, rfun = pr_samp, pdf_fun = pr_fun)
+##' er <- remove.edge(gra = gra_CM, j = 1, lbe = lZ, obs = CM, res = rv, rfun = pr_samp, pdf_fun = pr_fun)
 ##' clu_al.2 <- er[[1]]
 ##' lZ.2 <- er[[2]]
 ##' gra_CM.2 <- er[[3]]
@@ -72,12 +97,14 @@
 ##'
 ##' # If we then wanted to remove the first edge of the newly formed graph
 ##' # gra_CM.2 we would have
-##' er.2 <- remove.edge(gra = gra_CM.2, j = 1, clu_al = clu_al.2, lbe = lZ.2, obs = CM, res = rv, est_method = "SMC_BIC", par_no = 500, rfun = pr_samp, pdf_fun = pr_fun)
+##' er.2 <- remove.edge(gra = gra_CM.2, j = 1, clu_al = clu_al.2, lbe = lZ.2, obs = CM, res = rv, rfun = pr_samp, pdf_fun = pr_fun)
 ##' plot(er.2[[3]],layout=CM)
 ##' er.2[[2]]
 ##' sum(er.2[[2]])
 
-remove.edge <- function(gra,j,clu_al=NULL,lbe,obs,res,est_method="SMC_BIC",est_thres=Inf,par_no=NULL,rfun=NULL,pdf_fun=NULL){
+remove.edge <- function(gra,j,clu_al=NULL,lbe,obs,res,est_thres=30,mtb=Inf,
+                        mts=Inf,par_no=1000,rfun,pdf_fun,efsamp=par_no/2,
+                        methas=1){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -88,7 +115,7 @@ remove.edge <- function(gra,j,clu_al=NULL,lbe,obs,res,est_method="SMC_BIC",est_t
   change_set <- which(clu_al_rem==clu_al_rem[igraph::get.edgelist(gra,names=F)[j,2]])
   clu_al[change_set] <- K+1
   for(l in c(k,K+1)){
-    lbe[l] <- lbe.gen(method = est_method,thres = est_thres,obs_mat = obs[which(clu_al==l),,drop=F],res_vec = res[which(clu_al==l)],p_num = par_no,rpri = rfun,p_pdf = pdf_fun)
+    lbe[l] <- lbe.gen(thres = est_thres,obs_mat = obs,res_vec = res,obs_ind = which(clu_al==l),memo_thres_bic = mtb,memo_thres_smc = mts,p_num = par_no,rpri = rfun,p_pdf = pdf_fun,efs = efsamp,nm = methas)
   }
   return(list(clu_al,lbe,gra_rem))
 }

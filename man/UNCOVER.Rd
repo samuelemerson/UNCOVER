@@ -16,10 +16,13 @@ UNCOVER(
   min_size = 0,
   reg = 0,
   n_min_class = 0,
-  SMC_method = "SMC_BIC",
   SMC_thres = 30,
+  BIC_memo_thres = Inf,
+  SMC_memo_thres = Inf,
   rprior = NULL,
   prior_pdf = NULL,
+  ess = N/2,
+  n_move = 1,
   plot_progress = F,
   verbose = T
 )
@@ -29,35 +32,70 @@ UNCOVER(
 
 \item{y}{Binary response vector}
 
-\item{mst_var}{A vector specifying which variables of the covariate matrix will be used to form the graph. If not specified all variables will be used.}
+\item{mst_var}{A vector specifying which variables of the covariate matrix
+will be used to form the graph. If not specified all variables will be used.}
 
-\item{N}{Number of samples of the prior used for the SMC sampler. Not required if method `"BIC"` selected. If required but not specified the default value is set to `1000`.}
+\item{N}{Number of samples of the prior used for the SMC sampler. Not
+required if method `"BIC"` selected. If required but not specified the
+default value is set to `1000`.}
 
-\item{stop_criterion}{What is the maximum number of clusters allowed before we terminate the first stage and begin deforestation. If not specified the algorithm continues until the Bayesian evidence cannot be improved upon, however for time and memory purposes specifying a number is highly recommended.}
+\item{stop_criterion}{What is the maximum number of clusters allowed before
+we terminate the first stage and begin deforestation. If not specified the
+algorithm continues until the Bayesian evidence cannot be improved upon,
+however for time and memory purposes specifying a number is highly
+recommended.}
 
-\item{deforest_criterion}{Criterion in which edges are reintroduced to allow the model to satisfy. Can be one of `"NoC"`,`"SoC"`,`"MaxReg"`,`"Validation"`, `"Balanced"` or `"None"`.}
+\item{deforest_criterion}{Criterion in which edges are reintroduced to allow
+the model to satisfy. Can be one of `"NoC"`,`"SoC"`,`"MaxReg"`,
+`"Validation"`, `"Balanced"` or `"None"`.}
 
-\item{split}{What fraction of the data should be used for training. Should only be specified if `deforest_criterion == "Validation`. Defaults to `1`.}
+\item{split}{What fraction of the data should be used for training. Should
+only be specified if `deforest_criterion == "Validation`. Defaults to `1`.}
 
-\item{max_K}{The maximum number of clusters allowed in the final output. Should only be specified if `deforest_criterion == "NoC`. Defaults to `Inf`.}
+\item{max_K}{The maximum number of clusters allowed in the final output.
+Should only be specified if `deforest_criterion == "NoC`. Defaults to `Inf`.}
 
-\item{min_size}{The minimum number of observations allowed for any cluster in the final model. Should only be specified if `deforest_criterion == "SoC`. Defaults to `0`.}
+\item{min_size}{The minimum number of observations allowed for any cluster
+in the final model. Should only be specified if
+`deforest_criterion == "SoC`. Defaults to `0`.}
 
-\item{reg}{Numerical natural logarithm of the tolerance parameter. Must be positive. Should only be specified if `deforest_criterion == "MaxReg`. Defaults to `0`.}
+\item{reg}{Numerical natural logarithm of the tolerance parameter. Must be
+positive. Should only be specified if `deforest_criterion == "MaxReg`.
+Defaults to `0`.}
 
-\item{n_min_class}{The minimum number of observations in any cluster that has an associated response in the minority class of that cluster. Defaults to `0`.}
+\item{n_min_class}{The minimum number of observations in any cluster that
+has an associated response in the minority class of that cluster. Defaults
+to `0`.}
 
-\item{SMC_method}{Method to be used to estimate the log Bayesian evidence of the newly formed sub-models, can be one of `"SMC"`,`"SMC_BIC"` or `"BIC"`}
+\item{SMC_thres}{The threshold for which the number of observations needs to
+exceed to consider using BIC as an estimator. Defaults to 30 if not
+specified.}
 
-\item{SMC_thres}{The threshold for which the number of observations needs to exceed to consider using BIC as an estimator. Only applies if method `"SMC_BIC"` is selected. Defaults to `Inf` if not specified.}
+\item{BIC_memo_thres}{The threshold for when it is deemed worthwhile to
+check the cache of function `memo.bic` for similar observation indices.
+Defaults to never checking the cache.}
+
+\item{SMC_memo_thres}{The threshold for when it is deemed worthwhile to
+check the cache of function `IBIS.Z` for similar observation indices.
+Defaults to never checking the cache.}
 
 \item{rprior}{Function to sample from the prior. Must only have two
 arguments, `p_num` and `di` (Number of prior samples to generate and the
 number of dimensions of a single sample respectively).}
 
-\item{prior_pdf}{Probability Density Function of the prior. Must only have two arguments, `th` and `di` (a vector or matrix of regression coefficients samples and the number of dimensions of a single sample respectively).}
+\item{prior_pdf}{Probability Density Function of the prior. Must only have
+two arguments, `th` and `di` (a vector or matrix of regression coefficients
+samples and the number of dimensions of a single sample respectively).}
 
-\item{plot_progress}{Do you want to plot the output of the clustering each time an edge is removed or reintroduced?}
+\item{ess}{Threshold: if the effective sample size of the particle weights
+falls below this value then a resample move step is triggered. Defaults to
+`N/2`. See `IBIS.Z` for details.}
+
+\item{n_move}{Number of Metropolis-Hastings steps to apply each time a
+resample move step is triggered. Defaults to 1. See `IBIS.Z` for details.}
+
+\item{plot_progress}{Do you want to plot the output of the clustering each
+time an edge is removed or reintroduced?}
 
 \item{verbose}{Do you want the progress of the algorithm to be shown?}
 }
@@ -65,46 +103,88 @@ number of dimensions of a single sample respectively).}
 Either a list or a list of two lists. See details.
 }
 \description{
-Generates cohorts for a data set through removal of edges from a graphical representation of the covariates. Edges are removed (or reintroduced) by considering the normalisation constant (or Bayesian evidence) of a multiplicative Bayesian logistic regression model.
+Generates cohorts for a data set through removal of edges from
+a graphical representation of the covariates. Edges are removed (or
+reintroduced) by considering the normalisation constant (or Bayesian
+evidence) of a multiplicative Bayesian logistic regression model.
 
-The first stage of the function is concerned purely with a greedy optimisation of the Bayeisan evidence through edge manipulation. The second stage then addresses any other criteria (known as deforest conditions) expressed by the user through reintroduction of edges.
+The first stage of the function is concerned purely with a greedy
+optimisation of the Bayeisan evidence through edge manipulation. The second
+stage then addresses any other criteria (known as deforest conditions)
+expressed by the user through reintroduction of edges.
 }
 \details{
-Assumes a Bayesian logistic regression model for each cohort, with the overall model being a product of these sub-models.
+Assumes a Bayesian logistic regression model for each cohort, with
+the overall model being a product of these sub-models.
 
-A minimum spanning tree graph is first constructed from a subset of the covariates. Then at each iteration, each edge in the current graph is checked to see if removal to split a cohort is beneficial, and then either we selected the optimal edge to remove or we concluded it is not beneficial to remove any more edges. At the end of each iteration we also check the set of removed edges to see if it beneficial to reintroduce any previously removed edges. After this process has ended we then reintroduce edges in the removed set specifically to meet the criteria set by the user in the most optimal manner possible through a greedy approach. For more details see the help pages of `lbe.gen`,`one.stage.mst`,`two.stage.mst`,`remove.edge`,`deforest.noc`,`deforest.soc`,`deforest.maxreg`,`deforest.validation`, `deforest.balanced` and the paper *UNCOVER*.
+A minimum spanning tree graph is first constructed from a subset of the
+covariates. Then at each iteration, each edge in the current graph is
+checked to see if removal to split a cohort is beneficial, and then either
+we selected the optimal edge to remove or we concluded it is not beneficial
+to remove any more edges. At the end of each iteration we also check the set
+of removed edges to see if it beneficial to reintroduce any previously
+removed edges. After this process has ended we then reintroduce edges in the
+removed set specifically to meet the criteria set by the user in the most
+optimal manner possible through a greedy approach. For more details see the
+help pages of `lbe.gen`,`one.stage.mst`,`two.stage.mst`,`remove.edge`,
+`deforest.noc`,`deforest.soc`,`deforest.maxreg`,`deforest.validation`,
+`deforest.balanced` and the paper *UNCOVER*.
 
-If `rprior` and `prior_pdf` are not specified then the default prior is a standard multivariate normal.
+If `rprior` and `prior_pdf` are not specified then the default prior is a
+standard multivariate normal.
 
 The graph can be undergo deforestation to meet 6 possible criteria:
 
-1. `"NoC"`: Number of Clusters - we specify a maximum number of clusters (`max_K`) we can tolerate in the final output of the algorithm. See `deforest.noc` for more details.
+1. `"NoC"`: Number of Clusters - we specify a maximum number of clusters
+(`max_K`) we can tolerate in the final output of the algorithm. See
+`deforest.noc` for more details.
 
-2. `"SoC"`: Size of Clusters - we specify a minimum number of observations (`min_size`) we can tolerate being assigned to a cluster in the final output of the algorithm. See `deforest.soc` for more details.
+2. `"SoC"`: Size of Clusters - we specify a minimum number of observations
+(`min_size`) we can tolerate being assigned to a cluster in the final output
+of the algorithm. See `deforest.soc` for more details.
 
-3. `"MaxReg"`: Maximal Regret - we give a maximum tolerlance (`exp(reg)`) that we allow the Bayesian evidence to decrease by by reintroducing an edge. See `deforest.maxreg` for more details.
+3. `"MaxReg"`: Maximal Regret - we give a maximum tolerlance (`exp(reg)`)
+that we allow the Bayesian evidence to decrease by by reintroducing an edge.
+See `deforest.maxreg` for more details.
 
-4. `"Validation"`: Validation Data - we split (using `split`) the data into training and validation data, apply the first stage of the algorithm on the training data and the introduce the validation data for the deforestation stage. See `deforest.valaidation` for more details.
+4. `"Validation"`: Validation Data - we split (using `split`) the data into
+training and validation data, apply the first stage of the algorithm on the
+training data and the introduce the validation data for the deforestation
+stage. See `deforest.valaidation` for more details.
 
-5. `"Balanced"`: Balanced Response Class Within Clusters - We specify a minimum number of observations (`n_min_class`) in a cluster that have the minority response class associated to them (the minimum response class is determined for each cluster).
+5. `"Balanced"`: Balanced Response Class Within Clusters - We specify a
+minimum number of observations (`n_min_class`) in a cluster that have the
+minority response class associated to them (the minimum response class is
+determined for each cluster).
 
-6. `"None"`: No Criteria Specified - we do not go through the second deforestation stage of the algorithm.
+6. `"None"`: No Criteria Specified - we do not go through the second
+deforestation stage of the algorithm.
 
-For more details on the specifics of the possible values for `SMC_method`, see the help page of the function `lbe.gen`.
+For more details on the specifics of the possible values for `SMC_method`,
+see the help page of the function `lbe.gen`.
 
-If any deforestation criterion other than `"Validation"` is chosen, then the output will be a list of the following:
+If any deforestation criterion other than `"Validation"` is chosen, then the
+output will be a list of the following:
 
-1. Cluster Allocation - A vector indicating which cluster each observation belongs to.
+1. Cluster Allocation - A vector indicating which cluster each observation
+belongs to.
 
-2. Log Marginal Likelihoods - A vector of the log Bayesian evidences (or log marginal likelihoods) of each of the clusters. The sum of this vector will be the log Bayesian evidence of the overall model.
+2. Log Marginal Likelihoods - A vector of the log Bayesian evidences (or log
+marginal likelihoods) of each of the clusters. The sum of this vector will
+be the log Bayesian evidence of the overall model.
 
 3. Graph - The final graph of the data.
 
-4. Number of Clusters - Total number of clusters (or cohorts) in the final output.
+4. Number of Clusters - Total number of clusters (or cohorts) in the final
+output.
 
-5. Edges Removed - A matrix of the edges removed, expressed as the two vertices in the graph that the edge connected.
+5. Edges Removed - A matrix of the edges removed, expressed as the two
+vertices in the graph that the edge connected.
 
-If the deforestation criterion chosen is `"Validation"`, then we produce a list of two lists. The first is the list given above for only the training data, and the second is the list given above for both the training data and the valaidation data combined.
+If the deforestation criterion chosen is `"Validation"`, then we produce a
+list of two lists. The first is the list given above for only the training
+data, and the second is the list given above for both the training data and
+the valaidation data combined.
 }
 \examples{
 
@@ -146,7 +226,7 @@ UN.none.2 <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "No
 c(sum(UN.none[[2]]),sum(UN.none.2[[2]]))
 }
 \seealso{
-[lbe.gen,one.stage.mst,two.stage.mst,remove.edge,deforest.noc,deforest.soc,deforest.maxreg,deforest.validation,deforest.balanced]
+[lbe.gen,one.stage.mst,two.stage.mst,remove.edge,deforest.noc,deforest.soc,deforest.maxreg,deforest.validation,deforest.balanced,IBIS.Z,memo.bic]
 }
 \keyword{bayesian}
 \keyword{cluster}

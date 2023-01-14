@@ -2,7 +2,9 @@
 % Please edit documentation in R/Deforest.R
 \name{deforest.validation}
 \alias{deforest.validation}
-\title{Adding validation data to the training data graph and model, then reintroducing edges that increase a robustness statistic involving the overall model and the training model}
+\title{Adding validation data to the training data graph and model, then
+reintroducing edges that increase a robustness statistic involving the
+overall model and the training model}
 \usage{
 deforest.validation(
   obs,
@@ -17,11 +19,14 @@ deforest.validation(
   rho = NULL,
   clu_al = NULL,
   c_s = NULL,
-  est_method = "SMC_BIC",
-  est_thres = Inf,
-  par_no = 0,
-  rfun = NULL,
-  pdf_fun = NULL,
+  est_thres = 30,
+  mtb = Inf,
+  mts = Inf,
+  par_no = 1000,
+  rfun,
+  pdf_fun,
+  efsamp = par_no/2,
+  methas = 1,
   p_p = F,
   vb = F
 )
@@ -35,60 +40,140 @@ deforest.validation(
 
 \item{res_all}{Binary response vector of training and validation data}
 
-\item{gra}{`igraph` object which contains the information of the graph of the current model for the training data}
+\item{gra}{`igraph` object which contains the information of the graph of
+the current model for the training data}
 
-\item{lbe}{A vector detailing the log Bayesian evidences of all the sub-models defined by the separated components of `gra`}
+\item{lbe}{A vector detailing the log Bayesian evidences of all the
+sub-models defined by the separated components of `gra`}
 
-\item{eps}{A 2-column matrix of edges previously removed from the graph `gra`. Rows correspond to edges and edges should be expressed as the two vertices the edge connects.}
+\item{eps}{A 2-column matrix of edges previously removed from the graph
+`gra`. Rows correspond to edges and edges should be expressed as the two
+vertices the edge connects.}
 
-\item{gra_all}{`igraph` object which contains the information of the graph of the current model for the all the data. If not specified `which_tr` and `rho` must be specified. See details.}
+\item{gra_all}{`igraph` object which contains the information of the graph
+of the current model for the all the data. If not specified `which_tr` and
+`rho` must be specified. See details.}
 
-\item{which_tr}{Only applies if `gra_all` is `NULL`. Vector of indices of the training observations.}
+\item{which_tr}{Only applies if `gra_all` is `NULL`. Vector of indices of
+the training observations.}
 
-\item{rho}{Only applies if `gra_all` is `NULL` or `p_p` is `TRUE`. A vector specifying which variables of the covariate matrix were used to construct the graph `gra`.}
+\item{rho}{Only applies if `gra_all` is `NULL` or `p_p` is `TRUE`. A vector
+specifying which variables of the covariate matrix were used to construct
+the graph `gra`.}
 
-\item{clu_al}{A vector detailing the cluster allocation of each observation. If not specified the function will generate this vector.}
+\item{clu_al}{A vector detailing the cluster allocation of each observation.
+If not specified the function will generate this vector.}
 
-\item{c_s}{A list of length `nrow(eps)`. See details more information. Does not need to be specified.}
+\item{c_s}{A list of length `nrow(eps)`. See details more information. Does
+not need to be specified.}
 
-\item{est_method}{Method to be used to estimate the log Bayesian evidence of the newly formed sub-models, can be one of `"SMC"`,`"SMC_BIC"` or `"BIC"`}
+\item{est_thres}{The threshold for which the number of observations needs to
+exceed to consider using BIC as an estimator. Defaults to 30 if not
+specified.}
 
-\item{est_thres}{The threshold for which the number of observations needs to exceed to consider using BIC as an estimator. Only applies if method `"SMC_BIC"` is selected. Defaults to `Inf` if not specified.}
+\item{mtb}{The threshold for when it is deemed worthwhile to
+check the cache of function `memo.bic` for similar observation indices.
+Defaults to never checking the cache. See `lbe.gen` for details.}
 
-\item{par_no}{Number of samples of the prior used for the SMC sampler. Not required if method `"BIC"` selected.}
+\item{mts}{The threshold for when it is deemed worthwhile to
+check the cache of function `IBIS.Z` for similar observation indices.
+Defaults to never checking the cache. See `lbe.gen` for details.}
 
-\item{rfun}{Function to sample from the prior. Must only have two arguments, `p_n` and `di` (Number of prior samples to generate and the number of dimensions of a single sample respectively).}
+\item{par_no}{Number of samples of the prior used for the SMC sampler.
+Default value is 1000 samples.}
 
-\item{pdf_fun}{Probability Density Function of the prior. Must only have two arguments, `th` and `di` (a vector or matrix of regression coefficients samples and the number of dimensions of a single sample respectively).}
+\item{rfun}{Function to sample from the prior. Must only have two arguments,
+`p_n` and `di` (Number of prior samples to generate and the number of
+dimensions of a single sample respectively).}
 
-\item{p_p}{Do you want to plot the output of the clustering each time an edge is reintroduced?}
+\item{pdf_fun}{Probability Density Function of the prior. Must only have two
+arguments, `th` and `di` (a vector or matrix of regression coefficients
+samples and the number of dimensions of a single sample respectively).}
+
+\item{efsamp}{Threshold: if the effective sample size of the particle
+weights falls below this value then a resample move step is triggered.
+Defaults to `p_num/2`. See `IBIS.Z` for details.}
+
+\item{methas}{Number of Metropolis-Hastings steps to apply each time a
+resample move step is triggered. Defaults to 1. See `IBIS.Z` for details.}
+
+\item{p_p}{Do you want to plot the output of the clustering each time an
+edge is reintroduced?}
 
 \item{vb}{Do you want the progress of the algorithm to be shown?}
 }
 \value{
-A list of two lists, one containing information of the training data model and one containing information on the overall model. Each list consists of a further list containing; the cluster allocation vector of the new model, the resulting Bayesian evidence vector for the new model, an `igraph` object containing information on the new graph, the number of clusters in the model and the edges that have been removed from the graph to achieve this model.
+A list of two lists, one containing information of the training data
+model and one containing information on the overall model. Each list
+consists of a further list containing; the cluster allocation vector of the
+new model, the resulting Bayesian evidence vector for the new model, an
+`igraph` object containing information on the new graph, the number of
+clusters in the model and the edges that have been removed from the graph to
+achieve this model.
 }
 \description{
-Adds validation to the training data graph and updates the log Bayesian evidence, then selects the previously removed edge with the highest Bayesian evidence ratio, and adds this edge to the graph if this edges' addition gives a larger Bayesian evidence ratio than the current Bayesian evidence ratio. This process then repeats until it is no longer beneficial to add an edge to the graph.
+Adds validation to the training data graph and updates the log
+Bayesian evidence, then selects the previously removed edge with the highest
+Bayesian evidence ratio, and adds this edge to the graph if this edges'
+addition gives a larger Bayesian evidence ratio than the current Bayesian
+evidence ratio. This process then repeats until it is no longer beneficial
+to add an edge to the graph.
 
 Used in UNCOVER if the deforest condition is set to "Validation".
 }
 \details{
-Requires a minimum spanning forest graph which defines components for a multiplicative Bayesian logistic regression model, and the edges removed to achieve this graph. This will correspond to the training model.
+Requires a minimum spanning forest graph which defines components
+for a multiplicative Bayesian logistic regression model, and the edges
+removed to achieve this graph. This will correspond to the training model.
 
-`gra_all` represents the graph obtained by adding the validation data to the initial minimum spanning tree graph of the training data and then removing the edges removed from the training data graph. See details in `two.stage.mst` for more information. If `gra_all` is not specified but `which_tr` and `rho` are, then `which_tr` must be the row indices of `obs_all` that are not present in `obs` and `rho` must be the same variables that constucted the training graph.
+`gra_all` represents the graph obtained by adding the validation data to the
+initial minimum spanning tree graph of the training data and then removing
+the edges removed from the training data graph. See details in
+`two.stage.mst` for more information. If `gra_all` is not specified but
+`which_tr` and `rho` are, then `which_tr` must be the row indices of
+`obs_all` that are not present in `obs` and `rho` must be the same variables
+that constucted the training graph.
 
-The names of the vertices in `gra` (and `gra_all` if provided) must correspond to the row index of the observation in `obs_all`.
+The names of the vertices in `gra` (and `gra_all` if provided) must
+correspond to the row index of the observation in `obs_all`.
 
-`deforest.validation` first assigns the validation data to a cluster and subsequently updates each sub models log Bayesian evidence, summing to make an updated overall log Bayesian evidence. The difference between the overall log Bayesian evidence for the updated model and the training model is the new robustness statistic (`RobS`), and the edge (if any) whose reintroduction increases `RobS` the most is added back to both graphs (`gra` and `gra_all`) and subsequently both models including `RobS` are updated. If an edge is added the remaining edges are then reconsidered (with respect to `RobS`) and this process is repeated until either; it is not beneficial to add anymore edges to the graph or there are no longer any edges to reintroduce.
+`deforest.validation` first assigns the validation data to a cluster and
+subsequently updates each sub models log Bayesian evidence, summing to make
+an updated overall log Bayesian evidence. The difference between the overall
+log Bayesian evidence for the updated model and the training model is the
+new robustness statistic (`RobS`), and the edge (if any) whose
+reintroduction increases `RobS` the most is added back to both graphs (`gra`
+and `gra_all`) and subsequently both models including `RobS` are updated. If
+an edge is added the remaining edges are then reconsidered (with respect to
+`RobS`) and this process is repeated until either; it is not beneficial to
+add anymore edges to the graph or there are no longer any edges to
+reintroduce.
 
-If the clusters specified by the initial model have fixed labels then this should be specified by `clu_al`. `clu_al` must be a one of the possible labelling of the observations defined by the clusters of the graph. For example for a graph where there is only one connected component, if `clu_al` is specified it cannot be anything other than `rep(1,length(res)`.
+If the clusters specified by the initial model have fixed labels then this
+should be specified by `clu_al`. `clu_al` must be a one of the possible
+labeling of the observations defined by the clusters of the graph. For
+example for a graph where there is only one connected component, if `clu_al`
+is specified it cannot be anything other than `rep(1,length(res)`.
 
-`c_s` allows the user to specify information about the edges removed. For example if `c_s` is specified it must be of the form of list with each element representing information on the reintroduction of an edge. The index of this list corresponds to the index of the edges in `eps`. Furthermore, each element of the list will itself be a list of two elements, the first being the indices of the observations combined by introducing this edge and the second being the sub log Bayesian evidence of the cluster formed through this edge reintroduction. `c_s` is intended to be used to reduce computation time, and so whilst incorrect information on the observations involved in particular lists of `c_s` will not produce incorrect results, it will not have the desired time saving effect.
+`c_s` allows the user to specify information about the edges removed. For
+example if `c_s` is specified it must be of the form of list with each
+element representing information on the reintroduction of an edge. The index
+of this list corresponds to the index of the edges in `eps`. Furthermore,
+each element of the list will itself be a list of two elements, the first
+being the indices of the observations combined by introducing this edge and
+the second being the sub log Bayesian evidence of the cluster formed through
+this edge reintroduction. `c_s` is intended to be used to reduce computation
+time, and so whilst incorrect information on the observations involved in
+particular lists of `c_s` will not produce incorrect results, it will not
+have the desired time saving effect.
 
-For more details on the specifics of the possible values for `est_method`, see the help page of the function `lbe.gen`.
+For more details on the specifics of the possible methods for log Bayesian
+evidence estimation, see the help page of the function `lbe.gen`.
 
-Finally, whilst this function can be used separately we strongly encourage specifying `deforest_criterion="Validation"` in the `UNCOVER` function instead as this ensures that each cluster created has at least one validation observation attached at the deforestation stage.
+Finally, whilst this function can be used separately we strongly encourage
+specifying `deforest_criterion="Validation"` in the `UNCOVER` function
+instead as this ensures that each cluster created has at least one
+validation observation attached at the deforestation stage.
 }
 \examples{
 
