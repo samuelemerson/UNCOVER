@@ -101,20 +101,37 @@ pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 lbe.gen(obs_mat = CM,res_vec = rv,thres = 0,rpri = pr_samp, p_pdf = pr_fun)
 
 # If we suspect that the data might be linearly separable
-lbe.gen(method = "SMC_BIC",obs_mat = CM,res_vec = rv,p_num = 500, rpri = pr_samp, p_pdf = pr_fun)
+get("_cache", envir=environment(memo.bic))$reset()
+get("_cache", envir=environment(IBIS.Z))$reset()
+lbe.gen(obs_mat = CM,res_vec = rv,rpri = pr_samp, p_pdf = pr_fun)
 
 # For a much smaller dataset
 CM.2 <- matrix(rnorm(20),10,2)
 rv.2 <- sample(0:1,10,replace=T)
 
-# it is more preferable to use method `"SMC"`
-lbe.gen(method = "SMC",obs_mat = CM.2,res_vec = rv.2,p_num = 500, rpri = pr_samp, p_pdf = pr_fun)
+# it is more preferable to use only the SMC sampler to estimate log(Z)
+get("_cache", envir=environment(memo.bic))$reset()
+get("_cache", envir=environment(IBIS.Z))$reset()
+lbe.gen(obs_mat = CM.2,res_vec = rv.2,thres=Inf,rpri = pr_samp, p_pdf = pr_fun)
 
 # For small datasets the estimates of log(Z) using BIC or SMC will differ
 # significantly. This becomes relatively less problematic as the dataset
 # becomes larger however.
-sapply(10:11,FUN = function(u,covm,resv,ps,pf){lbe.gen(method="SMC_BIC",thres=u,obs_mat=covm,res_vec=resv,p_num=500,rpri=ps,p_pdf=pf)},covm = CM.2,resv = rv.2,ps = pr_samp,pf = pr_fun)
-sapply(1000:1001,FUN = function(u,covm,resv,ps,pf){lbe.gen(method="SMC_BIC",thres=u,obs_mat=covm,res_vec=resv,p_num=500,rpri=ps,p_pdf=pf)},covm = CM,resv = rv,ps = pr_samp,pf = pr_fun)
+get("_cache", envir=environment(memo.bic))$reset()
+get("_cache", envir=environment(IBIS.Z))$reset()
+small.bic <- lbe.gen(thres=0,obs_mat = CM.2,res_vec = rv.2,rpri = pr_samp, p_pdf = pr_fun)
+get("_cache", envir=environment(memo.bic))$reset()
+get("_cache", envir=environment(IBIS.Z))$reset()
+small.smc <- lbe.gen(thres=Inf,obs_mat = CM.2,res_vec = rv.2,rpri = pr_samp, p_pdf = pr_fun)
+c(small.bic,small.smc)
+
+get("_cache", envir=environment(memo.bic))$reset()
+get("_cache", envir=environment(IBIS.Z))$reset()
+large.bic <- lbe.gen(thres=0,obs_mat = CM,res_vec = rv,rpri = pr_samp, p_pdf = pr_fun)
+get("_cache", envir=environment(memo.bic))$reset()
+get("_cache", envir=environment(IBIS.Z))$reset()
+large.smc <- lbe.gen(thres=Inf,obs_mat = CM,res_vec = rv,rpri = pr_samp, p_pdf = pr_fun)
+c(large.bic,large.smc)
 
 }
 \seealso{

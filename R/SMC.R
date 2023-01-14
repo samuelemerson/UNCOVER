@@ -417,20 +417,37 @@ memo.bic <- function(X,y,which_obs=1:length(y),param_start=NULL){
 ##' lbe.gen(obs_mat = CM,res_vec = rv,thres = 0,rpri = pr_samp, p_pdf = pr_fun)
 ##'
 ##' # If we suspect that the data might be linearly separable
-##' lbe.gen(method = "SMC_BIC",obs_mat = CM,res_vec = rv,p_num = 500, rpri = pr_samp, p_pdf = pr_fun)
+##' get("_cache", envir=environment(memo.bic))$reset()
+##' get("_cache", envir=environment(IBIS.Z))$reset()
+##' lbe.gen(obs_mat = CM,res_vec = rv,rpri = pr_samp, p_pdf = pr_fun)
 ##'
 ##' # For a much smaller dataset
 ##' CM.2 <- matrix(rnorm(20),10,2)
 ##' rv.2 <- sample(0:1,10,replace=T)
 ##'
-##' # it is more preferable to use method `"SMC"`
-##' lbe.gen(method = "SMC",obs_mat = CM.2,res_vec = rv.2,p_num = 500, rpri = pr_samp, p_pdf = pr_fun)
+##' # it is more preferable to use only the SMC sampler to estimate log(Z)
+##' get("_cache", envir=environment(memo.bic))$reset()
+##' get("_cache", envir=environment(IBIS.Z))$reset()
+##' lbe.gen(obs_mat = CM.2,res_vec = rv.2,thres=Inf,rpri = pr_samp, p_pdf = pr_fun)
 ##'
 ##' # For small datasets the estimates of log(Z) using BIC or SMC will differ
 ##' # significantly. This becomes relatively less problematic as the dataset
 ##' # becomes larger however.
-##' sapply(10:11,FUN = function(u,covm,resv,ps,pf){lbe.gen(method="SMC_BIC",thres=u,obs_mat=covm,res_vec=resv,p_num=500,rpri=ps,p_pdf=pf)},covm = CM.2,resv = rv.2,ps = pr_samp,pf = pr_fun)
-##' sapply(1000:1001,FUN = function(u,covm,resv,ps,pf){lbe.gen(method="SMC_BIC",thres=u,obs_mat=covm,res_vec=resv,p_num=500,rpri=ps,p_pdf=pf)},covm = CM,resv = rv,ps = pr_samp,pf = pr_fun)
+##' get("_cache", envir=environment(memo.bic))$reset()
+##' get("_cache", envir=environment(IBIS.Z))$reset()
+##' small.bic <- lbe.gen(thres=0,obs_mat = CM.2,res_vec = rv.2,rpri = pr_samp, p_pdf = pr_fun)
+##' get("_cache", envir=environment(memo.bic))$reset()
+##' get("_cache", envir=environment(IBIS.Z))$reset()
+##' small.smc <- lbe.gen(thres=Inf,obs_mat = CM.2,res_vec = rv.2,rpri = pr_samp, p_pdf = pr_fun)
+##'c(small.bic,small.smc)
+##'
+##' get("_cache", envir=environment(memo.bic))$reset()
+##' get("_cache", envir=environment(IBIS.Z))$reset()
+##' large.bic <- lbe.gen(thres=0,obs_mat = CM,res_vec = rv,rpri = pr_samp, p_pdf = pr_fun)
+##' get("_cache", envir=environment(memo.bic))$reset()
+##' get("_cache", envir=environment(IBIS.Z))$reset()
+##' large.smc <- lbe.gen(thres=Inf,obs_mat = CM,res_vec = rv,rpri = pr_samp, p_pdf = pr_fun)
+##' c(large.bic,large.smc)
 ##'
 ##'@seealso [IBIS.Z]
 
@@ -481,17 +498,16 @@ lbe.gen <- function(obs_mat,res_vec,obs_ind = 1:length(res_vec),thres=30,
   }
   if(logZ==T){
     if(length(res_vec)<memo_thres_smc | length(cache_smc$keys())==0){
-      logZ <- IBIS.Z(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,rprior = rpri,N = p_num,prior_pdf = p_pdf,add_set = obs_ind,ess = efs,n_move = nm)$log_Bayesian_evidence
+      logZ <- IBIS.Z(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,rprior = rpri,N = p_num,prior_pdf = p_pdf,target_set = obs_ind,ess = efs,n_move = nm)$output$log_Bayesian_evidence
     } else{
       sub_size <- sapply(cache_smc$keys(),FUN = cache_search_fun,cs = cache_smc,oi = obs_ind)
       if(min(sub_size)==0 | min(sub_size)==Inf){
-        logZ <- IBIS.Z(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,rprior = rpri,N = p_num,prior_pdf = p_pdf,add_set = obs_ind,ess = efs,n_move = nm)$log_Bayesian_evidence
+        logZ <- IBIS.Z(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,rprior = rpri,N = p_num,prior_pdf = p_pdf,target_set = obs_ind,ess = efs,n_move = nm)$output$log_Bayesian_evidence
       } else{
         IBIS.sub <- IBIS.Z(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,rprior = rpri,N = p_num,prior_pdf = p_pdf,target_set = cache_smc$get(cache_smc$keys()[which.min(sub_size)])$input,ess = efs,n_move = nm)
         logZ <- IBIS.Z(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,sampl = IBIS.sub$ouput,prior_pdf = p_pdf,target_set = obs_ind,current_set = IBIS.sub$input,ess = efs,n_move = nm)$output$log_Bayesian_evidence
       }
     }
-    logZ <- IBIS.Z(X = cbind(rep(1,nrow(obs_mat)),obs_mat), y = res_vec, sampl = rpri(p_n = p_num,di = (ncol(obs_mat)+1)),prior_pdf = p_pdf)[[3]]
   }
   return(logZ)
 }
