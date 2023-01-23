@@ -186,7 +186,7 @@ pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
 pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 
 # We can initially run the UNCOVER algorithm with no criteria specified
-UN.none <- UNCOVER(X = CM,y = rv,N=1000, mst_var = 1:2, stop_criterion = 8,deforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+UN.none <- UNCOVER(X = CM,y = rv,mst_var = 1:2, stop_criterion = 8,deforest_criterion = "None",rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 
 # We may then obtain new observations and wish to use these new observations
 # as validation data to possibly combine clusters. This can be achieved
@@ -195,7 +195,7 @@ CM_val <- matrix(rnorm(50),25,2)
 rv_val <- sample(0:1,25,replace=T)
 CM_all <- rbind(CM,CM_val)
 rv_all <- c(rv,rv_val)
-UN.val <- deforest.validation(obs = CM,obs_all = CM_all,res = rv,res_all = rv_all,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],which_tr = 1:100,rho = 1:2,clu_al = UN.none[[1]],est_method = "SMC_BIC",est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+UN.val <- deforest.validation(obs = CM,obs_all = CM_all,res = rv,res_all = rv_all,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],which_tr = 1:100,rho = 1:2,clu_al = UN.none[[1]],rfun = pr_samp,pdf_fun = pr_fun)
 
 # We can then see which edges we have reintroduced as well as if this method
 # has improved the Bayesian evidence per observation (log(Z)/n)

@@ -149,11 +149,11 @@ pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
 pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 
 # We can initially run the UNCOVER algorithm with no criteria specified
-UN.none <- UNCOVER(X = CM,y = rv,N=1000, stop_criterion = 8,deforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+UN.none <- UNCOVER(X = CM,y = rv,stop_criterion = 8,deforest_criterion = "None",rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 
 # Then we may retrospectively want to reduce the number of clusters in our
 # output to 3 using `deforest.noc`
-UN.noc <- deforest.noc(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],K_dag = 3, clu_al = UN.none[[1]],est_method = "SMC_BIC", est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+UN.noc <- deforest.noc(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],K_dag = 3, clu_al = UN.none[[1]],rfun = pr_samp,pdf_fun = pr_fun)
 
 # We can then see which edges we have reintroduced and the cost that has had
 # on the Bayesian evidence

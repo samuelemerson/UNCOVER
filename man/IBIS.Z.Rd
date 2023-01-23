@@ -112,8 +112,8 @@ DM <- cbind(rep(1,100),matrix(rnorm(200),100,2))
 rv <- sample(0:1,100,replace=T)
 
 # We assume the prior for the regression coefficients is a standard normal
-pr_samp <- function(p_num,di){return(rmvn(p_num,rep(0,di),diag(di)))}
-pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
+pr_samp <- function(p_num,di){return(mvnfast::rmvn(p_num,rep(0,di),diag(di)))}
+pr_fun <- function(th,di){return(mvnfast::dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 
 # Now we can obtain 1000 samples from the posterior using only 1000 samples
 # from the prior

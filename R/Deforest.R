@@ -117,11 +117,11 @@
 ##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 ##'
 ##' # We can initially run the UNCOVER algorithm with no criteria specified
-##' UN.none <- UNCOVER(X = CM,y = rv,N=1000, stop_criterion = 8,deforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+##' UN.none <- UNCOVER(X = CM,y = rv,stop_criterion = 8,deforest_criterion = "None",rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 ##'
 ##' # Then we may retrospectively want to reduce the number of clusters in our
 ##' # output to 3 using `deforest.noc`
-##' UN.noc <- deforest.noc(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],K_dag = 3, clu_al = UN.none[[1]],est_method = "SMC_BIC", est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+##' UN.noc <- deforest.noc(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],K_dag = 3, clu_al = UN.none[[1]],rfun = pr_samp,pdf_fun = pr_fun)
 ##'
 ##' # We can then see which edges we have reintroduced and the cost that has had
 ##' # on the Bayesian evidence
@@ -306,11 +306,11 @@ deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
 ##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 ##'
 ##' # We can initially run the UNCOVER algorithm with no criteria specified
-##' UN.none <- UNCOVER(X = CM,y = rv,N=1000, stop_criterion = 8,deforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+##' UN.none <- UNCOVER(X = CM,y = rv,stop_criterion = 8,deforest_criterion = "None",rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 ##'
 ##' # Then we may retrospectively want to ensure that each one of our clusters
 ##' # is assigned at least 10 observations using `deforest.soc`
-##' UN.soc <- deforest.soc(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],n_dag = 10, clu_al = UN.none[[1]],est_method = "SMC_BIC", est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+##' UN.soc <- deforest.soc(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],n_dag = 10, clu_al = UN.none[[1]],rfun = pr_samp,pdf_fun = pr_fun)
 ##'
 ##' # We can then see which edges we have reintroduced and the cost that has had
 ##' # on the Bayesian evidence
@@ -507,13 +507,13 @@ deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
 ##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 ##'
 ##' # We can initially run the UNCOVER algorithm with no criteria specified
-##' UN.none <- UNCOVER(X = CM,y = rv,N=1000, stop_criterion = 8,deforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+##' UN.none <- UNCOVER(X = CM,y = rv,stop_criterion = 8,deforest_criterion = "None",rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 ##'
 ##' # Then we may retrospectively decide that we would like fewer clusters, but
 ##' # the maximum that we are willing to decrease the Bayesian evidence through
 ##' # an edge reintroduction by is `exp(1)` each time. This is achievable using
 ##' # `deforest.maxreg`
-##' UN.maxreg <- deforest.maxreg(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],tau = 1, clu_al = UN.none[[1]],est_method = "SMC_BIC",est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+##' UN.maxreg <- deforest.maxreg(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],tau = 1, clu_al = UN.none[[1]],rfun = pr_samp,pdf_fun = pr_fun)
 ##'
 ##' # We can then see which edges we have reintroduced and the cost that has had
 ##' # on the Bayesian evidence
@@ -725,7 +725,7 @@ deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,
 ##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 ##'
 ##' # We can initially run the UNCOVER algorithm with no criteria specified
-##' UN.none <- UNCOVER(X = CM,y = rv,N=1000, mst_var = 1:2, stop_criterion = 8,deforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+##' UN.none <- UNCOVER(X = CM,y = rv,mst_var = 1:2, stop_criterion = 8,deforest_criterion = "None",rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 ##'
 ##' # We may then obtain new observations and wish to use these new observations
 ##' # as validation data to possibly combine clusters. This can be achieved
@@ -734,7 +734,7 @@ deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,
 ##' rv_val <- sample(0:1,25,replace=T)
 ##' CM_all <- rbind(CM,CM_val)
 ##' rv_all <- c(rv,rv_val)
-##' UN.val <- deforest.validation(obs = CM,obs_all = CM_all,res = rv,res_all = rv_all,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],which_tr = 1:100,rho = 1:2,clu_al = UN.none[[1]],est_method = "SMC_BIC",est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+##' UN.val <- deforest.validation(obs = CM,obs_all = CM_all,res = rv,res_all = rv_all,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],which_tr = 1:100,rho = 1:2,clu_al = UN.none[[1]],rfun = pr_samp,pdf_fun = pr_fun)
 ##'
 ##' # We can then see which edges we have reintroduced as well as if this method
 ##' # has improved the Bayesian evidence per observation (log(Z)/n)
@@ -960,12 +960,12 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
 ##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 ##'
 ##' # We can initially run the UNCOVER algorithm with no criteria specified
-##' UN.none <- UNCOVER(X = CM,y = rv,N=1000, stop_criterion = 8,deforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+##' UN.none <- UNCOVER(X = CM,y = rv,stop_criterion = 8,deforest_criterion = "None",rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 ##'
 ##' # Then we may retrospectively want to ensure that each one of our clusters
 ##' # has at least 1 observation with response in the minority class (of their
 ##' # cluster) using `deforest.balanced`
-##' UN.balanced <- deforest.balanced(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],ups = 1, clu_al = UN.none[[1]],est_method = "SMC_BIC", est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+##' UN.balanced <- deforest.balanced(obs = CM,res = rv,gra = UN.none[[3]],lbe = UN.none[[2]],eps = UN.none[[5]],ups = 1, clu_al = UN.none[[1]],rfun = pr_samp,pdf_fun = pr_fun)
 ##'
 ##' # We can then see which edges we have reintroduced and the cost that has had
 ##' # on the Bayesian evidence
@@ -977,8 +977,8 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
 ##' # imbalanced the overall dataset is.
 ##'
 ##' rv.2 <- sample(0:1,100,replace=T,prob=c(0.8,0.2))
-##' UN.none.2 <- UNCOVER(X = CM,y = rv.2,N=1000, stop_criterion = 8,deforest_criterion = "None",SMC_method = "SMC_BIC",SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
-##' UN.balanced.2 <- deforest.balanced(obs = CM,res = rv.2,gra = UN.none.2[[3]],lbe = UN.none.2[[2]],eps = UN.none.2[[5]],ups = 1, clu_al = UN.none.2[[1]],est_method = "SMC_BIC", est_thres = 30, par_no = 1000,rfun = pr_samp,pdf_fun = pr_fun)
+##' UN.none.2 <- UNCOVER(X = CM,y = rv.2,stop_criterion = 8,deforest_criterion = "None",rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+##' UN.balanced.2 <- deforest.balanced(obs = CM,res = rv.2,gra = UN.none.2[[3]],lbe = UN.none.2[[2]],eps = UN.none.2[[5]],ups = 1, clu_al = UN.none.2[[1]],rfun = pr_samp,pdf_fun = pr_fun)
 ##' UN.none.2[[5]]
 ##' UN.balanced.2[[5]]
 ##' c(sum(UN.none.2[[2]]),sum(UN.balanced.2[[2]]))

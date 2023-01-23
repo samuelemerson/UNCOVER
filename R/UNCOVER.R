@@ -161,12 +161,12 @@
 ##'
 ##' # We can then run our algorithm to see what cohorts are selected for each
 ##' # of the different deforestation criteria
-##' UN.none <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "None", SMC_thres = 30,verbose = F)
-##' UN.noc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "NoC", max_K = 3, SMC_thres = 30,verbose = F)
-##' UN.soc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "SoC", min_size = 10, SMC_thres = 30,verbose = F)
-##' UN.maxreg <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "MaxReg", reg = 1, SMC_thres = 30,verbose = F)
-##' UN.validation <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "Validation", split = 0.8, SMC_thres = 30,verbose = F)
-##' UN.balanced <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "Balanced", n_min_class = 2, SMC_thres = 30,verbose = F)
+##' UN.none <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "None", verbose = F)
+##' UN.noc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "NoC", max_K = 3, verbose = F)
+##' UN.soc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "SoC", min_size = 10, verbose = F)
+##' UN.maxreg <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "MaxReg", reg = 1, verbose = F)
+##' UN.validation <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "Validation", split = 0.8, verbose = F)
+##' UN.balanced <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "Balanced", n_min_class = 2, verbose = F)
 ##' clu_al_mat <- rbind(UN.none[[1]],UN.noc[[1]],UN.soc[[1]],UN.maxreg[[1]],UN.validation[[2]][[1]],UN.balanced[[1]])
 ##' # We can create a matrix where each entry shows in how many of the methods
 ##' # did the indexed observations belong to the same cluster
@@ -189,7 +189,7 @@
 ##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(1,di),sigma=diag(di)))}
 ##'
 ##' # We then can run UNCOVER using this prior and compare to the standard result
-##' UN.none.2 <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "None", SMC_thres = 30,rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
+##' UN.none.2 <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "None", rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
 ##' c(sum(UN.none[[2]]),sum(UN.none.2[[2]]))
 
 
@@ -425,6 +425,8 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
   }
   if(deforest_criterion=="NoC"){
     pnoc <- deforest.noc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,K_dag = max_K,clu_al = z,c_s = combine_save,est_thres = SMC_thres,mtb = BIC_memo_thres,mts = SMC_memo_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,efsamp = ess,methas = n_move,p_p = plot_progress,rho = mst_var,vb = verbose)
+    get("_cache", envir=environment(memo.bic))$reset()
+    get("_cache", envir=environment(IBIS.Z))$reset()
     if(sum(model_selection[[2]])>sum(pnoc[[2]])){
       if(plot_progress){
         pairs(X[,mst_var],pch=as.character(y),col=model_selection[[1]],cex=0.5)
@@ -443,6 +445,8 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
   }
   if(deforest_criterion=="SoC"){
     psoc <- deforest.soc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,n_dag = min_size,clu_al = z,c_s = combine_save,est_thres = SMC_thres,mtb = BIC_memo_thres,mts = SMC_memo_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,efsamp = ess,methas = n_move,p_p = plot_progress,rho = mst_var,vb = verbose)
+    get("_cache", envir=environment(memo.bic))$reset()
+    get("_cache", envir=environment(IBIS.Z))$reset()
     if(sum(model_selection[[2]])>sum(psoc[[2]])){
       if(plot_progress){
         pairs(X[,mst_var],pch=as.character(y),col=model_selection[[1]],cex=0.5)
@@ -461,6 +465,8 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
   }
   if(deforest_criterion=="Balanced"){
     pbal <- deforest.balanced(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,ups = n_min_class,clu_al = z,c_s = combine_save,est_thres = SMC_thres,mtb = BIC_memo_thres,mts = SMC_memo_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,efsamp = ess,methas = n_move,p_p = plot_progress,rho = mst_var,vb = verbose)
+    get("_cache", envir=environment(memo.bic))$reset()
+    get("_cache", envir=environment(IBIS.Z))$reset()
     if(sum(model_selection[[2]])>sum(pbal[[2]])){
       if(plot_progress){
         pairs(X[,mst_var],pch=as.character(y),col=model_selection[[1]],cex=0.5)
@@ -478,6 +484,8 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
     }
   }
   if(deforest_criterion=="None"){
+    get("_cache", envir=environment(memo.bic))$reset()
+    get("_cache", envir=environment(IBIS.Z))$reset()
     if(plot_progress){
       pairs(X[,mst_var],pch=as.character(y),col=model_selection[[1]],cex=0.5)
     }
@@ -489,6 +497,8 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
   }
   if(deforest_criterion=="MaxReg"){
     pmaxreg <- deforest.maxreg(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,tau = reg,clu_al = z,c_s = combine_save,est_thres = SMC_thres,mtb = BIC_memo_thres,mts = SMC_memo_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,efsamp = ess,methas = n_move,p_p = plot_progress,rho = mst_var,vb = verbose)
+    get("_cache", envir=environment(memo.bic))$reset()
+    get("_cache", envir=environment(IBIS.Z))$reset()
     if(plot_progress){
       pairs(X[,mst_var],pch=as.character(y),col=pmaxreg[[1]],cex=0.5)
     }
@@ -496,6 +506,8 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
   }
   if(deforest_criterion=="Validation"){
     pval <- deforest.validation(obs = X,obs_all = X_all,res = y,res_all = y_all,gra = g,lbe = logZ,eps = edge_rem,gra_all = g_all,clu_al = z,c_s = combine_save,est_thres = SMC_thres,mtb = BIC_memo_thres,mts = SMC_memo_thres,par_no = N,rfun = rprior,pdf_fun = prior_pdf,efsamp = ess,methas = n_move,p_p = plot_progress,rho = mst_var,vb = verbose)
+    get("_cache", envir=environment(memo.bic))$reset()
+    get("_cache", envir=environment(IBIS.Z))$reset()
     if(plot_progress){
       pairs(X_all[,mst_var],pch=as.character(y_all),col=pval[[2]][[1]],cex=0.5)
     }
