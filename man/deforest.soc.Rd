@@ -149,8 +149,8 @@ CM <- matrix(rnorm(200),100,2)
 rv <- sample(0:1,100,replace=T)
 
 # Assuming the prior for the regression coefficients is a standard normal
-pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
-pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
+pr_samp <- function(p_n,di){return(mvnfast::rmvn(p_n,rep(0,di),diag(di)))}
+pr_fun <- function(th,di){return(mvnfast::dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 
 # We can initially run the UNCOVER algorithm with no criteria specified
 UN.none <- UNCOVER(X = CM,y = rv,stop_criterion = 8,deforest_criterion = "None",rprior = pr_samp,prior_pdf = pr_fun,verbose = F)

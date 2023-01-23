@@ -113,8 +113,8 @@
 ##' rv <- sample(0:1,100,replace=T)
 ##'
 ##' # Assuming the prior for the regression coefficients is a standard normal
-##' pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
-##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
+##' pr_samp <- function(p_n,di){return(mvnfast::rmvn(p_n,rep(0,di),diag(di)))}
+##' pr_fun <- function(th,di){return(mvnfast::dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 ##'
 ##' # We can initially run the UNCOVER algorithm with no criteria specified
 ##' UN.none <- UNCOVER(X = CM,y = rv,stop_criterion = 8,deforest_criterion = "None",rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
@@ -302,8 +302,8 @@ deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
 ##' rv <- sample(0:1,100,replace=T)
 ##'
 ##' # Assuming the prior for the regression coefficients is a standard normal
-##' pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
-##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
+##' pr_samp <- function(p_n,di){return(mvnfast::rmvn(p_n,rep(0,di),diag(di)))}
+##' pr_fun <- function(th,di){return(mvnfast::dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 ##'
 ##' # We can initially run the UNCOVER algorithm with no criteria specified
 ##' UN.none <- UNCOVER(X = CM,y = rv,stop_criterion = 8,deforest_criterion = "None",rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
@@ -503,8 +503,8 @@ deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
 ##' rv <- sample(0:1,100,replace=T)
 ##'
 ##' # Assuming the prior for the regression coefficients is a standard normal
-##' pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
-##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
+##' pr_samp <- function(p_n,di){return(mvnfast::rmvn(p_n,rep(0,di),diag(di)))}
+##' pr_fun <- function(th,di){return(mvnfast::dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 ##'
 ##' # We can initially run the UNCOVER algorithm with no criteria specified
 ##' UN.none <- UNCOVER(X = CM,y = rv,stop_criterion = 8,deforest_criterion = "None",rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
@@ -721,8 +721,8 @@ deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,
 ##' rv <- sample(0:1,100,replace=T)
 ##'
 ##' # Assuming the prior for the regression coefficients is a standard normal
-##' pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
-##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
+##' pr_samp <- function(p_n,di){return(mvnfast::rmvn(p_n,rep(0,di),diag(di)))}
+##' pr_fun <- function(th,di){return(mvnfast::dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 ##'
 ##' # We can initially run the UNCOVER algorithm with no criteria specified
 ##' UN.none <- UNCOVER(X = CM,y = rv,mst_var = 1:2, stop_criterion = 8,deforest_criterion = "None",rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
@@ -956,8 +956,8 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
 ##' rv <- sample(0:1,100,replace=T)
 ##'
 ##' # Assuming the prior for the regression coefficients is a standard normal
-##' pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
-##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
+##' pr_samp <- function(p_n,di){return(mvnfast::rmvn(p_n,rep(0,di),diag(di)))}
+##' pr_fun <- function(th,di){return(mvnfast::dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 ##'
 ##' # We can initially run the UNCOVER algorithm with no criteria specified
 ##' UN.none <- UNCOVER(X = CM,y = rv,stop_criterion = 8,deforest_criterion = "None",rprior = pr_samp,prior_pdf = pr_fun,verbose = F)

@@ -619,8 +619,8 @@ memo.bic <- function(X,y,which_obs=1:length(y),param_start=NULL){
 ##'
 ##' # If we assume the prior for the regression coefficients is a standard
 ##' # normal
-##' pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
-##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
+##' pr_samp <- function(p_n,di){return(mvnfast::rmvn(p_n,rep(0,di),diag(di)))}
+##' pr_fun <- function(th,di){return(mvnfast::dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 ##'
 ##' # We can then estimate log(Z) using the `"BIC"` method
 ##' lbe.gen(obs_mat = CM,res_vec = rv,thres = 0,rpri = pr_samp, p_pdf = pr_fun)

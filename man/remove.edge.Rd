@@ -99,8 +99,8 @@ plot(gra_CM,layout=CM)
 
 # If we assume the prior for the regression coefficients is a standard
 # normal
-pr_samp <- function(p_n,di){return(rmvn(p_n,rep(0,di),diag(di)))}
-pr_fun <- function(th,di){return(dmvn(th,mu=rep(0,di),sigma=diag(di)))}
+pr_samp <- function(p_n,di){return(mvnfast::rmvn(p_n,rep(0,di),diag(di)))}
+pr_fun <- function(th,di){return(mvnfast::dmvn(th,mu=rep(0,di),sigma=diag(di)))}
 
 # Then we can generate the log Bayesian evidence for this one component
 # model

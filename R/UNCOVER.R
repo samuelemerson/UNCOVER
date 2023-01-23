@@ -185,8 +185,8 @@
 ##' # If we don't assume the prior for the regression coefficients is a
 ##' # standard normal but instead a multivariate normal with mean (1,1) and the
 ##' # identity matrix as the covariance matrix we can specify
-##' pr_samp <- function(p_n,di){return(rmvn(p_n,rep(1,di),diag(di)))}
-##' pr_fun <- function(th,di){return(dmvn(th,mu=rep(1,di),sigma=diag(di)))}
+##' pr_samp <- function(p_n,di){return(mvnfast::rmvn(p_n,rep(1,di),diag(di)))}
+##' pr_fun <- function(th,di){return(mvnfast::dmvn(th,mu=rep(1,di),sigma=diag(di)))}
 ##'
 ##' # We then can run UNCOVER using this prior and compare to the standard result
 ##' UN.none.2 <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "None", rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
@@ -203,10 +203,10 @@ UNCOVER <- function(X,y,mst_var=NULL,N=1000,stop_criterion=Inf,
   }
   if(is.null(rprior)&is.null(prior_pdf)){
     rprior <- function(p_num,di){
-      return(rmvn(p_num,rep(0,di),diag(di)))
+      return(mvnfast::rmvn(p_num,rep(0,di),diag(di)))
     }
     prior_pdf <- function(th,di){
-      return(dmvn(th,mu=rep(0,di),sigma=diag(di)))
+      return(mvnfast::dmvn(th,mu=rep(0,di),sigma=diag(di)))
     }
   }
   if(is.null(mst_var)){

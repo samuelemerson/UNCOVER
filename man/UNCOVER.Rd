@@ -218,8 +218,8 @@ c(sum(UN.none[[2]]),sum(UN.noc[[2]]),sum(UN.soc[[2]]),sum(UN.maxreg[[2]]),sum(UN
 # If we don't assume the prior for the regression coefficients is a
 # standard normal but instead a multivariate normal with mean (1,1) and the
 # identity matrix as the covariance matrix we can specify
-pr_samp <- function(p_n,di){return(rmvn(p_n,rep(1,di),diag(di)))}
-pr_fun <- function(th,di){return(dmvn(th,mu=rep(1,di),sigma=diag(di)))}
+pr_samp <- function(p_n,di){return(mvnfast::rmvn(p_n,rep(1,di),diag(di)))}
+pr_fun <- function(th,di){return(mvnfast::dmvn(th,mu=rep(1,di),sigma=diag(di)))}
 
 # We then can run UNCOVER using this prior and compare to the standard result
 UN.none.2 <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "None", rprior = pr_samp,prior_pdf = pr_fun,verbose = F)
