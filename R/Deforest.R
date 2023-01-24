@@ -596,12 +596,12 @@ deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,
 ##'
 ##' @export
 ##' @name deforest.validation
-##' @description Adds validation to the training data graph and updates the log
-##' Bayesian evidence, then selects the previously removed edge with the highest
-##' Bayesian evidence ratio, and adds this edge to the graph if this edges'
-##' addition gives a larger Bayesian evidence ratio than the current Bayesian
-##' evidence ratio. This process then repeats until it is no longer beneficial
-##' to add an edge to the graph.
+##' @description Adds validation data to the training data graph and updates the
+##' log Bayesian evidence, then selects the previously removed edge with the
+##' highest Bayesian evidence ratio, and adds this edge to the graph if this
+##' edges' addition gives a larger Bayesian evidence ratio than the current
+##' Bayesian evidence ratio. This process then repeats until it is no longer
+##' beneficial to add an edge to the graph.
 ##'
 ##' Used in UNCOVER if the deforest condition is set to "Validation".
 ##'
