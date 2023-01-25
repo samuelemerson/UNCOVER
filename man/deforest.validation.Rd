@@ -28,7 +28,9 @@ deforest.validation(
   efsamp = par_no/2,
   methas = 1,
   p_p = F,
-  vb = F
+  vb = F,
+  cb,
+  cs
 )
 }
 \arguments{

@@ -18,7 +18,9 @@ remove.edge(
   rfun,
   pdf_fun,
   efsamp = par_no/2,
-  methas = 1
+  methas = 1,
+  cb,
+  cs
 )
 }
 \arguments{

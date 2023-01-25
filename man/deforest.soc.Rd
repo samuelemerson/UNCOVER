@@ -23,7 +23,9 @@ deforest.soc(
   methas = 1,
   p_p = F,
   rho = NULL,
-  vb = F
+  vb = F,
+  cb,
+  cs
 )
 }
 \arguments{

@@ -168,9 +168,9 @@
 ##'
 ##' @seealso [lbe.gen]
 
-
 IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,
-                   target_set=1:length(y),current_set=NULL,ess=NULL,n_move=1){
+                   target_set=1:length(y),current_set=NULL,ess=NULL,n_move=1,
+                   PriorArgs){
   if(length(target_set)==length(current_set)){
     stop("target_set and current_set cannot be the same length")
   }
@@ -194,16 +194,26 @@ IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,
       ss <- cov.wt(sampl$samples,wt=sampl$weights,method = "ML")
       mu <- ss$center
       Sigma <- ss$cov
-      samp <- sample(as.integer(names(sampl$duplication_table)),N,prob = sampl$weights[as.integer(names(sampl$duplication_table))]*sampl$duplication_table,replace = TRUE)
+      samp <- sample(as.integer(names(sampl$duplication_table)),N,
+                     prob = sampl$weights[as.integer(names(sampl$duplication_table))]*sampl$duplication_table,
+                     replace = TRUE)
       sampl$samples <- sampl$samples[samp,]
       sampl$weights <- rep(1,N)
       A.all <- rep(FALSE,N)
       for(j in 1:n_move){
         BC <- mvnfast::rmvn(N,mu = mu, sigma=Sigma)
         Log_1 <- log(1+exp(X[current_set,]%*%t(BC)))*(y[current_set]-1) + log(1+exp(-X[current_set,]%*%t(BC)))*(-y[current_set])
-        Log_1 <- colSums(Log_1) + log(prior_pdf(th = BC,di = p)) + log(mvnfast::dmvn(sampl$samples,mu=mu,sigma=Sigma))
+        TotArgs <- list(BC)
+        if(length(PriorArgs)!=0){
+          TotArgs <- c(TotArgs,PriorArgs)
+        }
+        Log_1 <- colSums(Log_1) + log(do.call(prior_pdf,TotArgs)) + log(mvnfast::dmvn(sampl$samples,mu=mu,sigma=Sigma))
         Log_2 <- log(1+exp(X[current_set,]%*%t(sampl$samples)))*(y[current_set]-1) + log(1+exp(-X[current_set,]%*%t(sampl$samples)))*(-y[current_set])
-        Log_2 <- colSums(Log_2) + log(prior_pdf(th = sampl$samples,di = p)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
+        TotArgs <- list(sampl$samples)
+        if(length(PriorArgs)!=0){
+          TotArgs <- c(TotArgs,PriorArgs)
+        }
+        Log_2 <- colSums(Log_2) + log(do.call(prior_pdf,TotArgs)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
         A <- Log_1 - Log_2 - log(runif(length(Log_1)))
         A.all <- A.all | (A>0)
         sampl$samples[which(A>0),] <- BC[which(A>0),]
@@ -223,7 +233,11 @@ IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,
   X <- as.matrix(X)
   p <- ncol(X)
   if(is.null(sampl)) {
-    sampl <- rprior(N,p)
+    TotArgs <- list(N)
+    if(length(PriorArgs)!=0){
+      TotArgs <- c(TotArgs,PriorArgs)
+    }
+    sampl <- do.call(rprior,TotArgs)
     w <- rep(1,N)
     logZ <- 0
     dup_tab <- table(1:N)
@@ -270,7 +284,9 @@ IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,
       ss <- cov.wt(sampl,wt=w,method = "ML")
       mu <- ss$center
       Sigma <- ss$cov
-      samp <- sample(as.integer(names(dup_tab)),N,prob = w[as.integer(names(dup_tab))]*dup_tab,replace = TRUE)
+      samp <- sample(as.integer(names(dup_tab)),N,
+                     prob = w[as.integer(names(dup_tab))]*dup_tab,
+                     replace = TRUE)
       sampl <- sampl[samp,]
       w <- rep(1,N)
       if(reverse){
@@ -281,19 +297,43 @@ IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,
         BC <- mvnfast::rmvn(N,mu = mu, sigma=Sigma)
         if(reverse){
           if(length(setdiff(current_set,action_set[i]))==0){
-            Log_1 <- log(prior_pdf(th = BC,di = p)) + log(mvnfast::dmvn(sampl,mu=mu,sigma=Sigma))
-            Log_2 <- log(prior_pdf(th = sampl,di = p)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
+            TotArgs <- list(BC)
+            if(length(PriorArgs)!=0){
+              TotArgs <- c(TotArgs,PriorArgs)
+            }
+            Log_1 <- log(do.call(prior_pdf,TotArgs)) + log(mvnfast::dmvn(sampl,mu=mu,sigma=Sigma))
+            TotArgs <- list(sampl)
+            if(length(PriorArgs)!=0){
+              TotArgs <- c(TotArgs,PriorArgs)
+            }
+            Log_2 <- log(do.call(prior_pdf,TotArgs)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
           } else{
             Log_1 <- log(1+exp(X[setdiff(current_set,action_set[i]),]%*%t(BC)))*(y[setdiff(current_set,action_set[i])]-1) + log(1+exp(-X[setdiff(current_set,action_set[i]),]%*%t(BC)))*(-y[setdiff(current_set,action_set[i])])
-            Log_1 <- colSums(Log_1) + log(prior_pdf(th = BC,di = p)) + log(mvnfast::dmvn(sampl,mu=mu,sigma=Sigma))
+            TotArgs <- list(BC)
+            if(length(PriorArgs)!=0){
+              TotArgs <- c(TotArgs,PriorArgs)
+            }
+            Log_1 <- colSums(Log_1) + log(do.call(prior_pdf,TotArgs)) + log(mvnfast::dmvn(sampl,mu=mu,sigma=Sigma))
             Log_2 <- log(1+exp(X[setdiff(current_set,action_set[i]),]%*%t(sampl)))*(y[setdiff(current_set,action_set[i])]-1) + log(1+exp(-X[setdiff(current_set,action_set[i]),]%*%t(sampl)))*(-y[setdiff(current_set,action_set[i])])
-            Log_2 <- colSums(Log_2) + log(prior_pdf(th = sampl,di = p)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
+            TotArgs <- list(sampl)
+            if(length(PriorArgs)!=0){
+              TotArgs <- c(TotArgs,PriorArgs)
+            }
+            Log_2 <- colSums(Log_2) + log(do.call(prior_pdf,TotArgs)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
           }
         } else{
           Log_1 <- log(1+exp(X[c(current_set,action_set[i]),]%*%t(BC)))*(y[c(current_set,action_set[i])]-1) + log(1+exp(-X[c(current_set,action_set[i]),]%*%t(BC)))*(-y[c(current_set,action_set[i])])
-          Log_1 <- colSums(Log_1) + log(prior_pdf(th = BC,di = p)) + log(mvnfast::dmvn(sampl,mu=mu,sigma=Sigma))
+          TotArgs <- list(BC)
+          if(length(PriorArgs)!=0){
+            TotArgs <- c(TotArgs,PriorArgs)
+          }
+          Log_1 <- colSums(Log_1) + log(do.call(prior_pdf,TotArgs)) + log(mvnfast::dmvn(sampl,mu=mu,sigma=Sigma))
           Log_2 <- log(1+exp(X[c(current_set,action_set[i]),]%*%t(sampl)))*(y[c(current_set,action_set[i])]-1) + log(1+exp(-X[c(current_set,action_set[i]),]%*%t(sampl)))*(-y[c(current_set,action_set[i])])
-          Log_2 <- colSums(Log_2) + log(prior_pdf(th = sampl,di = p)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
+          TotArgs <- list(sampl)
+          if(length(PriorArgs)!=0){
+            TotArgs <- c(TotArgs,PriorArgs)
+          }
+          Log_2 <- colSums(Log_2) + log(do.call(prior_pdf,TotArgs)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
         }
         A <- Log_1 - Log_2 - log(runif(length(Log_1)))
         A.all <- A.all | (A>0)
@@ -316,190 +356,6 @@ IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,
               input = target_set))
 }
 
-##' Logistic regression iterated batch importance sampling
-##'
-##'
-##' @export
-##' @name IBIS.logreg
-##' @description This function uses an iterated batch importance sampling scheme
-##' with batch size one to go from prior to full posterior. We
-##' assume a Bayesian logistic regression model.
-##'
-##' @keywords sequential monte carlo
-##' @param X Covariance matrix
-##' @param y Binary response vector
-##' @param prior Name of prior. Can be one of; `"mvn"` for multivariate normal,
-##' `"mvl"` for multivariate laplace or `"mviu"` for multivariate independent
-##' uniform. See details. Defaults to `"mvn"`.
-##' @param N Number of prior samples. Defaults to 1000.
-##' @param ess Threshold: if the effective sample size of the particle weights
-##' falls below this value then a resample move step is triggered. Defaults to
-##' `N/2`.
-##' @param n_move Number of Metropolis-Hastings steps to apply each time a
-##' resample move step is triggered. Defaults to 1.
-##' @param weighted Should the outputted samples be weighted? As a default the
-##' samples are not weighted.
-##' @param ... Arguments for each of the priors. See details.
-##' @return A list consisting of posterior samples and the
-##' log Bayesian evidence of the full posterior. If `weighted==TRUE` the weights
-##' of the samples is also provided.
-##' @details Details of the internal mechanisms of the SMC sampler such as the
-##' Metropolis-Hastings MCMC resample move can be found in *UNCOVER paper* and
-##' Chopin (2002).
-##'
-##' When selecting a prior the arguments for said prior must be specified or
-##' default values will be chosen. For a multivariate normal prior, mean `mu`
-##' and covariance matrix `sigma` must be specified or `mu = rep(0,ncol(X)+1)`,
-##' `sigma = diag(ncol(X)+1)` will be selected as default values. For a
-##' multivariate Laplace prior, mean `mu` and covariance matrix `Sigma` must be
-##' specified or `mu = rep(0,ncol(X)+1)`, `Sigma = diag(ncol(X)+1)` will be
-##' selected as default values. For a multivariate independent uniform prior
-##' (i.e. regression coefficients are independent under the prior), a minimum
-##' value vector `a` and a maximum value vector `b` must be specified or
-##' `a = rep(0,ncol(X)+1)`, `b = rep(1,ncol(X)+1)` will be selected as default
-##' values.
-##'
-##' Note that decreasing `ess` and increasing `n_move` will lead to a more
-##' accurate estimate of the Bayesian evidence, but at the cost of increased
-##' computational time.
-##'
-##' @references Chopin, N. (2002). A sequential particle filter method for
-##' static models. Biometrika, 89(3), 539-552.
-##' @examples
-##'
-##' # First we generate a covariate matrix X and binary response vector y
-##' CM <- matrix(rnorm(200),100,2)
-##' rv <- sample(0:1,100,replace=T)
-##'
-##' # Now we can obtain 1000 samples from the posterior from a standard
-##' # multivariate normal prior
-##' out.1 <- IBIS.logreg(X = CM,y = rv)
-##' pairs(out.1$samples)
-##' out.1$log_Bayesian_evidence
-##'
-##' # We can specify that the samples be weighted
-##' out.1.w <- IBIS.logreg(X = CM,y = rv,weighted = TRUE)
-##' weight_fade <- colorRampPalette(c('white','black'))(100)[as.numeric(cut(out.1.w$weights,breaks = 100))]
-##' pairs(out.1.w$samples,col = weight_fade)
-##'
-##' # We can change the prior
-##' out.2 <- IBIS.logreg(X = CM,y = rv,prior="mvl")
-##' pairs(rbind(out.1$samples,out.2$samples),col=rep(1:2,each=1000))
-##' out.2$log_Bayesian_evidence
-##' out.3 <- IBIS.logreg(X = CM,y = rv,prior="mviu")
-##' pairs(rbind(out.1$samples,out.2$samples,out.3$samples),col=rep(1:3,each=1000))
-##' out.3$log_Bayesian_evidence
-##'
-##' # And we can also specify different arguments for a specific prior
-##' out.4 <- IBIS.logreg(X = CM,y = rv,prior="mvn",mu = rep(-3,3),sigma = 0.5*diag(3))
-##' pairs(rbind(out.1$samples,out.4$samples),col=rep(c(1,4),each=1000))
-##' out.4$log_Bayesian_evidence
-##' out.5 <- IBIS.logreg(X = CM,y = rv,prior="mvn",mu = rep(3,3),sigma = 0.5*diag(3))
-##' pairs(rbind(out.1$samples,out.4$samples,out.5$samples),col=rep(c(1,4,5),each=1000))
-##' out.5$log_Bayesian_evidence
-##'
-
-
-IBIS.logreg <- function(X,y,prior="mvn",N=1000,ess=NULL,n_move=1,weighted = FALSE,...){
-  X <- cbind(rep(1,length(y)),X)
-  p <- ncol(X)
-  if(prior!="mvn" & prior!="mvl" & prior!="mviu"){
-    stop("prior not supported")
-  }
-  if(prior=="mvn"){
-    if("mu" %in% names(list(...))){
-      mu <- list(...)$mu
-      if(length(mu)!=p){
-        stop("mu must be of length ncol(X) + 1")
-      }
-    } else{
-      mu <- rep(0,p)
-    }
-    if("sigma" %in% names(list(...))){
-      sigma <- list(...)$sigma
-      if(ncol(sigma)!=p | nrow(sigma)!=p){
-        stop("sigma must be a (ncol(X)+1)*(ncol(X)+1) matrix")
-      }
-    } else{
-      sigma <- diag(p)
-    }
-    rprior <- function(p_num,di){return(mvnfast::rmvn(p_num,mu[1:di],sigma[1:di,1:di]))}
-    prior_pdf <- function(th,di){return(mvnfast::dmvn(th,mu=mu[1:di],sigma=sigma[1:di,1:di]))}
-  }
-  if(prior=="mvl"){
-    if("mu" %in% names(list(...))){
-      mu <- list(...)$mu
-      if(length(mu)!=p){
-        stop("mu must be of length ncol(X) + 1")
-      }
-    } else{
-      mu <- rep(0,p)
-    }
-    if("Sigma" %in% names(list(...))){
-      Sigma <- list(...)$Sigma
-      if(ncol(Sigma)!=p | nrow(Sigma)!=p){
-        stop("Sigma must be a (ncol(X)+1)*(ncol(X)+1) matrix")
-      }
-    } else{
-      Sigma <- diag(p)
-    }
-    rprior <- function(p_num,di){return(rmvl(p_num,mu[1:di],Sigma[1:di,1:di]))}
-    prior_pdf <- function(th,di){return(dmvl(th,mu=mu[1:di],Sigma=Sigma[1:di,1:di]))}
-  }
-  if(prior=="mviu"){
-    if("a" %in% names(list(...))){
-      a <- list(...)$a
-      if(length(a)!=p){
-        stop("a must be of length ncol(X) + 1")
-      }
-    } else{
-      a <- rep(0,p)
-    }
-    if("b" %in% names(list(...))){
-      b <- list(...)$b
-      if(length(b)!=p){
-        stop("b must be of length ncol(X) + 1")
-      }
-    } else{
-      b <- rep(1,p)
-    }
-    rprior <- function(p_num,di){return(mapply(FUN = function(a,b,N){runif(N,a,b)},a=a[1:di],b=b[1:di],MoreArgs = list(N = p_num)))}
-    prior_pdf <- function(th,di){
-      for(ii in 1:di){
-        th[,ii] <- dunif(th[,ii],a[ii],b[ii])
-      }
-      return(apply(th,1,prod))
-    }
-  }
-  IBIS_out <- IBIS.Z(X = X,y = y,rprior = rprior,N = N,prior_pdf = prior_pdf,
-                     ess = ess,n_move = n_move)$output
-  if(weighted==FALSE){
-    if(length(unique(IBIS_out$weights))!=1){
-      ss <- cov.wt(IBIS_out$samples,wt=IBIS_out$weights,method = "ML")
-      mu <- ss$center
-      Sigma <- ss$cov
-      samp <- sample(as.integer(names(IBIS_out$duplication_table)),N,prob = IBIS_out$weights[as.integer(names(IBIS_out$duplication_table))]*IBIS_out$duplication_table,replace = TRUE)
-      IBIS_out$samples <- IBIS_out$samples[samp,]
-      for(j in 1:n_move){
-        BC <- mvnfast::rmvn(N,mu = mu, sigma=Sigma)
-        Log_1 <- log(1+exp(X%*%t(BC)))*(y-1) + log(1+exp(-X%*%t(BC)))*(-y)
-        Log_1 <- colSums(Log_1) + log(prior_pdf(th = BC,di = p)) + log(mvnfast::dmvn(IBIS_out$samples,mu=mu,sigma=Sigma))
-        Log_2 <- log(1+exp(X%*%t(IBIS_out$samples)))*(y-1) + log(1+exp(-X%*%t(IBIS_out$samples)))*(-y)
-        Log_2 <- colSums(Log_2) + log(prior_pdf(th = IBIS_out$samples,di = p)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
-        A <- Log_1 - Log_2 - log(runif(length(Log_1)))
-        IBIS_out$samples[which(A>0),] <- BC[which(A>0),]
-      }
-    }
-    get("_cache", envir=environment(IBIS.Z))$reset()
-    return(list(samples = IBIS_out$samples,
-                log_Bayesian_evidence = IBIS_out$log_Bayesian_evidence))
-  } else{
-    get("_cache", envir=environment(IBIS.Z))$reset()
-    return(list(samples = IBIS_out$samples,
-                weights = IBIS_out$weights,
-                log_Bayesian_evidence = IBIS_out$log_Bayesian_evidence))
-  }
-}
 
 ##' Log Bayesian evidence estimator through BIC, built for memoisation
 ##'
@@ -662,9 +518,9 @@ memo.bic <- function(X,y,which_obs=1:length(y),param_start=NULL){
 
 lbe.gen <- function(obs_mat,res_vec,obs_ind = 1:length(res_vec),thres=30,
                     memo_thres_bic = Inf,memo_thres_smc = Inf,p_num=1000,rpri,
-                    p_pdf,efs = p_num/2,nm = 1){
-  cache_bic <- get("_cache", envir=environment(memo.bic))
-  cache_smc <- get("_cache", envir=environment(IBIS.Z))
+                    p_pdf,efs = p_num/2,nm = 1,cache_bic,cache_smc){
+  # cache_bic <- get("_cache", envir=environment(memo.bic))
+  # cache_smc <- get("_cache", envir=environment(IBIS.Z))
   cache_search_fun <- function(u,cs,oi){
     c_ind <- cs$get(u)$input
     lci <- length(c_ind)

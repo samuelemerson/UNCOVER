@@ -14,7 +14,8 @@ IBIS.Z(
   target_set = 1:length(y),
   current_set = NULL,
   ess = NULL,
-  n_move = 1
+  n_move = 1,
+  PriorArgs
 )
 }
 \arguments{
