@@ -14,7 +14,6 @@ UNCOVER(
   deforest_criterion = "None",
   prior_mean = rep(0, ncol(X) + 1),
   prior_var = diag(ncol(X) + 1),
-  plot_progress = F,
   verbose = T
 )
 
@@ -52,9 +51,6 @@ recommended.}
 \item{deforest_criterion}{Criterion in which edges are reintroduced to allow
 the model to satisfy. Can be one of `"NoC"`,`"SoC"`,`"MaxReg"`,
 `"Validation"`, `"Balanced"` or `"None"`.}
-
-\item{plot_progress}{Do you want to plot the output of the clustering each
-time an edge is removed or reintroduced?}
 
 \item{verbose}{Do you want the progress of the algorithm to be shown?}
 
@@ -106,6 +102,9 @@ number of dimensions of a single sample respectively).}
 \item{dprior}{Probability Density Function of the prior. Must only have
 two arguments, `th` and `di` (a vector or matrix of regression coefficients
 samples and the number of dimensions of a single sample respectively).}
+
+\item{plot_progress}{Do you want to plot the output of the clustering each
+time an edge is removed or reintroduced?}
 }
 \value{
 Either a list or a list of two lists. See details.

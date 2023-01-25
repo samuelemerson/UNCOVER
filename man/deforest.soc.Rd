@@ -21,11 +21,10 @@ deforest.soc(
   pdf_fun = NULL,
   efsamp = par_no/2,
   methas = 1,
-  p_p = F,
-  rho = NULL,
   vb = F,
   cb,
-  cs
+  cs,
+  PA
 )
 }
 \arguments{
@@ -81,13 +80,13 @@ Defaults to `p_num/2`. See `IBIS.Z` for details.}
 \item{methas}{Number of Metropolis-Hastings steps to apply each time a
 resample move step is triggered. Defaults to 1. See `IBIS.Z` for details.}
 
+\item{vb}{Do you want the progress of the algorithm to be shown?}
+
 \item{p_p}{Do you want to plot the output of the clustering each time an
 edge is reintroduced?}
 
 \item{rho}{Only applies if `p_p` is `TRUE`. A vector specifying which
 variables of the covariate matrix to plot.}
-
-\item{vb}{Do you want the progress of the algorithm to be shown?}
 }
 \value{
 A list consisting of; the cluster allocation vector of the new

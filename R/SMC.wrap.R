@@ -285,16 +285,6 @@ IBIS.logreg.opts <- function(N=1000,ess = N/2,n_move = 1,weighted = FALSE,
       stop("If overriding the default prior rprior and dprior must be specified.")
     }
     MoreArgs <- list(...)
-    # rprior <- list(...)$rprior
-    # if(!identical(formalArgs(rprior),c("N","MoreArgs"))){
-    #   stop("Only arguments for rprior should be N (number of samples) and
-    #   MoreArgs (if more arguments are required). See examples of IBIS.logreg")
-    # }
-    # dprior <- list(...)$dprior
-    # if(!identical(formalArgs(dprior),c("x","MoreArgs"))){
-    #   stop("Only arguments for rprior should be x (matrix of samples) and
-    #   MoreArgs (if more arguments are required). See examples of IBIS.logreg")
-    # }
   } else{
     MoreArgs = NULL
   }

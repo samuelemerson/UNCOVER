@@ -195,41 +195,38 @@
 
 UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
                     deforest_criterion="None",prior_mean=rep(0,ncol(X)+1),
-                    prior_var=diag(ncol(X)+1),
-                    plot_progress=F,verbose = T){
+                    prior_var=diag(ncol(X)+1),verbose = T){
   memo.bic <- memoise::memoise(memo.bic,
                                cache = options$BIC_cache,
                                omit_args = c("param_start"))
   IBIS.Z <- memoise::memoise(IBIS.Z,cache = options$SMC_cache,
                               omit_args = c("sampl","current_set"))
   if(options$prior.override){
+    MoreArgs <- options$MoreArgs
+    TotArgs <- list(options$N)
+    if(length(MoreArgs)!=0){
+      TotArgs <- c(TotArgs,MoreArgs)
+    }
     rprior <- options$rprior
-    test_rprior <- rprior()
-    if(nrow(rtest_rprior)!=options$N | ncol(test_rprior)!=(ncol(X)+1)){
+    test_rprior <- do.call(rprior,TotArgs)
+    if(nrow(test_rprior)!=options$N | ncol(test_rprior)!=(ncol(X)+1)){
       stop("rprior specified does not produce an N by (ncol(X)+1) matrix")
     }
     dprior <- options$dprior
-    test_dprior <- dprior(test_rprior)
+    TotArgs <- list(test_rprior)
+    if(length(MoreArgs)!=0){
+      TotArgs <- c(TotArgs,MoreArgs)
+    }
+    test_dprior <- do.call(dprior,TotArgs)
     if(length(test_dprior)!=options$N){
-      stop("dprior specified does not produce a vector of denisties for the
+      stop("dprior specified does not produce a vector of densities for the
            N samples provided")
     }
   } else{
-    rprior <- function(){
-      return(mvnfast::rmvn(options$N,mu = prior_mean,sigma = prior_var))
-    }
-    dprior <- function(x){
-      return(mvnfast::dmvn(x,mu = prior_mean,sigma = prior_var))
-    }
+    rprior <- mvnfast::rmvn
+    dprior <- mvnfast::dmvn
+    MoreArgs <- list(mu = prior_mean,sigma = prior_var)
   }
-  # if(is.null(rprior)&is.null(dprior)){
-  #   rprior <- function(p_num,di){
-  #     return(mvnfast::rmvn(p_num,rep(0,di),diag(di)))
-  #   }
-  #   dprior <- function(th,di){
-  #     return(mvnfast::dmvn(th,mu=rep(0,di),sigma=diag(di)))
-  #   }
-  # }
   if(is.null(mst_var)){
     mst_var <- 1:ncol(X)
   }
@@ -260,8 +257,8 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
   logZ <- lbe.gen(thres = SMC_thres,obs_mat = X,res_vec = y,
                   memo_thres_bic = options$BIC_memo_thres,
                   memo_thres_smc = options$SMC_memo_thres,
-                  p_num = options$N,rpri = rprior,p_pdf = dprior,efs = ess,
-                  nm = options$n_move,cache_bic = options$BIC_cache,
+                  p_num = options$N,rpri = rprior,p_pdf = dprior,MA = MoreArgs,
+                  efs = ess,nm = options$n_move,cache_bic = options$BIC_cache,
                   cache_smc = options$SMC_cache)
   edge_rem <- c()
   system_save <- vector(mode = "list",length=1)
@@ -319,7 +316,7 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
                                par_no = options$N,rfun = rprior,
                                pdf_fun = dprior,efsamp = ess,
                                methas = options$n_move,cb = options$BIC_cache,
-                               cs = options$SMC_cache)
+                               cs = options$SMC_cache,PA = MoreArgs)
         if(sum(er_temp[[2]])>sum(system_save[[k]][[2]])){
           if(deforest_criterion=="Validation"){
             system_save[[k]] <- c(er_temp,list(get.edgelist(g)[i,]),
@@ -353,9 +350,9 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
     if(deforest_criterion=="Validation"){
       g_all <- system_save[[k_change]][[5]]
     }
-    if(plot_progress){
-      pairs(X[,mst_var],pch=as.character(y),col=z,cex=0.5)
-    }
+    # if(plot_progress){
+    #   pairs(X[,mst_var],pch=as.character(y),col=z,cex=0.5)
+    # }
     for(k in 1:K){
       if(k==k_change){
         system_save[[k]] <- vector(mode = "list",length=1)
@@ -398,7 +395,8 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
                                           memo_thres_smc = options$SMC_memo_thres,
                                           efs = options$ess,nm = options$n_move,
                                           cache_bic = options$BIC_cache,
-                                          cache_smc = options$SMC_cache))
+                                          cache_smc = options$SMC_cache,
+                                          MA = MoreArgs))
       }
       if(verbose){
         txtProgressBar(min=1,max=nrow(edge_rem)+1,initial=j+1,style=3)
@@ -446,9 +444,6 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
           edge_rem <- edge_rem[-cut_comb,,drop=F]
           combine_save[[cut_comb]] <- c()
           K <- K-1
-          if(plot_progress){
-            pairs(X[,mst_var],pch=as.character(y),col=z,cex=0.5)
-          }
           j <- 0
           if(verbose){
             message("")
@@ -479,24 +474,18 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
                          est_thres = SMC_thres,mtb = options$BIC_memo_thres,
                          mts = options$SMC_memo_thres,par_no = options$N,
                          rfun = rprior,pdf_fun = dprior,efsamp = options$ess,
-                         methas = options$n_move,p_p = plot_progress,
-                         rho = mst_var,vb = verbose,cb = options$BIC_cache,
-                         cs = options$SMC_cache)
-    get("_cache", envir=environment(memo.bic))$reset()
-    get("_cache", envir=environment(IBIS.Z))$reset()
+                         methas = options$n_move,vb = verbose,
+                         cb = options$BIC_cache,cs = options$SMC_cache,
+                         PA = MoreArgs)
+    memoise::forget(memo.bic)
+    memoise::forget(IBIS.Z)
     if(sum(model_selection[[2]])>sum(pnoc[[2]])){
-      if(plot_progress){
-        pairs(X[,mst_var],pch=as.character(y),col=model_selection[[1]],cex=0.5)
-      }
       return(list("Cluster Allocation" = model_selection[[1]],
                   "Log Marginal Likelihoods" = model_selection[[2]],
                   "Graph" = model_selection[[3]],
                   "Number of Clusters" = model_selection[[4]],
                   "Edges Removed" = model_selection[[5]]))
     } else{
-      if(plot_progress){
-        pairs(X[,mst_var],pch=as.character(y),col=pnoc[[1]],cex=0.5)
-      }
       return(pnoc)
     }
   }
@@ -506,24 +495,18 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
                          est_thres = SMC_thres,mtb = options$BIC_memo_thres,
                          mts = options$SMC_memo_thres,par_no = options$N,
                          rfun = rprior,pdf_fun = dprior,efsamp = options$ess,
-                         methas = options$n_move,p_p = plot_progress,
-                         rho = mst_var,vb = verbose,cb = options$BIC_cache,
-                         cs = options$SMC_cache)
-    get("_cache", envir=environment(memo.bic))$reset()
-    get("_cache", envir=environment(IBIS.Z))$reset()
+                         methas = options$n_move,vb = verbose,
+                         cb = options$BIC_cache,cs = options$SMC_cache,
+                         PA = MoreArgs)
+    memoise::forget(memo.bic)
+    memoise::forget(IBIS.Z)
     if(sum(model_selection[[2]])>sum(psoc[[2]])){
-      if(plot_progress){
-        pairs(X[,mst_var],pch=as.character(y),col=model_selection[[1]],cex=0.5)
-      }
       return(list("Cluster Allocation" = model_selection[[1]],
                   "Log Marginal Likelihoods" = model_selection[[2]],
                   "Graph" = model_selection[[3]],
                   "Number of Clusters" = model_selection[[4]],
                   "Edges Removed" = model_selection[[5]]))
     } else{
-      if(plot_progress){
-        pairs(X[,mst_var],pch=as.character(y),col=psoc[[1]],cex=0.5)
-      }
       return(psoc)
     }
   }
@@ -535,32 +518,23 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
                               mts = options$SMC_memo_thres,par_no = options$N,
                               rfun = rprior,pdf_fun = dprior,
                               efsamp = options$ess,methas = options$n_move,
-                              p_p = plot_progress,rho = mst_var,vb = verbose,
-                              cb = options$BIC_cache,cs = options$SMC_cache)
-    get("_cache", envir=environment(memo.bic))$reset()
-    get("_cache", envir=environment(IBIS.Z))$reset()
+                              vb = verbose,cb = options$BIC_cache,
+                              cs = options$SMC_cache,PA = MoreArgs)
+    memoise::forget(memo.bic)
+    memoise::forget(IBIS.Z)
     if(sum(model_selection[[2]])>sum(pbal[[2]])){
-      if(plot_progress){
-        pairs(X[,mst_var],pch=as.character(y),col=model_selection[[1]],cex=0.5)
-      }
       return(list("Cluster Allocation" = model_selection[[1]],
                   "Log Marginal Likelihoods" = model_selection[[2]],
                   "Graph" = model_selection[[3]],
                   "Number of Clusters" = model_selection[[4]],
                   "Edges Removed" = model_selection[[5]]))
     } else{
-      if(plot_progress){
-        pairs(X[,mst_var],pch=as.character(y),col=pbal[[1]],cex=0.5)
-      }
       return(pbal)
     }
   }
   if(deforest_criterion=="None"){
-    get("_cache", envir=environment(memo.bic))$reset()
-    get("_cache", envir=environment(IBIS.Z))$reset()
-    if(plot_progress){
-      pairs(X[,mst_var],pch=as.character(y),col=model_selection[[1]],cex=0.5)
-    }
+    memoise::forget(memo.bic)
+    memoise::forget(IBIS.Z)
     return(list("Cluster Allocation" = z,
                 "Log Marginal Likelihoods" = logZ,
                 "Graph" = g,
@@ -574,13 +548,10 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
                                mts = options$SMC_memo_thres,par_no = options$N,
                                rfun = rprior,pdf_fun = dprior,
                                efsamp = options$ess,methas = options$n_move,
-                               p_p = plot_progress,rho = mst_var,vb = verbose,
-                               cb = options$BIC_cache,cs = options$SMC_cache)
-    get("_cache", envir=environment(memo.bic))$reset()
-    get("_cache", envir=environment(IBIS.Z))$reset()
-    if(plot_progress){
-      pairs(X[,mst_var],pch=as.character(y),col=pmaxreg[[1]],cex=0.5)
-    }
+                               vb = verbose,cb = options$BIC_cache,
+                               cs = options$SMC_cache,PA = MoreArgs)
+    memoise::forget(memo.bic)
+    memoise::forget(IBIS.Z)
     return(pmaxreg)
   }
   if(deforest_criterion=="Validation"){
@@ -591,13 +562,11 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
                                 mts = options$SMC_memo_thres,par_no = options$N,
                                 rfun = rprior,pdf_fun = dprior,
                                 efsamp = options$ess,methas = options$n_move,
-                                p_p = plot_progress,rho = mst_var,vb = verbose,
-                                cb = options$BIC_cache,cs = options$SMC_cache)
-    get("_cache", envir=environment(memo.bic))$reset()
-    get("_cache", envir=environment(IBIS.Z))$reset()
-    if(plot_progress){
-      pairs(X_all[,mst_var],pch=as.character(y_all),col=pval[[2]][[1]],cex=0.5)
-    }
+                                rho = mst_var,vb = verbose,
+                                cb = options$BIC_cache,cs = options$SMC_cache,
+                                PA = MoreArgs)
+    memoise::forget(memo.bic)
+    memoise::forget(IBIS.Z)
     return(pval)
   }
 }
@@ -791,21 +760,12 @@ UNCOVERopts <- function(N = 1000,train_frac = 1,max_K = Inf,min_size = 0,
                         SMC_cache = cachem::cache_mem(max_size = 1024 * 1024^2,
                                                       evict = "lru"),...){
   if(prior.override){
-    rprior <- list(...)$rprior
-    if(!is.null(formalArgs(rprior))){
-      stop("No arguments should be specified for rprior. This should be a
-           custom function which always produces N samples from your chosen
-           prior.")
+    if(is.null(rprior) | is.null(dprior)){
+      stop("If overriding the default prior rprior and dprior must be specified.")
     }
-    dprior <- list(...)$dprior
-    if(!identical(formalArgs(rprior),"x")){
-      stop("Only the arguement 'x' should be specified for dprior. dprior
-           should be a custom function which calculates the denisty of the prior
-           samples provided.")
-    }
+    MoreArgs <- list(...)
   } else{
-    rprior <- NULL
-    dprior <- NULL
+    MoreArgs = NULL
   }
   if(N <= 1){
     stop("N must be greater than 1")
@@ -844,5 +804,5 @@ UNCOVERopts <- function(N = 1000,train_frac = 1,max_K = Inf,min_size = 0,
               reg = 0,n_min_class = 0,BIC_memo_thres = Inf,
               SMC_memo_thres = Inf,ess = N/2,n_move = 1,rprior = rprior,
               dprior = dprior,prior.override = prior.override,
-              BIC_cache = BIC_cache,SMC_cache = SMC_cache))
+              BIC_cache = BIC_cache,SMC_cache = SMC_cache,MoreArgs = MoreArgs))
 }

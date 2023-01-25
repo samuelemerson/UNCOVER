@@ -17,7 +17,8 @@ lbe.gen(
   efs = p_num/2,
   nm = 1,
   cache_bic,
-  cache_smc
+  cache_smc,
+  MA
 )
 }
 \arguments{

@@ -104,7 +104,7 @@
 
 remove.edge <- function(gra,j,clu_al=NULL,lbe,obs,res,est_thres=30,mtb=Inf,
                         mts=Inf,par_no=1000,rfun,pdf_fun,efsamp=par_no/2,
-                        methas=1,cb,cs){
+                        methas=1,cb,cs,PA){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -119,7 +119,7 @@ remove.edge <- function(gra,j,clu_al=NULL,lbe,obs,res,est_thres=30,mtb=Inf,
                       obs_ind = which(clu_al==l),memo_thres_bic = mtb,
                       memo_thres_smc = mts,p_num = par_no,rpri = rfun,
                       p_pdf = pdf_fun,efs = efsamp,nm = methas,
-                      cache_bic = cb,cache_smc = cs)
+                      cache_bic = cb,cache_smc = cs,MA = PA)
   }
   return(list(clu_al,lbe,gra_rem))
 }

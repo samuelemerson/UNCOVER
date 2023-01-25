@@ -20,7 +20,8 @@ remove.edge(
   efsamp = par_no/2,
   methas = 1,
   cb,
-  cs
+  cs,
+  PA
 )
 }
 \arguments{

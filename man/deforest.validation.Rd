@@ -27,10 +27,10 @@ deforest.validation(
   pdf_fun,
   efsamp = par_no/2,
   methas = 1,
-  p_p = F,
   vb = F,
   cb,
-  cs
+  cs,
+  PA
 )
 }
 \arguments{
@@ -99,10 +99,10 @@ Defaults to `p_num/2`. See `IBIS.Z` for details.}
 \item{methas}{Number of Metropolis-Hastings steps to apply each time a
 resample move step is triggered. Defaults to 1. See `IBIS.Z` for details.}
 
+\item{vb}{Do you want the progress of the algorithm to be shown?}
+
 \item{p_p}{Do you want to plot the output of the clustering each time an
 edge is reintroduced?}
-
-\item{vb}{Do you want the progress of the algorithm to be shown?}
 }
 \value{
 A list of two lists, one containing information of the training data

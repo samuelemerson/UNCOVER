@@ -132,8 +132,8 @@
 
 deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
                          est_thres=30,mtb = Inf,mts = Inf,par_no=1000,rfun=NULL,
-                         pdf_fun=NULL,efsamp = par_no/2,methas = 1,p_p=F,
-                         rho=NULL,vb = F,cb,cs){
+                         pdf_fun=NULL,efsamp = par_no/2,methas = 1,vb = F,cb,cs,
+                         PA){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -155,7 +155,7 @@ deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
                                memo_thres_bic = mtb,memo_thres_smc = mts,
                                p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
                                efs = efsamp,nm = methas,cache_bic = cb,
-                               cache_smc = cs))
+                               cache_smc = cs,MA = PA))
     }
     if(vb){
       txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
@@ -181,12 +181,6 @@ deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
         eps <- eps[-cut_comb,,drop=F]
         c_s[[cut_comb]] <- c()
         K <- K-1
-        if(p_p){
-          if(is.null(rho)){
-            rho <- 1:ncol(obs)
-          }
-          pairs(obs[,rho],pch=as.character(res),col=clu_al,cex=0.5)
-        }
         j <- 0
         if(nrow(eps)!=0 & vb){
           message("")
@@ -327,8 +321,8 @@ deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
 
 deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
                          est_thres=30,mtb = Inf,mts = Inf,par_no=1000,rfun=NULL,
-                         pdf_fun=NULL,efsamp = par_no/2,methas = 1,p_p=F,
-                         rho=NULL,vb = F,cb,cs){
+                         pdf_fun=NULL,efsamp = par_no/2,methas = 1,vb = F,cb,cs,
+                         PA){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -350,7 +344,7 @@ deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
                                memo_thres_bic = mtb,memo_thres_smc = mts,
                                p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
                                efs = efsamp,nm = methas,cache_bic = cb,
-                               cache_smc = cs))
+                               cache_smc = cs,MA = PA))
     }
     if(vb){
       txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
@@ -380,12 +374,6 @@ deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
         eps <- eps[-cut_comb,,drop=F]
         c_s[[cut_comb]] <- c()
         K <- K-1
-        if(p_p){
-          if(is.null(rho)){
-            rho <- 1:ncol(obs)
-          }
-          pairs(obs[,rho],pch=as.character(res),col=clu_al,cex=0.5)
-        }
         j <- 0
         if(nrow(eps)!=0 & vb){
           message("")
@@ -537,7 +525,7 @@ deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
 deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,
                             est_thres=30,mtb = Inf,mts = Inf,par_no=1000,
                             rfun=NULL,pdf_fun=NULL,efsamp = par_no/2,methas = 1,
-                            p_p=F,rho=NULL,vb = F,cb,cs){
+                            vb = F,cb,cs,PA){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -559,7 +547,7 @@ deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,
                                memo_thres_bic = mtb,memo_thres_smc = mts,
                                p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
                                efs = efsamp,nm = methas,cache_bic = cb,
-                               cache_smc = cs))
+                               cache_smc = cs,MA = PA))
     }
     if(vb){
       txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
@@ -585,12 +573,6 @@ deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,
         eps <- eps[-cut_comb,,drop=F]
         c_s[[cut_comb]] <- c()
         K <- K-1
-        if(p_p){
-          if(is.null(rho)){
-            rho <- 1:ncol(obs)
-          }
-          pairs(obs[,rho],pch=as.character(res),col=clu_al,cex=0.5)
-        }
         j <- 0
         if(nrow(eps)!=0 & vb){
           message("")
@@ -766,7 +748,7 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
                                 gra_all=NULL,which_tr=NULL,rho=NULL,clu_al=NULL,
                                 c_s=NULL,est_thres=30,mtb=Inf,mts=Inf,
                                 par_no=1000,rfun,pdf_fun,efsamp=par_no/2,
-                                methas=1,p_p=F,vb=F,cb,cs){
+                                methas=1,vb=F,cb,cs,PA){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -789,7 +771,7 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
                           obs_ind = which(clu_al_all==k),memo_thres_bic = mtb,
                           memo_thres_smc = mts,p_num = par_no,rpri = rfun,
                           p_pdf = pdf_fun,efs = efsamp,nm = methas,
-                          cache_bic = cb,cache_smc = cs)
+                          cache_bic = cb,cache_smc = cs,MA = PA)
   }
   RobS <- sum(lbe_all-lbe)
   j <- 1
@@ -806,7 +788,7 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
                                obs_ind = which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2]),
                                memo_thres_bic = mtb,memo_thres_smc = mts,
                                p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
-                               efs = efsamp,nm = methas))
+                               efs = efsamp,nm = methas,MA = PA))
     }
     if(!identical(c_s_all[[j]][[1]],which(clu_al_all==edge_clu_al[1]| clu_al_all==edge_clu_al[2]))){
       c_s_all[[j]] <- list(which(clu_al_all==edge_clu_al[1]| clu_al_all==edge_clu_al[2]),
@@ -816,7 +798,7 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
                                    memo_thres_bic = mtb,memo_thres_smc = mts,
                                    p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
                                    efs = efsamp,nm = methas,cache_bic = cb,
-                                   cache_smc = cs))
+                                   cache_smc = cs,MA = PA))
     }
     if(vb){
       txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
@@ -855,12 +837,6 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
         c_s[[cut_comb]] <- c()
         c_s_all[[cut_comb]] <- c()
         K <- K-1
-        if(p_p){
-          if(is.null(rho)){
-            rho <- 1:ncol(obs)
-          }
-          pairs(obs_all[,rho],pch=as.character(res_all),col=clu_al_all,cex=0.5)
-        }
         j <- 0
         if(nrow(eps)!=0 & vb){
           message("")
@@ -1021,7 +997,7 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
 deforest.balanced <- function(obs,res,gra,lbe,eps,ups,clu_al=NULL,c_s=NULL,
                               est_thres=30,mtb = Inf,mts = Inf,par_no=1000,
                               rfun=NULL,pdf_fun=NULL,efsamp=par_no/2,methas=1,
-                              p_p=F,rho=NULL,vb = F,cb,cs){
+                              vb = F,cb,cs,PA){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -1043,7 +1019,7 @@ deforest.balanced <- function(obs,res,gra,lbe,eps,ups,clu_al=NULL,c_s=NULL,
                                memo_thres_bic = mtb,memo_thres_smc = mts,
                                p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
                                efs = efsamp,nm = methas,cache_bic = cb,
-                               cache_smc = cs))
+                               cache_smc = cs,MA = PA))
     }
     if(vb){
       txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
@@ -1078,12 +1054,6 @@ deforest.balanced <- function(obs,res,gra,lbe,eps,ups,clu_al=NULL,c_s=NULL,
         eps <- eps[-cut_comb,,drop=F]
         c_s[[cut_comb]] <- c()
         K <- K-1
-        if(p_p){
-          if(is.null(rho)){
-            rho <- 1:ncol(obs)
-          }
-          pairs(obs[,rho],pch=as.character(res),col=clu_al,cex=0.5)
-        }
         j <- 0
         if(nrow(eps)!=0 & vb){
           message("")
