@@ -195,6 +195,24 @@ print.IBIS <- function(x){
   cat("Log Bayesian Evidence:",x$log_Bayesian_evidence)
 }
 
+predict.IBIS <- function(object,newX,type = "prob"){
+  if(type!="prob" & type!="response"){
+    stop("type not supported")
+  }
+  if(!is.matrix(newX)){
+    newX <- matrix(newX,nrow=1)
+  }
+  DM <- cbind(rep(1,nrow(newX)),newX)
+  p1 <- rowMeans(1/(1+exp(-DM%*%t(object$samples))))
+  if(type=="prob"){
+    res <- data.frame(p1,1-p1)
+    colnames(res) <- 1:0
+  } else{
+    res <- rep(0,length(p1))
+    res[which(p1>=0.5)] <- 1
+  }
+  return(res)
+}
 
 ##' Log Bayesian evidence generator
 ##'

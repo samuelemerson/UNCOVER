@@ -221,7 +221,7 @@ for(ii in 1:ncol(x)){
 return(apply(x,1,prod))
 }
 UN.none.3 <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "None", options = UNCOVERopts(prior.override = TRUE,rprior = rmviu,dprior = dmviu,a=rep(0,3),b=rep(1,3)),verbose = F)
-c(sum(UN.none[[2]]),sum(UN.none.2[[2]]))
+c(sum(UN.none$Log_Marginal_Likelihoods),sum(UN.none.2$Log_Marginal_Likelihoods),sum(UN.none.3$Log_Marginal_Likelihoods))
 }
 \seealso{
 [lbe.gen,one.stage.mst,two.stage.mst,remove.edge,deforest.noc,deforest.soc,deforest.maxreg,deforest.validation,deforest.balanced,IBIS.Z,memo.bic]
