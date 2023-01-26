@@ -192,7 +192,7 @@ print.IBIS <- function(x){
     print.default(xx)
   }
   cat("\n")
-  cat("Log Bayesian Evidence",x$log_Bayesian_evidence)
+  cat("Log Bayesian Evidence:",x$log_Bayesian_evidence)
 }
 
 

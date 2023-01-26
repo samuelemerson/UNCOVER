@@ -1,3 +1,5 @@
 exportPattern("^[[:alpha:]]+")
 export(print.IBIS)
 S3method(print,IBIS)
+export(print.UNCOVER)
+S3method(print,UNCOVER)

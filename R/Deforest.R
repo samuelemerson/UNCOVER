@@ -190,11 +190,11 @@ deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
     }
     j <- j+1
   }
-  return(list("Cluster Allocation" = clu_al,
-              "Log Marginal Likelihoods" = lbe,
-              "Graph" = gra,
-              "Number of Clusters" = K,
-              "Edges Removed" = eps))
+  return(list(Cluster_Allocation = clu_al,
+              Log_Marginal_Likelihoods = lbe,
+              Graph = gra,
+              Number_of_Clusters = K,
+              Edges_Removed = eps))
 }
 
 ##' Reintroducing edges to a graph in order to ensure the size of all clusters is above the specified threshold
@@ -383,11 +383,11 @@ deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
     }
     j <- j+1
   }
-  return(list("Cluster Allocation" = clu_al,
-              "Log Marginal Likelihoods" = lbe,
-              "Graph" = gra,
-              "Number of Clusters" = K,
-              "Edges Removed" = eps))
+  return(list(Cluster_Allocation = clu_al,
+              Log_Marginal_Likelihoods = lbe,
+              Graph = gra,
+              Number_of_Clusters = K,
+              Edges_Removed = eps))
 }
 
 ##' Reintroducing edges to a graph that decrease the Bayesian evidence within a
@@ -582,11 +582,11 @@ deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,
     }
     j <- j+1
   }
-  return(list("Cluster Allocation" = clu_al,
-              "Log Marginal Likelihoods" = lbe,
-              "Graph" = gra,
-              "Number of Clusters" = K,
-              "Edges Removed" = eps))
+  return(list(Cluster_Allocation = clu_al,
+              Log_Marginal_Likelihoods = lbe,
+              Graph = gra,
+              Number_of_Clusters = K,
+              Edges_Removed = eps))
 }
 
 ##' Adding validation data to the training data graph and model, then
@@ -788,7 +788,8 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
                                obs_ind = which(clu_al==edge_clu_al[1]| clu_al==edge_clu_al[2]),
                                memo_thres_bic = mtb,memo_thres_smc = mts,
                                p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
-                               efs = efsamp,nm = methas,MA = PA))
+                               efs = efsamp,nm = methas,cache_bic = cb,
+                               cache_smc = cs,MA = PA))
     }
     if(!identical(c_s_all[[j]][[1]],which(clu_al_all==edge_clu_al[1]| clu_al_all==edge_clu_al[2]))){
       c_s_all[[j]] <- list(which(clu_al_all==edge_clu_al[1]| clu_al_all==edge_clu_al[2]),
@@ -846,16 +847,16 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
     }
     j <- j+1
   }
-  return(list("Training Data" = list("Cluster Allocation" = clu_al,
-                                     "Log Marginal Likelihoods" = lbe,
-                                     "Graph" = gra,
-                                     "Number of Clusters" = K,
-                                     "Edges Removed" = eps),
-              "All Data" = list("Cluster Allocation" = clu_al_all,
-                                "Log Marginal Likelihoods" = lbe_all,
-                                "Graph" = gra_all,
-                                "Number of Clusters" = K,
-                                "Edges Removed" = eps)))
+  return(list(Training_Data = list(Cluster_Allocation = clu_al,
+                                   Log_Marginal_Likelihoods = lbe,
+                                   Graph = gra,
+                                   Number_of_Clusters = K,
+                                   Edges_Removed = eps),
+              All_Data = list(Cluster_Allocation = clu_al_all,
+                              Log_Marginal_Likelihoods = lbe_all,
+                              Graph = gra_all,
+                              Number_of_Clusters = K,
+                              Edges_Removed = eps)))
 }
 
 ##' Reintroducing edges to a graph in order to ensure the minority response
@@ -1063,9 +1064,9 @@ deforest.balanced <- function(obs,res,gra,lbe,eps,ups,clu_al=NULL,c_s=NULL,
     }
     j <- j+1
   }
-  return(list("Cluster Allocation" = clu_al,
-              "Log Marginal Likelihoods" = lbe,
-              "Graph" = gra,
-              "Number of Clusters" = K,
-              "Edges Removed" = eps))
+  return(list(Cluster_Allocation = clu_al,
+              Log_Marginal_Likelihoods = lbe,
+              Graph = gra,
+              Number_of_Clusters = K,
+              Edges_Removed = eps))
 }
