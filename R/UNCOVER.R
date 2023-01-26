@@ -615,6 +615,9 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
 }
 
 print.UNCOVER <- function(x){
+  if(x$Deforestation_Criterion=="Validation"){
+    x$Model <- x$Model$All_Data
+  }
   cat(x$Model$Number_of_Clusters,"clusters were uncovered \n")
   cat("\n")
   cat("Cluster sizes:\n")
@@ -638,7 +641,7 @@ predict.UNCOVER <- function(object,newX,type="prob"){
   }
   object.infer <- UNCOVER.infer(object)
   newX.assign <- UNCOVER.assign(object,newX)
-  newX <- as.matrix(newX,ncol = ncol(object$covariate_matrix))
+  newX <- as.matrix(newX,ncol = ncol(object$Covariate_Matrix))
   DM <- cbind(rep(1,nrow(newX)),newX)
   p1 <- rep(0,nrow(newX))
   for(i in 1:nrow(newX)){
@@ -689,6 +692,9 @@ UNCOVER.infer <- function(x){
 UNCOVER.assign <- function(x,nX){
   if(class(x)!="UNCOVER"){
     stop("This function is only for outputs of UNCOVER")
+  }
+  if(x$Deforestation_Criterion=="Validation"){
+    x$Model <- x$Model$All_Data
   }
   nX <- as.matrix(nX,ncol = ncol(x$Covariate_Matrix))
   conn <- as.matrix(dist(rbind(x$Covariate_Matrix,nX),method = "euclidean"))
