@@ -231,6 +231,8 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
       stop("dprior specified does not produce a vector of densities for the
            N samples provided")
     }
+    prior_mean = "overriden"
+    prior_var = "overriden"
   } else{
     rprior <- mvnfast::rmvn
     dprior <- mvnfast::dmvn
@@ -601,27 +603,106 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
     memoise::forget(memo.bic)
     memoise::forget(IBIS.Z)
     res <- pval
+    X <- X_all
+    y <- y_all
   }
+  res <- append(list(Covariate_Matrix = X,Response_Vector = y,Control = options,
+                     Deforestation_Criterion = deforest_criterion,
+                     Prior_Mean = prior_mean,Prior_Variance = prior_var),
+                list(Model = res))
   class(res) <- 'UNCOVER'
   res
 }
 
 print.UNCOVER <- function(x){
-  cat(x$Number_of_Clusters,"clusters were uncovered \n")
+  cat(x$Model$Number_of_Clusters,"clusters were uncovered \n")
   cat("\n")
   cat("Cluster sizes:\n")
   cat("\n")
-  xz <- as.vector(table(x$Cluster_Allocation))
-  names(xz) <- paste0("Cluster ",1:x$Number_of_Clusters)
+  xz <- as.vector(table(x$Model$Cluster_Allocation))
+  names(xz) <- paste0("Cluster ",1:x$Model$Number_of_Clusters)
   print.default(xz,print.gap = 2)
   cat("\n")
   cat("Sub-model log Bayesian evidences:\n")
   cat("\n")
-  xx <- x$Log_Marginal_Likelihoods
-  names(xx) <- paste0("Cluster ",1:x$Number_of_Clusters)
+  xx <- x$Model$Log_Marginal_Likelihoods
+  names(xx) <- paste0("Cluster ",1:x$Model$Number_of_Clusters)
   print.default(xx)
   cat("\n")
-  cat("Total model log Bayesian evidence:",sum(x$Log_Marginal_Likelihoods))
+  cat("Total model log Bayesian evidence:",sum(x$Model$Log_Marginal_Likelihoods))
+}
+
+predict.UNCOVER <- function(object,newX,type="prob"){
+  if(type!="prob" & type!="response"){
+    stop("type not supported")
+  }
+  object.infer <- UNCOVER.infer(object)
+  newX.assign <- UNCOVER.assign(object,newX)
+  newX <- as.matrix(newX,ncol = ncol(object$covariate_matrix))
+  DM <- cbind(rep(1,nrow(newX)),newX)
+  p1 <- rep(0,nrow(newX))
+  for(i in 1:nrow(newX)){
+    p1[i] <- rowMeans(1/(1+exp(-DM[i,,drop=F]%*%t(object.infer[[newX.assign[i]]]))))
+  }
+  if(type=="prob"){
+    res <- data.frame(p1,1-p1,newX.assign)
+    colnames(res) <- c(1:0,"Cluster")
+  } else{
+    res <- rep(0,length(p1))
+    res[which(p1>=0.5)] <- 1
+    res <- data.frame(newX.assign,res)
+    colnames(res) <- c("Cluster","Predicted Response")
+  }
+  return(res)
+}
+
+UNCOVER.infer <- function(x){
+  if(class(x)!="UNCOVER"){
+    stop("This function is only for outputs of UNCOVER")
+  }
+  if(x$Deforestation_Criterion=="Validation"){
+    x$Model <- x$Model$All_Data
+  }
+  res.list <- vector(mode = "list",length = x$Model$Number_of_Clusters)
+  for(k in 1:x$Model$Number_of_Clusters){
+    if(typeof(x$Prior_Mean)=="character"){
+      x$Prior_Mean = rep(0, ncol(x$Covariate_Matrix) + 1)
+      x$Prior_Variance = diag(ncol(x$Covariate_Matrix) + 1)
+    }
+    res.list[[k]] <- IBIS.logreg(X = x$Covariate_Matrix[which(x$Model$Cluster_Allocation==k),,drop=F],
+                                 y = x$Response_Vector[which(x$Model$Cluster_Allocation==k)],
+                                 options = do.call(IBIS.logreg.opts,
+                                                   do.call(c,list(list(N=x$Control$N),
+                                                                  ess = x$Control$ess,
+                                                                  n_move = x$Control$n_move,
+                                                                  prior.override = x$Control$prior.override,
+                                                                  rprior = x$Control$rprior,
+                                                                  dprior = x$Control$dprior,
+                                                                  x$Control$MoreArgs))),
+                                 prior_mean = x$Prior_Mean,
+                                 prior_var = x$Prior_Variance)$samples
+  }
+  names(res.list) <- paste0("Cluster ",1:x$Model$Number_of_Clusters)
+  return(res.list)
+}
+
+UNCOVER.assign <- function(x,nX){
+  if(class(x)!="UNCOVER"){
+    stop("This function is only for outputs of UNCOVER")
+  }
+  nX <- as.matrix(nX,ncol = ncol(x$Covariate_Matrix))
+  conn <- as.matrix(dist(rbind(x$Covariate_Matrix,nX),method = "euclidean"))
+  nn <- function(u){
+    nns <- which(u==min(u))
+    if(length(nns)==1){
+      return(nns)
+    } else{
+      return(sample(nns,1))
+    }
+  }
+  n.assign <- apply(conn[(nrow(x$Covariate_Matrix)+1):nrow(conn),1:nrow(x$Covariate_Matrix)],1,nn)
+  c.assign <- x$Model$Cluster_Allocation[n.assign]
+  return(c.assign)
 }
 
 UNCOVERopts <- function(N = 1000,train_frac = 1,max_K = Inf,min_size = 0,

@@ -166,7 +166,7 @@ IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
                 samples = IBIS_out$samples,
                 log_Bayesian_evidence = IBIS_out$log_Bayesian_evidence)
   } else{
-    res <- list(covariance_matrix = data.frame(X),
+    res <- list(covariate_matrix = data.frame(X),
                 response_vector = y,
                 samples = IBIS_out$samples,
                 weights = IBIS_out$weights,
@@ -179,14 +179,14 @@ IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
 print.IBIS <- function(x){
   if(length(x)==4){
     xx <- colMeans(x$samples)
-    names(xx) <- c("(Intercept)",colnames(x$covariance_matrix))
+    names(xx) <- c("(Intercept)",colnames(x$covariate_matrix))
     cat(nrow(x$samples),"posterior samples with mean:\n")
     cat("\n")
     print.default(xx)
   } else{
     ss <- cov.wt(x$samples,wt=x$weights,method = "ML")
     xx <- ss$center
-    names(xx) <- c("(Intercept)",colnames(x$covariance_matrix))
+    names(xx) <- c("(Intercept)",colnames(x$covariate_matrix))
     cat(nrow(x$samples),"posterior samples with weighted mean:\n")
     cat("\n")
     print.default(xx)
@@ -199,9 +199,7 @@ predict.IBIS <- function(object,newX,type = "prob"){
   if(type!="prob" & type!="response"){
     stop("type not supported")
   }
-  if(!is.matrix(newX)){
-    newX <- matrix(newX,nrow=1)
-  }
+  newX <- as.matrix(newX,ncol = ncol(object$covariate_matrix))
   DM <- cbind(rep(1,nrow(newX)),newX)
   p1 <- rowMeans(1/(1+exp(-DM%*%t(object$samples))))
   if(type=="prob"){
@@ -213,113 +211,6 @@ predict.IBIS <- function(object,newX,type = "prob"){
   }
   return(res)
 }
-
-##' Log Bayesian evidence generator
-##'
-##'
-##' @export
-##' @name IBIS.logreg.opts
-##' @description Estimates the log Bayesian evidence (log(Z)) of a Bayesian
-##' logistic regression model.
-##'
-##' @keywords sequential monte carlo
-##' @param obs_mat Covariate matrix
-##' @param res_vec Binary response vector
-##' @param obs_ind Vector of indices indicating which observations are in the
-##' model. Defaults to all observations.
-##' @param thres The threshold for which the number of observations needs to
-##' exceed to consider using BIC as an estimator. Defaults to 30 if not
-##' specified.
-##' @param memo_thres_bic The threshold for when it is deemed worthwhile to
-##' check the cache of function `memo.bic` for similar observation indices.
-##' Defaults to never checking the cache.
-##' @param memo_thres_smc The threshold for when it is deemed worthwhile to
-##' check the cache of function `IBIS.Z` for similar observation indices.
-##' Defaults to never checking the cache.
-##' @param p_num Number of samples of the prior used for the SMC sampler.
-##' Default value is 1000 samples.
-##' @param rpri Function to sample from the prior. Must only have two arguments,
-##' `p_n` and `di` (Number of prior samples to generate and the number of
-##' dimensions of a single sample respectively).
-##' @param p_pdf Probability Density Function of the prior. Must only have two
-##' arguments, `th` and `di` (a vector or matrix of regression coefficients
-##' samples and the number of dimensions of a single sample respectively).
-##' @param efs Threshold: if the effective sample size of the particle weights
-##' falls below this value then a resample move step is triggered. Defaults to
-##' `p_num/2`. See `IBIS.Z` for details.
-##' @param nm Number of Metropolis-Hastings steps to apply each time a
-##' resample move step is triggered. Defaults to 1. See `IBIS.Z` for details.
-##' @return An estimation of the log Bayesian evidence
-##' @details log(Z) is estimated using three possible methods:
-##'
-##' 1. `"SMC"`: Estimates log(Z) using an SMC sampler. In order to achieve this
-##' set `thres = Inf`. See `IBIS.Z` for more details.
-##'
-##' 2. `"SMC_BIC"`: Initially tries to estimate log(Z) using BIC but will revert
-##' to using an SMC sampler if the data is linearly separable. Also reverts to
-##' using an SMC sampler if the number of observations is below a certain
-##' threshold. Recommended method and is set as default.
-##'
-##' 3. `"BIC"`: Always tries to estimate log(Z) using the
-##' Bayesian Information Criterion (BIC). Only reverts to an SMC sampler if the
-##' data is linearly separable. In order to achieve this set `thres = 0`. Only
-##' advisable if the number of observations is large.
-##'
-##' `memo_thres_bic` is recommended to be high as the computation time spent
-##' searching for a similar previous run of `memo.bic` is likely to be much
-##' higher than running `memo.bic` from scratch when the number of observations
-##' isn't extremely high. `memo_thres_smc` should be specified much lower as
-##' the running the SMC sampler function is much more costly.
-##'
-##' @examples
-##'
-##' # First we generate a covariate matrix `obs_mat` and binary response vector
-##' # `res_vec`
-##' CM <- matrix(rnorm(2000),1000,2)
-##' rv <- sample(0:1,1000,replace=T)
-##'
-##' # If we assume the prior for the regression coefficients is a standard
-##' # normal
-##' pr_samp <- function(p_n,di){return(mvnfast::rmvn(p_n,rep(0,di),diag(di)))}
-##' pr_fun <- function(th,di){return(mvnfast::dmvn(th,mu=rep(0,di),sigma=diag(di)))}
-##'
-##' # We can then estimate log(Z) using the `"BIC"` method
-##' lbe.gen(obs_mat = CM,res_vec = rv,thres = 0,rpri = pr_samp, p_pdf = pr_fun)
-##'
-##' # If we suspect that the data might be linearly separable
-##' get("_cache", envir=environment(memo.bic))$reset()
-##' get("_cache", envir=environment(IBIS.Z))$reset()
-##' lbe.gen(obs_mat = CM,res_vec = rv,rpri = pr_samp, p_pdf = pr_fun)
-##'
-##' # For a much smaller dataset
-##' CM.2 <- matrix(rnorm(20),10,2)
-##' rv.2 <- sample(0:1,10,replace=T)
-##'
-##' # it is more preferable to use only the SMC sampler to estimate log(Z)
-##' get("_cache", envir=environment(memo.bic))$reset()
-##' get("_cache", envir=environment(IBIS.Z))$reset()
-##' lbe.gen(obs_mat = CM.2,res_vec = rv.2,thres=Inf,rpri = pr_samp, p_pdf = pr_fun)
-##'
-##' # For small datasets the estimates of log(Z) using BIC or SMC will differ
-##' # significantly. This becomes relatively less problematic as the dataset
-##' # becomes larger however.
-##' get("_cache", envir=environment(memo.bic))$reset()
-##' get("_cache", envir=environment(IBIS.Z))$reset()
-##' small.bic <- lbe.gen(thres=0,obs_mat = CM.2,res_vec = rv.2,rpri = pr_samp, p_pdf = pr_fun)
-##' get("_cache", envir=environment(memo.bic))$reset()
-##' get("_cache", envir=environment(IBIS.Z))$reset()
-##' small.smc <- lbe.gen(thres=Inf,obs_mat = CM.2,res_vec = rv.2,rpri = pr_samp, p_pdf = pr_fun)
-##'c(small.bic,small.smc)
-##'
-##' get("_cache", envir=environment(memo.bic))$reset()
-##' get("_cache", envir=environment(IBIS.Z))$reset()
-##' large.bic <- lbe.gen(thres=0,obs_mat = CM,res_vec = rv,rpri = pr_samp, p_pdf = pr_fun)
-##' get("_cache", envir=environment(memo.bic))$reset()
-##' get("_cache", envir=environment(IBIS.Z))$reset()
-##' large.smc <- lbe.gen(thres=Inf,obs_mat = CM,res_vec = rv,rpri = pr_samp, p_pdf = pr_fun)
-##' c(large.bic,large.smc)
-##'
-##'@seealso [IBIS.Z]
 
 IBIS.logreg.opts <- function(N=1000,ess = N/2,n_move = 1,weighted = FALSE,
                              prior.override = FALSE,rprior = NULL,
