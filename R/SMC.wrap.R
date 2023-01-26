@@ -161,14 +161,40 @@ IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
         IBIS_out$samples[which(A>0),] <- BC[which(A>0),]
       }
     }
-    return(list(samples = IBIS_out$samples,
-                log_Bayesian_evidence = IBIS_out$log_Bayesian_evidence))
+    res <- list(covariance_matrix = data.frame(X),
+                response_vector = y,
+                samples = IBIS_out$samples,
+                log_Bayesian_evidence = IBIS_out$log_Bayesian_evidence)
   } else{
-    return(list(samples = IBIS_out$samples,
+    res <- list(covariance_matrix = data.frame(X),
+                response_vector = y,
+                samples = IBIS_out$samples,
                 weights = IBIS_out$weights,
-                log_Bayesian_evidence = IBIS_out$log_Bayesian_evidence))
+                log_Bayesian_evidence = IBIS_out$log_Bayesian_evidence)
   }
+  class(res) <- 'IBIS'
+  res
 }
+
+print.IBIS <- function(x){
+  if(length(x)==4){
+    xx <- colMeans(x$samples)
+    names(xx) <- c("(Intercept)",colnames(x$covariance_matrix))
+    cat(nrow(x$samples),"posterior samples with mean:\n")
+    cat("\n")
+    print.default(xx)
+  } else{
+    ss <- cov.wt(x$samples,wt=x$weights,method = "ML")
+    xx <- ss$center
+    names(xx) <- c("(Intercept)",colnames(x$covariance_matrix))
+    cat(nrow(x$samples),"posterior samples with weighted mean:\n")
+    cat("\n")
+    print.default(xx)
+  }
+  cat("\n")
+  cat("Log Bayesian Evidence",x$log_Bayesian_evidence)
+}
+
 
 ##' Log Bayesian evidence generator
 ##'
