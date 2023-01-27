@@ -161,7 +161,7 @@ IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
         IBIS_out$samples[which(A>0),] <- BC[which(A>0),]
       }
     }
-    res <- list(covariance_matrix = data.frame(X),
+    res <- list(covariate_matrix = data.frame(X),
                 response_vector = y,
                 samples = IBIS_out$samples,
                 log_Bayesian_evidence = IBIS_out$log_Bayesian_evidence)
@@ -203,13 +203,43 @@ predict.IBIS <- function(object,newX,type = "prob"){
   DM <- cbind(rep(1,nrow(newX)),newX)
   p1 <- rowMeans(1/(1+exp(-DM%*%t(object$samples))))
   if(type=="prob"){
-    res <- data.frame(p1,1-p1)
-    colnames(res) <- 1:0
+    res <- data.frame(1-p1,p1)
+    colnames(res) <- 0:1
   } else{
     res <- rep(0,length(p1))
     res[which(p1>=0.5)] <- 1
   }
   return(res)
+}
+
+plot.IBIS <- function(x,type = "samples"){
+  if(type!="samples" & type!="fitted" & type!="diagnostics"){
+    stop("type not supported")
+  }
+  if(type=="samples"){
+    samp.df <- data.frame(x$samples)
+    colnames(samp.df) <- paste0("beta[",0:(ncol(x$samples)-1),"]")
+    GGally::ggpairs(samp.df,labeller = "label_parsed",
+                    upper = list(continuous = wrap("density",colour = "black")),
+                    lower = list(continuous = wrap("points",size=0.5)))
+  }
+  if(type=="fitted"){
+    X_prob <- predict.IBIS(object = x,newX = x$covariate_matrix)[,2]
+    overall_plot <- GGally::ggpairs(x$covariate_matrix)
+    for(i in 1:ncol(x$covariate_matrix)){
+      for(j in (1:ncol(x$covariate_matrix))[-i]){
+        overall_plot[i,j] <- ggplot2::ggplot(data.frame(x$covariate_matrix[,c(i,j)],
+                                                        y = as.character(x$response_vector),
+                                                        prob = X_prob),
+                                    aes(get(colnames(x$covariate_matrix)[1]),
+                                        get(colnames(x$covariate_matrix)[2]),
+                                        label = y,colour = X_prob)) +
+          theme(axis.title.x = element_blank(),axis.title.y = element_blank()) +
+          ggplot2::geom_text(show.legend = FALSE,size = 3) +
+          scale_color_gradient(low = "red",high = "green")
+      }
+    }
+  }
 }
 
 IBIS.logreg.opts <- function(N=1000,ess = N/2,n_move = 1,weighted = FALSE,

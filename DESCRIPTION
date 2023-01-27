@@ -9,5 +9,5 @@ Description: More about what it does (maybe more than one line)
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
-Depends: mvnfast, igraph, crayon, memoise
+Depends: mvnfast, igraph, crayon, memoise, GGally
 RoxygenNote: 7.2.1
