@@ -170,7 +170,7 @@
 
 IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,
                    target_set=1:length(y),current_set=NULL,ess=NULL,n_move=1,
-                   PriorArgs){
+                   PriorArgs,diagnostics = FALSE){
   if(length(target_set)==length(current_set)){
     stop("target_set and current_set cannot be the same length")
   }
@@ -257,6 +257,12 @@ IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,
     action_set <- setdiff(target_set,current_set)
   }
   action_set <- action_set[sample(1:length(action_set),length(action_set))]
+  if(diagnostics){
+    ESS.rec <- data.frame(Observations = action_set, ESS = rep(0,length(action_set)))
+    LBE.rec <- ESS.rec
+    colnames(LBE.rec)[2] <- "Log_Bayesian_Evidence"
+    AR.rec <- data.frame()
+  }
   for(i in 1:length(action_set)){
     w_new <- as.vector(((1+exp(-X[action_set[i],]%*%t(sampl)))^(-y[action_set[i]]))*((1+exp(X[action_set[i],]%*%t(sampl)))^(y[action_set[i]]-1)))
     if(reverse){
@@ -265,12 +271,18 @@ IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,
       w_new <- w*w_new
     }
     logZ <- logZ + log(sum(w_new)) - log(sum(w))
+    if(diagnostics){
+      LBE.rec[i,2] <- logZ
+    }
     w <- w_new
     wsq <- sum((w[as.integer(names(dup_tab))]*dup_tab)^2)
     if(wsq==0){
       ESS <- 0
     } else{
       ESS <- (sum(w)^2)/wsq
+    }
+    if(diagnostics){
+      ESS.rec[i,2] <- ESS
     }
     if(ESS < ess){
       if(reverse){
@@ -338,6 +350,9 @@ IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,
         A <- Log_1 - Log_2 - log(runif(length(Log_1)))
         A.all <- A.all | (A>0)
         sampl[which(A>0),] <- BC[which(A>0),]
+        if(diagnostics){
+          AR.rec <- rbind(AR.rec,c(paste0(action_set[i],".",j),sum(A>0)/N))
+        }
       }
       samp[which(A.all)] <- (N+1):(N+length(which(A.all)))
       dup_tab <- table(samp)
@@ -349,11 +364,26 @@ IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,
       current_set <- c(current_set,action_set[i])
     }
   }
-  return(list(output = list(samples = sampl,
-                            weights = w,
-                            log_Bayesian_evidence = logZ,
-                            duplication_table = dup_tab[order(as.integer(names(dup_tab)))]),
-              input = target_set))
+  if(diagnostics){
+    if(nrow(AR.rec)>0){
+      colnames(AR.rec) <- c("Observations","Acceptance_Rate")
+    }
+    return(list(output = list(samples = sampl,
+                              weights = w,
+                              log_Bayesian_evidence = logZ,
+                              duplication_table = dup_tab[order(as.integer(names(dup_tab)))],
+                              diagnostics = list(log_Bayesian_evidence_tracker = LBE.rec,
+                                                 effective_sample_size_tracker = ESS.rec,
+                                                 acceptance_rate_tracker = AR.rec,
+                                                 ESS_threshold = ess)),
+                input = target_set))
+  } else{
+    return(list(output = list(samples = sampl,
+                              weights = w,
+                              log_Bayesian_evidence = logZ,
+                              duplication_table = dup_tab[order(as.integer(names(dup_tab)))]),
+                input = target_set))
+  }
 }
 
 

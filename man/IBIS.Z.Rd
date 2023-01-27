@@ -15,7 +15,8 @@ IBIS.Z(
   current_set = NULL,
   ess = NULL,
   n_move = 1,
-  PriorArgs
+  PriorArgs,
+  diagnostics = FALSE
 )
 }
 \arguments{
