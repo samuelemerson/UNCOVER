@@ -24,7 +24,9 @@ deforest.soc(
   vb = F,
   cb,
   cs,
-  PA
+  PA,
+  diagnostics = FALSE,
+  Tr = NULL
 )
 }
 \arguments{

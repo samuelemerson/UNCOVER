@@ -210,6 +210,8 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
                                omit_args = c("param_start"))
   IBIS.Z <- memoise::memoise(IBIS.Z,cache = options$SMC_cache,
                               omit_args = c("sampl","current_set"))
+  X_names <- colnames(X)
+  X <- as.matrix(X)
   if(options$prior.override){
     MoreArgs <- options$MoreArgs
     TotArgs <- list(options$N)
@@ -272,6 +274,15 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
                   efs = options$ess,nm = options$n_move,
                   cache_bic = options$BIC_cache,
                   cache_smc = options$SMC_cache)
+  if(options$diagnostics){
+    n_min_size <- sum(table(z)<options$min_size)
+    num_min_cla <- sum(table(y)<options$n_min_class)
+    Track <- data.frame(Action = "Init.",Log_Bayesian_Evidence = logZ,
+                        Number_Of_Clusters = K,Minimum_Cluster_Size = n,
+                        Number_Of_Small_Clusters = n_min_size,
+                        Minimum_Minority_Class = min(table(y)),
+                        Number_Of_Unbalanced_Clusters = num_min_cla)
+  }
   edge_rem <- c()
   system_save <- vector(mode = "list",length=1)
   combine_save <- list()
@@ -362,9 +373,14 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
     if(deforest_criterion=="Validation"){
       g_all <- system_save[[k_change]][[5]]
     }
-    # if(plot_progress){
-    #   pairs(X[,mst_var],pch=as.character(y),col=z,cex=0.5)
-    # }
+    if(options$diagnostics){
+      tab_z <- table(z)
+      sap_bal <- sapply(1:(K+1),FUN = function(u,res,clu_al){min(table(factor(res[which(clu_al==u)],levels=0:1)))},res=y,clu_al=z)
+      Track <- rbind(Track,
+                     c(paste0("Rem.",system_save[[k_change]][[4]][1],"-",system_save[[k_change]][[4]][2]),
+                       sum(logZ),K+1,min(tab_z),sum(tab_z<options$min_size),
+                       min(sap_bal),sum(sap_bal<options$n_min_class)))
+    }
     for(k in 1:K){
       if(k==k_change){
         system_save[[k]] <- vector(mode = "list",length=1)
@@ -462,6 +478,13 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
           if(deforest_criterion=="Validation"){
             g_all <- add_edges(g_all,edge_rem[cut_comb,])
           }
+          if(options$diagnostics){
+            tab_z <- table(z)
+            sap_bal <- sapply(1:(K-1),FUN = function(u,res,clu_al){min(table(factor(res[which(clu_al==u)],levels=0:1)))},res=y,clu_al=z)
+            Track <- rbind(Track,c(paste0("Add.",edge_rem[cut_comb,1],"-",edge_rem[cut_comb,2]),
+                                   sum(logZ),K-1,min(tab_z),sum(tab_z<options$min_size),
+                                   min(sap_bal),sum(sap_bal<options$n_min_class)))
+          }
           edge_rem <- edge_rem[-cut_comb,,drop=F]
           combine_save[[cut_comb]] <- c()
           K <- K-1
@@ -500,6 +523,10 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
     message("Deforestation Stage")
   }
   if(deforest_criterion=="NoC"){
+    if(!options$diagnostics){
+      Z_track = NULL
+      K_track = NULL
+    }
     pnoc <- deforest.noc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,
                          K_dag = options$max_K,clu_al = z,c_s = combine_save,
                          est_thres = options$SMC_thres,
@@ -508,15 +535,27 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
                          rfun = rprior,pdf_fun = dprior,efsamp = options$ess,
                          methas = options$n_move,vb = verbose,
                          cb = options$BIC_cache,cs = options$SMC_cache,
-                         PA = MoreArgs)
+                         PA = MoreArgs,diagnostics = options$diagnostics,
+                         Tr = Track[,1:3])
     memoise::forget(memo.bic)
     memoise::forget(IBIS.Z)
     if(sum(model_selection[[2]])>sum(pnoc[[2]])){
-      res <- list(Cluster_Allocation = model_selection[[1]],
-                  Log_Marginal_Likelihoods = model_selection[[2]],
-                  Graph = model_selection[[3]],
-                  Number_of_Clusters = model_selection[[4]],
-                  Edges_Removed = model_selection[[5]])
+      if(options$diagnostics){
+        Track <- pnoc$Diagnostics
+        Track <- rbind(Track,c("Rev.",sum(model_selection[[2]]),model_selection[[4]]))
+        res <- list(Cluster_Allocation = model_selection[[1]],
+                    Log_Marginal_Likelihoods = model_selection[[2]],
+                    Graph = model_selection[[3]],
+                    Number_of_Clusters = model_selection[[4]],
+                    Edges_Removed = model_selection[[5]],
+                    Diagnostics = Track)
+      } else{
+        res <- list(Cluster_Allocation = model_selection[[1]],
+                    Log_Marginal_Likelihoods = model_selection[[2]],
+                    Graph = model_selection[[3]],
+                    Number_of_Clusters = model_selection[[4]],
+                    Edges_Removed = model_selection[[5]])
+      }
     } else{
       res <- pnoc
     }
@@ -530,15 +569,30 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
                          rfun = rprior,pdf_fun = dprior,efsamp = options$ess,
                          methas = options$n_move,vb = verbose,
                          cb = options$BIC_cache,cs = options$SMC_cache,
-                         PA = MoreArgs)
+                         PA = MoreArgs,diagnostics = options$diagnostics,
+                         Tr = Track[,c(1:2,4:5)])
     memoise::forget(memo.bic)
     memoise::forget(IBIS.Z)
     if(sum(model_selection[[2]])>sum(psoc[[2]])){
-      res <- list(Cluster_Allocation = model_selection[[1]],
-                  Log_Marginal_Likelihoods = model_selection[[2]],
-                  Graph = model_selection[[3]],
-                  Number_of_Clusters = model_selection[[4]],
-                  Edges_Removed = model_selection[[5]])
+      if(options$diagnostics){
+        Track <- psoc$Diagnostics
+        tab_z <- table(model_selection[[1]])
+        Track <- rbind(Track,c("Rev.",sum(model_selection[[2]]),
+                               min(tab_z),
+                               sum(tab_z<options$min_size)))
+        res <- list(Cluster_Allocation = model_selection[[1]],
+                    Log_Marginal_Likelihoods = model_selection[[2]],
+                    Graph = model_selection[[3]],
+                    Number_of_Clusters = model_selection[[4]],
+                    Edges_Removed = model_selection[[5]],
+                    Diagnostics = Track)
+      } else{
+        res <- list(Cluster_Allocation = model_selection[[1]],
+                    Log_Marginal_Likelihoods = model_selection[[2]],
+                    Graph = model_selection[[3]],
+                    Number_of_Clusters = model_selection[[4]],
+                    Edges_Removed = model_selection[[5]])
+      }
     } else{
       res <- psoc
     }
@@ -552,15 +606,29 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
                               rfun = rprior,pdf_fun = dprior,
                               efsamp = options$ess,methas = options$n_move,
                               vb = verbose,cb = options$BIC_cache,
-                              cs = options$SMC_cache,PA = MoreArgs)
+                              cs = options$SMC_cache,PA = MoreArgs,
+                              diagnostics = options$diagnostics,
+                              Tr = Track[,c(1:2,6:7)])
     memoise::forget(memo.bic)
     memoise::forget(IBIS.Z)
     if(sum(model_selection[[2]])>sum(pbal[[2]])){
-      res <- list(Cluster_Allocation = model_selection[[1]],
-                  Log_Marginal_Likelihoods = model_selection[[2]],
-                  Graph = model_selection[[3]],
-                  Number_of_Clusters = model_selection[[4]],
-                  Edges_Removed = model_selection[[5]])
+      if(options$diagnostics){
+        Track <- pbal$Diagnostics
+        sap_bal <- sapply(1:(model_selection[[4]]),FUN = function(u,res,clu_al){min(table(factor(res[which(clu_al==u)],levels=0:1)))},res=y,clu_al=model_selection[[1]])
+        Track <- rbind(Track,c("Rev.",sum(model_selection[[2]]),min(sap_bal),sum(sap_bal<options$n_min_class)))
+        res <- list(Cluster_Allocation = model_selection[[1]],
+                    Log_Marginal_Likelihoods = model_selection[[2]],
+                    Graph = model_selection[[3]],
+                    Number_of_Clusters = model_selection[[4]],
+                    Edges_Removed = model_selection[[5]],
+                    Diagnostics = Track)
+      } else{
+        res <- list(Cluster_Allocation = model_selection[[1]],
+                    Log_Marginal_Likelihoods = model_selection[[2]],
+                    Graph = model_selection[[3]],
+                    Number_of_Clusters = model_selection[[4]],
+                    Edges_Removed = model_selection[[5]])
+      }
     } else{
       res <- pbal
     }
@@ -568,11 +636,20 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
   if(deforest_criterion=="None"){
     memoise::forget(memo.bic)
     memoise::forget(IBIS.Z)
-    res <- list(Cluster_Allocation = z,
-                Log_Marginal_Likelihoods = logZ,
-                Graph = g,
-                Number_of_Clusters = K,
-                Edges_Removed = edge_rem)
+    if(options$diagnostics){
+      res <- list(Cluster_Allocation = z,
+                  Log_Marginal_Likelihoods = logZ,
+                  Graph = g,
+                  Number_of_Clusters = K,
+                  Edges_Removed = edge_rem,
+                  Diagnostics = Track[,1:2])
+    } else{
+      res <- list(Cluster_Allocation = z,
+                  Log_Marginal_Likelihoods = logZ,
+                  Graph = g,
+                  Number_of_Clusters = K,
+                  Edges_Removed = edge_rem)
+    }
   }
   if(deforest_criterion=="MaxReg"){
     pmaxreg <- deforest.maxreg(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,
@@ -583,7 +660,8 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
                                rfun = rprior,pdf_fun = dprior,
                                efsamp = options$ess,methas = options$n_move,
                                vb = verbose,cb = options$BIC_cache,
-                               cs = options$SMC_cache,PA = MoreArgs)
+                               cs = options$SMC_cache,PA = MoreArgs,
+                               diagnostics = options$diagnostics,Tr = Track[,1:2])
     memoise::forget(memo.bic)
     memoise::forget(IBIS.Z)
     res <- (pmaxreg)
@@ -599,14 +677,21 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVERopts(),stop_criterion=Inf,
                                 efsamp = options$ess,methas = options$n_move,
                                 rho = mst_var,vb = verbose,
                                 cb = options$BIC_cache,cs = options$SMC_cache,
-                                PA = MoreArgs)
+                                PA = MoreArgs,diagnostics = options$diagnostics,
+                                Tr = Track[,1:2])
     memoise::forget(memo.bic)
     memoise::forget(IBIS.Z)
     res <- pval
     X <- X_all
     y <- y_all
   }
-  res <- append(list(Covariate_Matrix = X,Response_Vector = y,Control = options,
+  X <- data.frame(X)
+  if(!is.null(X_names)){
+    colnames(X) <- X_names
+  }
+  res <- append(list(Covariate_Matrix = X,Response_Vector = y,
+                     Minimum_Spanning_Tree_Variables = mst_var,
+                     Control = options,
                      Deforestation_Criterion = deforest_criterion,
                      Prior_Mean = prior_mean,Prior_Variance = prior_var),
                 list(Model = res))
@@ -636,6 +721,7 @@ print.UNCOVER <- function(x){
 }
 
 predict.UNCOVER <- function(object,newX,type="prob"){
+  newX <- as.matrix(newX)
   if(type!="prob" & type!="response"){
     stop("type not supported")
   }
@@ -648,8 +734,8 @@ predict.UNCOVER <- function(object,newX,type="prob"){
     p1[i] <- rowMeans(1/(1+exp(-DM[i,,drop=F]%*%t(object.infer[[newX.assign[i]]]))))
   }
   if(type=="prob"){
-    res <- data.frame(p1,1-p1,newX.assign)
-    colnames(res) <- c(1:0,"Cluster")
+    res <- data.frame(1-p1,p1,newX.assign)
+    colnames(res) <- c(0:1,"Cluster")
   } else{
     res <- rep(0,length(p1))
     res[which(p1>=0.5)] <- 1
@@ -657,6 +743,303 @@ predict.UNCOVER <- function(object,newX,type="prob"){
     colnames(res) <- c("Cluster","Predicted Response")
   }
   return(res)
+}
+
+plot.UNCOVER <- function(x,type = "covariates",
+                         plot_var = x$Minimum_Spanning_Tree_Variables,
+                         diagnostic.x.axis = "full"){
+  if(diagnostic.x.axis!="full" & diagnostic.x.axis!="minimal"){
+    stop("diagnostic.x.axis must be either full or minimal")
+  }
+  if(x$Deforestation_Criterion=="Validation"){
+    x$Model <- x$Model$All_Data
+  }
+  if(any(is.na(match(plot_var,1:ncol(x$Covariate_Matrix))))){
+    stop("cannot subset the covariate matrix with plot_var provided")
+  }
+  if(type!="covariates" & type!="fitted" & type!="samples" & type!="diagnostics"){
+    stop("type not supported")
+  }
+  if(type=="covariates"){
+    x$Covariate_Matrix <- x$Covariate_Matrix[,plot_var,drop=F]
+    if(ncol(x$Covariate_Matrix)==1){
+      overall_plot <- ggplot2::ggplot(data.frame(Index = 1:nrow(x$Covariate_Matrix),x$Covariate_Matrix,
+                                                 y = as.character(x$Response_Vector),
+                                                 Cluster = as.factor(x$Model$Cluster_Allocation)),
+                                      aes(Index,
+                                          get(colnames(x$Covariate_Matrix)[1]),
+                                          label = y,colour = Cluster)) +
+        ggplot2::geom_point(alpha=0) +
+        ggplot2::geom_text(alpha = 1,show.legend = FALSE,size = 3) +
+        guides(colour = guide_legend(override.aes = list(alpha=1),title = "Cluster")) +
+        labs(y = colnames(x$Covariate_Matrix)[1]) + theme(legend.position = "bottom")
+    } else{
+      colour.large <- x$Model$Cluster_Allocation
+      colour.large[which(colour.large %in% which(table(colour.large)<5))] <- 0
+      legend_plot <- ggplot2::ggplot(data.frame(x$Covariate_Matrix[,c(1,2)],
+                                                Cluster = as.factor(x$Model$Cluster_Allocation)),
+                                     ggplot2::aes(get(colnames(x$Covariate_Matrix)[1]),
+                                                  get(colnames(x$Covariate_Matrix)[2]),
+                                                  colour = Cluster)) +
+        ggplot2::geom_point() + ggplot2::theme(legend.position = "bottom")
+      overall_plot <- GGally::ggpairs(data.frame(x$Covariate_Matrix),
+                                      upper = list(continuous = "points"),
+                                      lower = list(continuous = "points"),
+                                      legend = GGally::grab_legend(legend_plot)) +
+        ggplot2::theme(legend.position = "bottom")
+
+      for(i in 1:ncol(x$Covariate_Matrix)){
+        for(j in 1:ncol(x$Covariate_Matrix)){
+          if(i==j){
+            df.i <- data.frame(x$Covariate_Matrix[which(colour.large>0),i])
+            colnames(df.i) <- "temp"
+            overall_plot[i,j] <- ggplot2::ggplot(df.i,ggplot2::aes(temp,
+                                                                   alpha = 0.5,
+                                                                   color = factor(colour.large[which(colour.large>0)],levels = unique(colour.large[which(colour.large>0)])),
+                                                                   fill = factor(colour.large[which(colour.large>0)],levels = unique(colour.large[which(colour.large>0)])))) +
+              ggplot2::geom_density(show.legend = FALSE) +
+              ggplot2::theme(axis.title.x = ggplot2::element_blank(),
+                             axis.title.y = ggplot2::element_blank()) +
+              ggplot2::scale_colour_manual(values = scales::hue_pal()(x$Model$Number_of_Clusters)[unique(colour.large)]) +
+              ggplot2::scale_fill_manual(values = scales::hue_pal()(x$Model$Number_of_Clusters)[unique(colour.large)]) +
+              ggplot2::scale_x_continuous(limits = ggplot2::layer_scales(overall_plot[i,j])$x$range$range)
+          }
+          else{
+            df.ij <- data.frame(x$Covariate_Matrix[,c(i,j)],
+                                y = as.character(x$Response_Vector),
+                                X_col = as.factor(x$Model$Cluster_Allocation))
+            colnames(df.ij)[1:2] <- c("temp.i","temp.j")
+          overall_plot[i,j] <- ggplot2::ggplot(df.ij,
+                                               ggplot2::aes(temp.j,temp.i,
+                                                   label = y,colour = X_col)) +
+            ggplot2::theme(axis.title.x = ggplot2::element_blank(),
+                           axis.title.y = ggplot2::element_blank()) +
+            ggplot2::geom_text(show.legend = FALSE,size = 3)
+          }
+        }
+      }
+    }
+  }
+  if(type=="fitted"){
+    X_prob <- predict.UNCOVER(object = x,newX = x$Covariate_Matrix)[,2]
+    x$Covariate_Matrix <- x$Covariate_Matrix[,plot_var,drop=F]
+    if(ncol(x$Covariate_Matrix)==1){
+      overall_plot <- ggplot2::ggplot(data.frame(Index = 1:nrow(x$Covariate_Matrix),x$Covariate_Matrix,
+                                                 rv = as.character(x$Response_Vector),
+                                                 prob = X_prob),
+                                      aes(Index,
+                                          get(colnames(x$Covariate_Matrix)[1]),
+                                          label = rv,colour = X_prob)) +
+        ggplot2::geom_text(size = 3) +
+        scale_color_gradient(low = "red",high = "green",name = "Fitted Probabilities",limits = c(0,1)) +
+        labs(y = colnames(x$Covariate_Matrix)[1]) + theme(legend.position = "bottom")
+    } else{
+      legend_plot <- ggplot2::ggplot(data.frame(x$Covariate_Matrix[,c(1,2)],
+                                                Fitted.Probabilities = X_prob),
+                                     ggplot2::aes(get(colnames(x$Covariate_Matrix)[1]),
+                                         get(colnames(x$Covariate_Matrix)[2]),
+                                         colour = Fitted.Probabilities)) +
+        ggplot2::geom_point() + theme(legend.position = "bottom") +
+        scale_color_gradient(low = "red",high = "green",name = "Fitted Probabilities",limits = c(0,1))
+      overall_plot <- GGally::ggpairs(x$Covariate_Matrix,legend = GGally::grab_legend(legend_plot)) +
+        theme(legend.position = "bottom")
+      for(i in 1:ncol(x$Covariate_Matrix)){
+        for(j in (1:ncol(x$Covariate_Matrix))[-i]){
+          df.ij <- data.frame(x$Covariate_Matrix[,c(i,j)],
+                              y = as.character(x$Response_Vector),
+                              X_col = X_prob)
+          colnames(df.ij)[1:2] <- c("temp.i","temp.j")
+          overall_plot[i,j] <- ggplot2::ggplot(df.ij,
+                                               ggplot2::aes(temp.j,temp.i,
+                                                   label = y,colour = X_prob)) +
+            ggplot2::theme(axis.title.x = ggplot2::element_blank(),
+                           axis.title.y = ggplot2::element_blank()) +
+            ggplot2::geom_text(show.legend = FALSE,size = 3) +
+            ggplot2::scale_color_gradient(low = "red",high = "green",limits = c(0,1))
+        }
+      }
+    }
+  }
+  if(type=="samples"){
+    legend_plot <- ggplot2::ggplot(data.frame(x$Covariate_Matrix[,c(1,2)],
+                                              Cluster = as.factor(x$Model$Cluster_Allocation)),
+                                   ggplot2::aes(get(colnames(x$Covariate_Matrix)[1]),
+                                                get(colnames(x$Covariate_Matrix)[2]),
+                                                colour = Cluster)) +
+      ggplot2::geom_point() + ggplot2::theme(legend.position = "bottom")
+    samp.df <- data.frame(do.call(rbind,UNCOVER.infer(x))[,c(1,plot_var+1)])
+    colnames(samp.df) <- paste0("beta[",c(0,plot_var),"]")
+    overall_plot <- GGally::ggpairs(samp.df,ggplot2::aes(alpha = 0.5,
+                                                         color = as.factor(rep(1:x$Model$Number_of_Clusters,each = x$Control$N))),
+                                    labeller = "label_parsed",
+                                    upper = list(continuous = wrap("points",size=0.5)),
+                                    lower = list(continuous = wrap("points",size=0.5)),
+                                    legend = GGally::grab_legend(legend_plot)) +
+      ggplot2::theme(legend.position = "bottom")
+  }
+  if(type=="diagnostics"){
+    if(!("Diagnostics" %in% names(x$Model))){
+      stop("For diagnostics plot diagnostics=TRUE needs to be specified when creating UNCOVER object")
+    }
+    if(x$Deforestation_Criterion=="None"){
+      obs_lev <- x$Model$Diagnostics$Action
+      obs_lev_tics <- rep("",length(obs_lev))
+      obs_lev_tics[c(1,round(length(obs_lev)*(1:4)/4))] <- obs_lev[c(1,round(length(obs_lev)*(1:4)/4))]
+      overall_plot <- ggplot2::ggplot(x$Model$Diagnostics,
+                                      ggplot2::aes(x = factor(Action,levels = obs_lev),
+                                                   y = as.numeric(Log_Bayesian_Evidence),group=1)) +
+        ggplot2::geom_point() + ggplot2::geom_line() +
+        labs(x = "Action",y = "Log Bayesian Evidence")
+      if(diagnostic.x.axis=="minimal"){
+        overall_plot <- overall_plot + scale_x_discrete(labels = obs_lev_tics)
+      }
+    }
+    if(x$Deforestation_Criterion=="NoC"){
+      obs_lev <- x$Model$Diagnostics$Action
+      obs_lev_tics <- rep("",length(obs_lev))
+      obs_lev_tics[c(1,round(length(obs_lev)*(1:4)/4))] <- obs_lev[c(1,round(length(obs_lev)*(1:4)/4))]
+      plot_1 <- ggplot2::ggplot(x$Model$Diagnostics,
+                                      ggplot2::aes(x = factor(Action,levels = obs_lev),
+                                                   y = as.numeric(Log_Bayesian_Evidence),group=1)) +
+        ggplot2::geom_point() + ggplot2::geom_line()
+      if(diagnostic.x.axis=="minimal"){
+        plot_1 <- plot_1 + scale_x_discrete(labels = obs_lev_tics)
+      }
+      x$Model$Diagnostics$Number_Of_Clusters <- as.integer(x$Model$Diagnostics$Number_Of_Clusters)
+      plot_2 <- ggplot2::ggplot(x$Model$Diagnostics,
+                                ggplot2::aes(x = factor(Action,levels = obs_lev),
+                                             y = Number_Of_Clusters,group=1)) +
+        ggplot2::geom_point() + ggplot2::geom_line() +
+        geom_hline(yintercept = x$Control$max_K,linetype = 2) +
+        scale_y_continuous(breaks = unique(sort(c(round(seq(min(x$Model$Diagnostics$Number_Of_Clusters),max(x$Model$Diagnostics$Number_Of_Clusters),length.out = 5)),x$Control$max_K))))
+      if(diagnostic.x.axis=="minimal"){
+        plot_2 <- plot_2 + scale_x_discrete(labels = obs_lev_tics)
+      }
+      overall_plot <- GGally::ggmatrix(list(plot_1,plot_2),nrow = 2,ncol = 1,
+                                       xlab = "Action",
+                                       yAxisLabels = c("Log Bayesian Evidence",
+                                                       "Number Of Clusters"))
+    }
+    if(x$Deforestation_Criterion=="SoC"){
+      obs_lev <- x$Model$Diagnostics$Action
+      obs_lev_tics <- rep("",length(obs_lev))
+      obs_lev_tics[c(1,round(length(obs_lev)*(1:4)/4))] <- obs_lev[c(1,round(length(obs_lev)*(1:4)/4))]
+      plot_1 <- ggplot2::ggplot(x$Model$Diagnostics,
+                                ggplot2::aes(x = factor(Action,levels = obs_lev),
+                                             y = as.numeric(Log_Bayesian_Evidence),group=1)) +
+        ggplot2::geom_point() + ggplot2::geom_line() +
+        labs(x = "Action",y = "Log Bayesian Evidence")
+      if(diagnostic.x.axis=="minimal"){
+        plot_1 <- plot_1 + scale_x_discrete(labels = obs_lev_tics)
+      }
+      x$Model$Diagnostics$Minimum_Cluster_Size <- as.integer(x$Model$Diagnostics$Minimum_Cluster_Size)
+      plot_2 <- ggplot2::ggplot(x$Model$Diagnostics,
+                                ggplot2::aes(x = factor(Action,levels = obs_lev),
+                                             y = Minimum_Cluster_Size,group=1)) +
+        ggplot2::geom_point() + ggplot2::geom_line() +
+        geom_hline(yintercept = x$Control$min_size,linetype = 2) +
+        scale_y_continuous(breaks = unique(sort(c(round(seq(min(x$Model$Diagnostics$Minimum_Cluster_Size),max(x$Model$Diagnostics$Minimum_Cluster_Size),length.out = 5)),x$Control$min_size)))) +
+        labs(x = "Action",y = "Minimum Cluster Size")
+      if(diagnostic.x.axis=="minimal"){
+        plot_2 <- plot_2 + scale_x_discrete(labels = obs_lev_tics)
+      }
+      plot_3 <- ggplot2::ggplot(x$Model$Diagnostics,
+                                ggplot2::aes(x = factor(Action,levels = obs_lev),
+                                             y = as.integer(Number_Of_Small_Clusters),group=1)) +
+        ggplot2::geom_point() + ggplot2::geom_line() +
+        labs(x = "Action",y = "Number of Criterion Breaking Clusters")
+      if(diagnostic.x.axis=="minimal"){
+        plot_3 <- plot_3 + scale_x_discrete(labels = obs_lev_tics)
+      }
+      overall_plot <- ggpubr::ggarrange(ggpubr::ggarrange(plot_1,plot_3,ncol=2),plot_2,nrow=2)
+    }
+    if(x$Deforestation_Criterion=="MaxReg"){
+      obs_lev <- x$Model$Diagnostics$Action
+      obs_lev_tics <- rep("",length(obs_lev))
+      obs_lev_tics[c(1,round(length(obs_lev)*(1:4)/4))] <- obs_lev[c(1,round(length(obs_lev)*(1:4)/4))]
+      x$Model$Diagnostics$Log_Bayesian_Evidence <- as.numeric(x$Model$Diagnostics$Log_Bayesian_Evidence)
+      overall_plot <- ggplot2::ggplot(x$Model$Diagnostics,
+                                ggplot2::aes(x = factor(Action,levels = obs_lev),
+                                             y = Log_Bayesian_Evidence,group=1,
+                                             colour = factor(Action,levels = obs_lev))) +
+        ggplot2::geom_point(show.legend = FALSE) + ggplot2::geom_line(show.legend = FALSE) +
+        labs(x = "Action",y = "Log Bayesian Evidence")
+      for(i in 1:nrow(x$Model$Diagnostics)){
+        yint <- x$Model$Diagnostics$Log_Bayesian_Evidence[i] + x$Control$reg
+        ycol <- scales::hue_pal()(nrow(x$Model$Diagnostics))[i]
+        overall_plot <- overall_plot + geom_hline(yintercept = yint, colour = ycol,linetype = 2)
+      }
+      if(diagnostic.x.axis=="minimal"){
+        overall_plot <- overall_plot + scale_x_discrete(labels = obs_lev_tics)
+      }
+    }
+    if(x$Deforestation_Criterion=="Validation"){
+      obs_lev <- x$Model$All_Data$Diagnostics$Action
+      obs_lev_tics <- rep("",length(obs_lev))
+      obs_lev_tics[c(1,round(length(obs_lev)*(1:4)/4))] <- obs_lev[c(1,round(length(obs_lev)*(1:4)/4))]
+      p1df <- x$Model$All_Data$Diagnostics
+      p1df <- rbind(p1df,p1df)
+      p1df[(nrow(x$Model$All_Data$Diagnostics)+1):nrow(p1df),2] <- p1df[(nrow(x$Model$All_Data$Diagnostics)+1):nrow(p1df),3]
+      p1df <- p1df[,1:2]
+      p1df$Data <- rep(c("Training","All"),each=nrow(x$Model$All_Data$Diagnostics))
+      plot_1 <- ggplot2::ggplot(p1df,
+                                      ggplot2::aes(x = factor(Action,levels = obs_lev),
+                                                   y = as.numeric(Log_Bayesian_Evidence),
+                                                   group=Data,color = Data)) +
+        ggplot2::geom_point() + ggplot2::geom_line(show.legend = FALSE) +
+        theme(legend.position = "top")
+      if(diagnostic.x.axis=="minimal"){
+        plot_1 <- plot_1 + scale_x_discrete(labels = obs_lev_tics)
+      }
+      plot_2 <- ggplot2::ggplot(x$Model$All_Data$Diagnostics,
+                                ggplot2::aes(x = factor(Action,levels = obs_lev),
+                                             y = as.numeric(Robustness_Statistic),
+                                             group=1)) +
+        ggplot2::geom_point(show.legend = FALSE) + ggplot2::geom_line(show.legend = FALSE)
+      if(diagnostic.x.axis=="minimal"){
+        plot_2 <- plot_2 + scale_x_discrete(labels = obs_lev_tics)
+      }
+      overall_plot <- GGally::ggmatrix(list(plot_1,plot_2),nrow = 2,ncol = 1,
+                                       xlab = "Action",
+                                       yAxisLabels = c("Log Bayesian Evidence",
+                                                       "Log Robustness Statistic"),
+                                       legend = 1) + theme(legend.position = "top")
+    }
+    if(x$Deforestation_Criterion=="Balanced"){
+      obs_lev <- x$Model$Diagnostics$Action
+      obs_lev_tics <- rep("",length(obs_lev))
+      obs_lev_tics[c(1,round(length(obs_lev)*(1:4)/4))] <- obs_lev[c(1,round(length(obs_lev)*(1:4)/4))]
+      plot_1 <- ggplot2::ggplot(x$Model$Diagnostics,
+                                ggplot2::aes(x = factor(Action,levels = obs_lev),
+                                             y = as.numeric(Log_Bayesian_Evidence),group=1)) +
+        ggplot2::geom_point() + ggplot2::geom_line() +
+        labs(x = "Action",y = "Log Bayesian Evidence")
+      if(diagnostic.x.axis=="minimal"){
+        plot_1 <- plot_1 + scale_x_discrete(labels = obs_lev_tics)
+      }
+      x$Model$Diagnostics$Minimum_Minority_Class <- as.integer(x$Model$Diagnostics$Minimum_Minority_Class)
+      plot_2 <- ggplot2::ggplot(x$Model$Diagnostics,
+                                ggplot2::aes(x = factor(Action,levels = obs_lev),
+                                             y = Minimum_Minority_Class,group=1)) +
+        ggplot2::geom_point() + ggplot2::geom_line() +
+        geom_hline(yintercept = x$Control$n_min_class,linetype = 2) +
+        scale_y_continuous(breaks = unique(sort(c(round(seq(min(x$Model$Diagnostics$Minimum_Minority_Class),max(x$Model$Diagnostics$Minimum_Minority_Class),length.out = 5)),x$Control$n_min_class)))) +
+        labs(x = "Action",y = "Minimum Minority Class")
+      if(diagnostic.x.axis=="minimal"){
+        plot_2 <- plot_2 + scale_x_discrete(labels = obs_lev_tics)
+      }
+      plot_3 <- ggplot2::ggplot(x$Model$Diagnostics,
+                                ggplot2::aes(x = factor(Action,levels = obs_lev),
+                                             y = as.integer(Number_Of_Unbalanced_Clusters),group=1)) +
+        ggplot2::geom_point() + ggplot2::geom_line() +
+        labs(x = "Action",y = "Number of Criterion Breaking Clusters")
+      if(diagnostic.x.axis=="minimal"){
+        plot_3 <- plot_3 + scale_x_discrete(labels = obs_lev_tics)
+      }
+      overall_plot <- ggpubr::ggarrange(ggpubr::ggarrange(plot_1,plot_3,ncol=2),plot_2,nrow=2)
+    }
+  }
+  suppressWarnings(overall_plot)
 }
 
 UNCOVER.infer <- function(x){
@@ -697,7 +1080,7 @@ UNCOVER.assign <- function(x,nX){
     x$Model <- x$Model$All_Data
   }
   nX <- as.matrix(nX,ncol = ncol(x$Covariate_Matrix))
-  conn <- as.matrix(dist(rbind(x$Covariate_Matrix,nX),method = "euclidean"))
+  conn <- as.matrix(dist(rbind(as.matrix(x$Covariate_Matrix),nX),method = "euclidean"))
   nn <- function(u){
     nns <- which(u==min(u))
     if(length(nns)==1){
@@ -715,7 +1098,7 @@ UNCOVERopts <- function(N = 1000,train_frac = 1,max_K = Inf,min_size = 0,
                         reg = 0,n_min_class = 0,SMC_thres = 30,
                         BIC_memo_thres = Inf,SMC_memo_thres = Inf,ess = N/2,
                         n_move = 1,prior.override = FALSE,rprior = NULL,
-                        dprior = NULL,
+                        dprior = NULL,diagnostics = TRUE,
                         BIC_cache = cachem::cache_mem(max_size = 1024 * 1024^2,
                                                       evict = "lru"),
                         SMC_cache = cachem::cache_mem(max_size = 1024 * 1024^2,
@@ -764,10 +1147,14 @@ UNCOVERopts <- function(N = 1000,train_frac = 1,max_K = Inf,min_size = 0,
   if(SMC_thres < 0){
     stop("SMC_thres must be non-negative")
   }
+  if(!is.logical(diagnostics)){
+    stop("diagnostics must be logical")
+  }
   return(list(N = N,train_frac = train_frac,max_K = max_K,min_size = min_size,
               reg = reg,n_min_class = n_min_class,SMC_thres = SMC_thres,
               BIC_memo_thres = BIC_memo_thres,
               SMC_memo_thres = SMC_memo_thres,ess = ess,n_move = n_move,
               rprior = rprior,dprior = dprior,prior.override = prior.override,
+              diagnostics = diagnostics,
               BIC_cache = BIC_cache,SMC_cache = SMC_cache,MoreArgs = MoreArgs))
 }

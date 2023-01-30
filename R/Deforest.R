@@ -133,7 +133,7 @@
 deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
                          est_thres=30,mtb = Inf,mts = Inf,par_no=1000,rfun=NULL,
                          pdf_fun=NULL,efsamp = par_no/2,methas = 1,vb = F,cb,cs,
-                         PA){
+                         PA,diagnostics = FALSE,Tr=NULL){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -178,6 +178,9 @@ deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
         lbe[edge_clu_al[1]] <- c_s[[cut_comb]][[2]]
         lbe <- lbe[-edge_clu_al[2]]
         gra <- igraph::add_edges(gra,eps[cut_comb,])
+        if(diagnostics){
+          Tr <- rbind(Tr,c(paste0("Add.",eps[cut_comb,1],"-",eps[cut_comb,2]),sum(lbe),K-1))
+        }
         eps <- eps[-cut_comb,,drop=F]
         c_s[[cut_comb]] <- c()
         K <- K-1
@@ -190,11 +193,20 @@ deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
     }
     j <- j+1
   }
-  return(list(Cluster_Allocation = clu_al,
-              Log_Marginal_Likelihoods = lbe,
-              Graph = gra,
-              Number_of_Clusters = K,
-              Edges_Removed = eps))
+  if(diagnostics){
+    return(list(Cluster_Allocation = clu_al,
+                Log_Marginal_Likelihoods = lbe,
+                Graph = gra,
+                Number_of_Clusters = K,
+                Edges_Removed = eps,
+                Diagnostics = Tr))
+  } else{
+    return(list(Cluster_Allocation = clu_al,
+                Log_Marginal_Likelihoods = lbe,
+                Graph = gra,
+                Number_of_Clusters = K,
+                Edges_Removed = eps))
+  }
 }
 
 ##' Reintroducing edges to a graph in order to ensure the size of all clusters is above the specified threshold
@@ -322,7 +334,7 @@ deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
 deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
                          est_thres=30,mtb = Inf,mts = Inf,par_no=1000,rfun=NULL,
                          pdf_fun=NULL,efsamp = par_no/2,methas = 1,vb = F,cb,cs,
-                         PA){
+                         PA,diagnostics=FALSE,Tr=NULL){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -371,6 +383,11 @@ deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
         lbe[edge_clu_al[1]] <- c_s[[cut_comb]][[2]]
         lbe <- lbe[-edge_clu_al[2]]
         gra <- igraph::add_edges(gra,eps[cut_comb,])
+        if(diagnostics){
+          tab_clu_al <- table(clu_al)
+          Tr <- rbind(Tr,c(paste0("Add.",eps[cut_comb,1],"-",eps[cut_comb,2]),
+                           sum(lbe),min(tab_clu_al),sum(tab_clu_al<n_dag)))
+        }
         eps <- eps[-cut_comb,,drop=F]
         c_s[[cut_comb]] <- c()
         K <- K-1
@@ -383,11 +400,20 @@ deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
     }
     j <- j+1
   }
-  return(list(Cluster_Allocation = clu_al,
-              Log_Marginal_Likelihoods = lbe,
-              Graph = gra,
-              Number_of_Clusters = K,
-              Edges_Removed = eps))
+  if(diagnostics){
+    return(list(Cluster_Allocation = clu_al,
+                Log_Marginal_Likelihoods = lbe,
+                Graph = gra,
+                Number_of_Clusters = K,
+                Edges_Removed = eps,
+                Diagnostics = Tr))
+  } else{
+    return(list(Cluster_Allocation = clu_al,
+                Log_Marginal_Likelihoods = lbe,
+                Graph = gra,
+                Number_of_Clusters = K,
+                Edges_Removed = eps))
+  }
 }
 
 ##' Reintroducing edges to a graph that decrease the Bayesian evidence within a
@@ -525,7 +551,7 @@ deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
 deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,
                             est_thres=30,mtb = Inf,mts = Inf,par_no=1000,
                             rfun=NULL,pdf_fun=NULL,efsamp = par_no/2,methas = 1,
-                            vb = F,cb,cs,PA){
+                            vb = F,cb,cs,PA,diagnostics=FALSE,Tr=NULL){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -570,6 +596,9 @@ deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,
         lbe[edge_clu_al[1]] <- c_s[[cut_comb]][[2]]
         lbe <- lbe[-edge_clu_al[2]]
         gra <- igraph::add_edges(gra,eps[cut_comb,])
+        if(diagnostics){
+          Tr <- rbind(Tr,c(paste0("Add.",eps[cut_comb,1],"-",eps[cut_comb,2]),sum(lbe)))
+        }
         eps <- eps[-cut_comb,,drop=F]
         c_s[[cut_comb]] <- c()
         K <- K-1
@@ -582,11 +611,20 @@ deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,
     }
     j <- j+1
   }
-  return(list(Cluster_Allocation = clu_al,
-              Log_Marginal_Likelihoods = lbe,
-              Graph = gra,
-              Number_of_Clusters = K,
-              Edges_Removed = eps))
+  if(diagnostics){
+    return(list(Cluster_Allocation = clu_al,
+                Log_Marginal_Likelihoods = lbe,
+                Graph = gra,
+                Number_of_Clusters = K,
+                Edges_Removed = eps,
+                Diagnostics = Tr))
+  } else{
+    return(list(Cluster_Allocation = clu_al,
+                Log_Marginal_Likelihoods = lbe,
+                Graph = gra,
+                Number_of_Clusters = K,
+                Edges_Removed = eps))
+  }
 }
 
 ##' Adding validation data to the training data graph and model, then
@@ -748,7 +786,15 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
                                 gra_all=NULL,which_tr=NULL,rho=NULL,clu_al=NULL,
                                 c_s=NULL,est_thres=30,mtb=Inf,mts=Inf,
                                 par_no=1000,rfun,pdf_fun,efsamp=par_no/2,
-                                methas=1,vb=F,cb,cs,PA){
+                                methas=1,vb=F,cb,cs,PA,diagnostics=FALSE,Tr=NULL){
+  if(diagnostics){
+    if(is.null(Tr)){
+      stop("If diagnostics=TRUE then Tr needs to be specified")
+    } else{
+      Tr <- data.frame(Tr,Log_Bayesian_Evidence_All = rep(NA,nrow(Tr)),
+                       Robustness_Statistic = rep(NA,nrow(Tr)))
+    }
+  }
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -774,6 +820,9 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
                           cache_bic = cb,cache_smc = cs,MA = PA)
   }
   RobS <- sum(lbe_all-lbe)
+  if(diagnostics){
+    Tr[nrow(Tr),3:4] <- c(sum(lbe_all),RobS)
+  }
   j <- 1
   c_s_all <- vector(mode="list",length=nrow(eps))
   if(vb){
@@ -834,6 +883,9 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
         RobS <- sum(lbe_all-lbe)
         gra <- add_edges(gra,eps[cut_comb,])
         gra_all <- add_edges(gra_all,eps[cut_comb,])
+        if(diagnostics){
+          Tr <- rbind(Tr,c(paste0("Def.Add.",eps[cut_comb,1],"-",eps[cut_comb,2]),sum(lbe),sum(lbe_all),RobS))
+        }
         eps <- eps[-cut_comb,,drop=F]
         c_s[[cut_comb]] <- c()
         c_s_all[[cut_comb]] <- c()
@@ -847,16 +899,27 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
     }
     j <- j+1
   }
-  return(list(Training_Data = list(Cluster_Allocation = clu_al,
-                                   Log_Marginal_Likelihoods = lbe,
-                                   Graph = gra,
-                                   Number_of_Clusters = K,
-                                   Edges_Removed = eps),
-              All_Data = list(Cluster_Allocation = clu_al_all,
-                              Log_Marginal_Likelihoods = lbe_all,
-                              Graph = gra_all,
-                              Number_of_Clusters = K,
-                              Edges_Removed = eps)))
+  TD = list(Cluster_Allocation = clu_al,
+                       Log_Marginal_Likelihoods = lbe,
+                       Graph = gra,
+                       Number_of_Clusters = K,
+                       Edges_Removed = eps)
+  if(diagnostics){
+    AD = list(Cluster_Allocation = clu_al_all,
+                    Log_Marginal_Likelihoods = lbe_all,
+                    Graph = gra_all,
+                    Number_of_Clusters = K,
+                    Edges_Removed = eps,
+                    Diagnostics = Tr)
+  } else{
+    AD = list(Cluster_Allocation = clu_al_all,
+                    Log_Marginal_Likelihoods = lbe_all,
+                    Graph = gra_all,
+                    Number_of_Clusters = K,
+                    Edges_Removed = eps)
+  }
+  return(list(Training_Data = TD,
+              All_Data = AD))
 }
 
 ##' Reintroducing edges to a graph in order to ensure the minority response
@@ -998,7 +1061,7 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
 deforest.balanced <- function(obs,res,gra,lbe,eps,ups,clu_al=NULL,c_s=NULL,
                               est_thres=30,mtb = Inf,mts = Inf,par_no=1000,
                               rfun=NULL,pdf_fun=NULL,efsamp=par_no/2,methas=1,
-                              vb = F,cb,cs,PA){
+                              vb = F,cb,cs,PA,diagnostics=FALSE,Tr=NULL){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -1052,6 +1115,10 @@ deforest.balanced <- function(obs,res,gra,lbe,eps,ups,clu_al=NULL,c_s=NULL,
         lbe[edge_clu_al[1]] <- c_s[[cut_comb]][[2]]
         lbe <- lbe[-edge_clu_al[2]]
         gra <- igraph::add_edges(gra,eps[cut_comb,])
+        if(diagnostics){
+          sap_bal <- sapply(1:(K-1),FUN = function(u,y,z){min(table(factor(y[which(z==u)],levels=0:1)))},y=res,z=clu_al)
+          Tr <- rbind(Tr,c(paste0("Add.",eps[cut_comb,1],"-",eps[cut_comb,2]),sum(lbe),min(sap_bal),sum(sap_bal<ups)))
+        }
         eps <- eps[-cut_comb,,drop=F]
         c_s[[cut_comb]] <- c()
         K <- K-1
@@ -1064,9 +1131,18 @@ deforest.balanced <- function(obs,res,gra,lbe,eps,ups,clu_al=NULL,c_s=NULL,
     }
     j <- j+1
   }
-  return(list(Cluster_Allocation = clu_al,
-              Log_Marginal_Likelihoods = lbe,
-              Graph = gra,
-              Number_of_Clusters = K,
-              Edges_Removed = eps))
+  if(diagnostics){
+    return(list(Cluster_Allocation = clu_al,
+                Log_Marginal_Likelihoods = lbe,
+                Graph = gra,
+                Number_of_Clusters = K,
+                Edges_Removed = eps,
+                Diagnostics = Tr))
+  } else{
+    return(list(Cluster_Allocation = clu_al,
+                Log_Marginal_Likelihoods = lbe,
+                Graph = gra,
+                Number_of_Clusters = K,
+                Edges_Removed = eps))
+  }
 }

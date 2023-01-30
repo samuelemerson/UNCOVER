@@ -71,20 +71,24 @@
 ##' # Now we can obtain 1000 samples from the posterior from a standard
 ##' # multivariate normal prior
 ##' out.1 <- IBIS.logreg(X = CM,y = rv)
-##' pairs(out.1$samples)
+##' plot(out.1)
 ##' out.1$log_Bayesian_evidence
 ##'
 ##' # We can specify that the samples be weighted
 ##' out.1.w <- IBIS.logreg(X = CM,y = rv,options = IBIS.logreg.opts(weighted = TRUE))
-##' weight_fade <- colorRampPalette(c('white','black'))(100)[as.numeric(cut(out.1.w$weights,breaks = 100))]
-##' pairs(out.1.w$samples,col = weight_fade)
+##' out.1.w$weights
+##' plot(out.1.w)
 ##'
 ##' # We can also specify different arguments for a specific prior
 ##' out.2 <- IBIS.logreg(X = CM,y = rv,prior_mean = rep(-3,3),prior_var = 0.1*diag(3))
-##' pairs(rbind(out.1$samples,out.2$samples),col=rep(c(1,2),each=1000))
+##' samp.df <- data.frame(rbind(out.1$samples,out.2$samples))
+##' colnames(samp.df) <- paste0("beta[",c(0:2),"]")
+##' ggpairs(samp.df,labeller = "label_parsed",aes(color = as.factor(rep(c(1,2),each=1000))),upper = list(continuous = wrap("density")),lower = list(continuous = wrap("points",size=0.5)))
 ##' out.2$log_Bayesian_evidence
 ##' out.3 <- IBIS.logreg(X = CM,y = rv,prior_mean = rep(3,3),prior_var = 0.1*diag(3))
-##' pairs(rbind(out.1$samples,out.2$samples,out.3$samples),col=rep(c(1,2,3),each=1000))
+##' samp.df <- data.frame(rbind(out.1$samples,out.2$samples,out.3$samples))
+##' colnames(samp.df) <- paste0("beta[",c(0:2),"]")
+##' ggpairs(samp.df,labeller = "label_parsed",aes(color = as.factor(rep(c(1,2,3),each=1000))),upper = list(continuous = wrap("density")),lower = list(continuous = wrap("points",size=0.5)))
 ##' out.3$log_Bayesian_evidence
 ##'
 ##' # We can also change the prior, for example a multivariate independent
@@ -100,7 +104,9 @@
 ##' }
 ##'
 ##' out.4 <- IBIS.logreg(X = CM,y = rv,options = IBIS.logreg.opts(prior.override = TRUE,rprior = rmviu,dprior = dmviu,a=rep(0,3),b=rep(1,3)))
-##' pairs(rbind(out.1$samples,out.4$samples),col=rep(c(1,4),each=1000))
+##' samp.df <- data.frame(rbind(out.1$samples,out.4$samples))
+##' colnames(samp.df) <- paste0("beta[",c(0:2),"]")
+##' ggpairs(samp.df,labeller = "label_parsed",aes(color = as.factor(rep(c(1,4),each=1000))),upper = list(continuous = wrap("density")),lower = list(continuous = wrap("points",size=0.5)))
 ##' out.4$log_Bayesian_evidence
 ##'
 
@@ -132,7 +138,7 @@ IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
     dprior <- mvnfast::dmvn
     MoreArgs <- list(mu = prior_mean,sigma = prior_var)
   }
-  DM <- cbind(rep(1,length(y)),X)
+  DM <- as.matrix(cbind(rep(1,length(y)),X))
   IBIS_out <- IBIS.Z(X = DM,y = y,rprior = rprior,N = options$N,prior_pdf = dprior,
                      ess = options$ess,n_move = options$n_move,
                      PriorArgs = MoreArgs,diagnostics=TRUE)$output
@@ -179,17 +185,17 @@ IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
 }
 
 print.IBIS <- function(x){
-  if(length(x)==5){
-    xx <- colMeans(x$samples)
-    names(xx) <- c("(Intercept)",colnames(x$covariate_matrix))
-    cat(nrow(x$samples),"posterior samples with mean:\n")
-    cat("\n")
-    print.default(xx)
-  } else{
+  if("weights" %in% names(x)){
     ss <- cov.wt(x$samples,wt=x$weights,method = "ML")
     xx <- ss$center
     names(xx) <- c("(Intercept)",colnames(x$covariate_matrix))
     cat(nrow(x$samples),"posterior samples with weighted mean:\n")
+    cat("\n")
+    print.default(xx)
+  } else{
+    xx <- colMeans(x$samples)
+    names(xx) <- c("(Intercept)",colnames(x$covariate_matrix))
+    cat(nrow(x$samples),"posterior samples with mean:\n")
     cat("\n")
     print.default(xx)
   }
@@ -214,27 +220,36 @@ predict.IBIS <- function(object,newX,type = "prob"){
   return(res)
 }
 
-plot.IBIS <- function(x,type = "samples",subset = NULL,diagnostic.x.axis = "full"){
-  if(is.null(subset)){
-    subset <- 1:ncol(x$covariate_matrix)
+plot.IBIS <- function(x,type = "samples",plot_var = NULL,diagnostic.x.axis = "full"){
+  if(diagnostic.x.axis!="full" & diagnostic.x.axis!="minimal"){
+    stop("diagnostic.x.axis must be either full or minimal")
   }
-  if(any(is.na(match(subset,1:ncol(x$covariate_matrix))))){
-    stop("cannot subset the covariate matrix with subset provided")
+  if(is.null(plot_var)){
+    plot_var <- 1:ncol(x$covariate_matrix)
+  }
+  if(any(is.na(match(plot_var,1:ncol(x$covariate_matrix))))){
+    stop("cannot subset the covariate matrix with plot_var provided")
   }
   if(type!="samples" & type!="fitted" & type!="diagnostics"){
     stop("type not supported")
   }
   if(type=="samples"){
-    x$samples <- x$samples[,c(1,subset+1)]
+    x$samples <- x$samples[,c(1,plot_var+1)]
     samp.df <- data.frame(x$samples)
-    colnames(samp.df) <- paste0("beta[",c(0,subset),"]")
-    overall_plot <- GGally::ggpairs(samp.df,labeller = "label_parsed",
-                                    upper = list(continuous = wrap("density",colour = "black")),
-                                    lower = list(continuous = wrap("points",size=0.5)))
+    colnames(samp.df) <- paste0("beta[",c(0,plot_var),"]")
+    if("weights" %in% names(x)){
+      overall_plot <- GGally::ggpairs(samp.df,labeller = "label_parsed",
+                                      upper = list(continuous = wrap("density",colour = "black")),
+                                      lower = list(continuous = wrap("points",size=0.5,alpha = x$weights)))
+    } else{
+      overall_plot <- GGally::ggpairs(samp.df,labeller = "label_parsed",
+                                      upper = list(continuous = wrap("density",colour = "black")),
+                                      lower = list(continuous = wrap("points",size=0.5)))
+    }
   }
   if(type=="fitted"){
     X_prob <- predict.IBIS(object = x,newX = x$covariate_matrix)[,2]
-    x$covariate_matrix <- x$covariate_matrix[,subset,drop=F]
+    x$covariate_matrix <- x$covariate_matrix[,plot_var,drop=F]
     if(ncol(x$covariate_matrix)==1){
       overall_plot <- ggplot2::ggplot(data.frame(Index = 1:nrow(x$covariate_matrix),x$covariate_matrix,
                                                  y = as.character(x$response_vector),
@@ -246,18 +261,20 @@ plot.IBIS <- function(x,type = "samples",subset = NULL,diagnostic.x.axis = "full
         scale_color_gradient(low = "red",high = "green") +
         labs(y = colnames(x$covariate_matrix)[1])
     } else{
-      overall_plot <- GGally::ggpairs(x$covariate_matrix)
+      overall_plot <- GGally::ggpairs(x$covariate_matrix,upper = list(continuous = "points"))
       for(i in 1:ncol(x$covariate_matrix)){
         for(j in (1:ncol(x$covariate_matrix))[-i]){
-          overall_plot[i,j] <- ggplot2::ggplot(data.frame(x$covariate_matrix[,c(i,j)],
-                                                          y = as.character(x$response_vector),
-                                                          prob = X_prob),
-                                               aes(get(colnames(x$covariate_matrix)[1]),
-                                                   get(colnames(x$covariate_matrix)[2]),
-                                                   label = y,colour = X_prob)) +
-            theme(axis.title.x = element_blank(),axis.title.y = element_blank()) +
+          df.ij <- data.frame(x$covariate_matrix[,c(j,i)],
+                              y = as.character(x$response_vector),
+                              prob = X_prob)
+          colnames(df.ij)[1:2] <- c("temp.i","temp.j")
+          overall_plot[j,i] <- ggplot2::ggplot(df.ij,
+                                               ggplot2::aes(temp.j,temp.i,
+                                                            label = y,colour = prob)) +
+            ggplot2::theme(axis.title.x = ggplot2::element_blank(),
+                           axis.title.y = ggplot2::element_blank()) +
             ggplot2::geom_text(show.legend = FALSE,size = 3) +
-            scale_color_gradient(low = "red",high = "green")
+            ggplot2::scale_color_gradient(low = "red",high = "green",limits = c(0,1))
         }
       }
     }
@@ -283,7 +300,7 @@ plot.IBIS <- function(x,type = "samples",subset = NULL,diagnostic.x.axis = "full
       plot_2 <- plot_2 + scale_x_discrete(labels = obs_lev_tics)
     }
     if(nrow(x$diagnostics$acceptance_rate_tracker)==0){
-      overall_plot <- ggarrange(plot_1,plot_2)
+      overall_plot <- ggpubr::ggarrange(plot_1,plot_2)
     } else{
       obs_lev_tics2 <- rep("",length(x$diagnostics$acceptance_rate_tracker$Observations))
       obs_lev_tics2[c(1,round(length(obs_lev_tics2)*(1:4)/4))] <- x$diagnostics$acceptance_rate_tracker$Observations[c(1,round(length(obs_lev_tics2)*(1:4)/4))]
@@ -294,7 +311,7 @@ plot.IBIS <- function(x,type = "samples",subset = NULL,diagnostic.x.axis = "full
       if(diagnostic.x.axis=="minimal"){
         plot_3 <- plot_3 + scale_x_discrete(labels = obs_lev_tics2)
       }
-      overall_plot <- ggarrange(ggarrange(plot_1,plot_2,ncol=2),plot_3,nrow=2)
+      overall_plot <- ggpubr::ggarrange(ggpubr::ggarrange(plot_1,plot_2,ncol=2),plot_3,nrow=2)
     }
   }
   overall_plot
