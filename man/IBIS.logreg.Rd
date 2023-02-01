@@ -79,26 +79,38 @@ plot(out.1)
 out.1$log_Bayesian_evidence
 
 # We can specify that the samples be weighted
-out.1.w <- IBIS.logreg(X = CM,y = rv,options = IBIS.logreg.opts(weighted = TRUE))
+out.1.w <- IBIS.logreg(X = CM,y = rv,
+                       options = IBIS.logreg.opts(weighted = TRUE))
 out.1.w$weights
 plot(out.1.w)
 
 # We can also specify different arguments for a specific prior
-out.2 <- IBIS.logreg(X = CM,y = rv,prior_mean = rep(-3,3),prior_var = 0.1*diag(3))
+out.2 <- IBIS.logreg(X = CM,y = rv,prior_mean = rep(-3,3),
+                     prior_var = 0.1*diag(3))
 samp.df <- data.frame(rbind(out.1$samples,out.2$samples))
 colnames(samp.df) <- paste0("beta[",c(0:2),"]")
-ggpairs(samp.df,labeller = "label_parsed",aes(color = as.factor(rep(c(1,2),each=1000))),upper = list(continuous = wrap("density")),lower = list(continuous = wrap("points",size=0.5)))
+ggpairs(samp.df,
+        labeller = "label_parsed",
+        aes(color = as.factor(rep(c(1,2),each=1000))),
+        upper = list(continuous = GGally::wrap("density")),
+        lower = list(continuous = GGally::wrap("points",size=0.5)))
 out.2$log_Bayesian_evidence
-out.3 <- IBIS.logreg(X = CM,y = rv,prior_mean = rep(3,3),prior_var = 0.1*diag(3))
+out.3 <- IBIS.logreg(X = CM,y = rv,prior_mean = rep(3,3),
+                     prior_var = 0.1*diag(3))
 samp.df <- data.frame(rbind(out.1$samples,out.2$samples,out.3$samples))
 colnames(samp.df) <- paste0("beta[",c(0:2),"]")
-ggpairs(samp.df,labeller = "label_parsed",aes(color = as.factor(rep(c(1,2,3),each=1000))),upper = list(continuous = wrap("density")),lower = list(continuous = wrap("points",size=0.5)))
+ggpairs(samp.df,
+        labeller = "label_parsed",
+        aes(color = as.factor(rep(c(1,2,3),each=1000))),
+        upper = list(continuous = GGally::wrap("density")),
+        lower = list(continuous = GGally::wrap("points",size=0.5)))
 out.3$log_Bayesian_evidence
 
 # We can also change the prior, for example a multivariate independent
 # uniform
 rmviu <- function(n,a,b){
-return(mapply(FUN = function(min.vec,max.vec,pn){runif(pn,a,b)},min.vec=a,max.vec=b,MoreArgs = list(pn = n)))
+return(mapply(FUN = function(min.vec,max.vec,pn){stats::runif(pn,a,b)},
+              min.vec=a,max.vec=b,MoreArgs = list(pn = n)))
 }
 dmviu <- function(x,a,b){
 for(ii in 1:ncol(x)){
@@ -107,10 +119,18 @@ for(ii in 1:ncol(x)){
 return(apply(x,1,prod))
 }
 
-out.4 <- IBIS.logreg(X = CM,y = rv,options = IBIS.logreg.opts(prior.override = TRUE,rprior = rmviu,dprior = dmviu,a=rep(0,3),b=rep(1,3)))
+out.4 <- IBIS.logreg(X = CM,y = rv,
+                     options = IBIS.logreg.opts(prior.override = TRUE,
+                                                rprior = rmviu,
+                                                dprior = dmviu,a=rep(0,3),
+                                                b=rep(1,3)))
 samp.df <- data.frame(rbind(out.1$samples,out.4$samples))
 colnames(samp.df) <- paste0("beta[",c(0:2),"]")
-ggpairs(samp.df,labeller = "label_parsed",aes(color = as.factor(rep(c(1,4),each=1000))),upper = list(continuous = wrap("density")),lower = list(continuous = wrap("points",size=0.5)))
+ggpairs(samp.df,
+        labeller = "label_parsed",
+        aes(color = as.factor(rep(c(1,4),each=1000))),
+        upper = list(continuous = GGally::wrap("density")),
+        lower = list(continuous = GGally::wrap("points",size=0.5)))
 out.4$log_Bayesian_evidence
 
 }

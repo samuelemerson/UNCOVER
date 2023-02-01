@@ -8,7 +8,7 @@ UNCOVER(
   X,
   y,
   mst_var = NULL,
-  options = UNCOVERopts(),
+  options = UNCOVER.opts(),
   stop_criterion = Inf,
   deforest_criterion = "None",
   prior_mean = rep(0, ncol(X) + 1),
@@ -183,13 +183,28 @@ rv <- sample(0:1,100,replace=T)
 
 # We can then run our algorithm to see what cohorts are selected for each
 # of the different deforestation criteria
-UN.none <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "None", verbose = F)
-UN.noc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "NoC", options = UNCOVERopts(max_K = 3), verbose = F)
-UN.soc <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "SoC", options = UNCOVERopts(min_size = 10), verbose = F)
-UN.maxreg <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "MaxReg", options = UNCOVERopts(reg = 1), verbose = F)
-UN.validation <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "Validation", options = UNCOVERopts(train_frac = 0.8), verbose = F)
-UN.balanced <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "Balanced", options = UNCOVERopts(n_min_class = 2), verbose = F)
-clu_al_mat <- rbind(UN.none$Cluster_Allocation,UN.noc$Cluster_Allocation,UN.soc$Cluster_Allocation,UN.maxreg$Cluster_Allocation,UN.validation$All_Data$Cluster_Allocation,UN.balanced$Cluster_Allocation)
+UN.none <- UNCOVER(X = CM,y = rv, stop_criterion = 8,
+                   deforest_criterion = "None", verbose = F)
+UN.noc <- UNCOVER(X = CM,y = rv, stop_criterion = 8,
+                  deforest_criterion = "NoC",
+                  options = UNCOVER.opts(max_K = 3), verbose = F)
+UN.soc <- UNCOVER(X = CM,y = rv, stop_criterion = 8,
+                  deforest_criterion = "SoC",
+                  options = UNCOVER.opts(min_size = 10), verbose = F)
+UN.maxreg <- UNCOVER(X = CM,y = rv, stop_criterion = 8,
+                     deforest_criterion = "MaxReg",
+                     options = UNCOVER.opts(reg = 1), verbose = F)
+UN.validation <- UNCOVER(X = CM,y = rv, stop_criterion = 8,
+                         deforest_criterion = "Validation",
+                         options = UNCOVER.opts(train_frac = 0.8),
+                         verbose = F)
+UN.balanced <- UNCOVER(X = CM,y = rv, stop_criterion = 8,
+                       deforest_criterion = "Balanced",
+                       options = UNCOVER.opts(n_min_class = 2), verbose = F)
+clu_al_mat <- rbind(UN.none$Cluster_Allocation,UN.noc$Cluster_Allocation,
+                    UN.soc$Cluster_Allocation,UN.maxreg$Cluster_Allocation,
+                    UN.validation$All_Data$Cluster_Allocation,
+                    UN.balanced$Cluster_Allocation)
 # We can create a matrix where each entry shows in how many of the methods
 # did the indexed observations belong to the same cluster
 obs_con_mat <- matrix(0,100,100)
@@ -202,17 +217,25 @@ obs_con_mat[j,i] <- obs_con_mat[i,j]
 head(obs_con_mat)
 # We can also view the outputted overall Bayesian evidence of the five
 # models as well
-c(sum(UN.none$Log_Marginal_Likelihoods),sum(UN.noc$Log_Marginal_Likelihoods),sum(UN.soc$Log_Marginal_Likelihoods),sum(UN.maxreg$Log_Marginal_Likelihoods),sum(UN.validation$All_Data$Log_Marginal_Likelihoods),sum(UN.balanced$Log_Marginal_Likelihoods))
+c(sum(UN.none$Log_Marginal_Likelihoods),sum(UN.noc$Log_Marginal_Likelihoods),
+  sum(UN.soc$Log_Marginal_Likelihoods),sum(UN.maxreg$Log_Marginal_Likelihoods),
+  sum(UN.validation$All_Data$Log_Marginal_Likelihoods),
+  sum(UN.balanced$Log_Marginal_Likelihoods))
 
 # If we don't assume the prior for the regression coefficients is a
 # standard multivariate normal but instead a multivariate normal with
 # different parameters
-UN.none.2 <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "None", prior_mean = rep(1,3),prior_var = 0.5*diag(3),verbose = F)
-c(sum(UN.none$Log_Marginal_Likelihoods),sum(UN.none.2$Log_Marginal_Likelihoods))
+UN.none.2 <- UNCOVER(X = CM,y = rv, stop_criterion = 8,
+                     deforest_criterion = "None", prior_mean = rep(1,3),
+                     prior_var = 0.5*diag(3),verbose = F)
+c(sum(UN.none$Log_Marginal_Likelihoods),
+  sum(UN.none.2$Log_Marginal_Likelihoods))
 # We can also specify a completely different prior, for example a
 # multivariate independent uniform
 rmviu <- function(n,a,b){
-return(mapply(FUN = function(min.vec,max.vec,pn){runif(pn,a,b)},min.vec=a,max.vec=b,MoreArgs = list(pn = n)))
+return(mapply(FUN = function(min.vec,max.vec,pn){
+                      stats::runif(pn,a,b)},min.vec=a,max.vec=b,
+                                     MoreArgs = list(pn = n)))
 }
 dmviu <- function(x,a,b){
 for(ii in 1:ncol(x)){
@@ -220,8 +243,15 @@ for(ii in 1:ncol(x)){
 }
 return(apply(x,1,prod))
 }
-UN.none.3 <- UNCOVER(X = CM,y = rv, stop_criterion = 8, deforest_criterion = "None", options = UNCOVERopts(prior.override = TRUE,rprior = rmviu,dprior = dmviu,a=rep(0,3),b=rep(1,3)),verbose = F)
-c(sum(UN.none$Log_Marginal_Likelihoods),sum(UN.none.2$Log_Marginal_Likelihoods),sum(UN.none.3$Log_Marginal_Likelihoods))
+UN.none.3 <- UNCOVER(X = CM,y = rv, stop_criterion = 8,
+                     deforest_criterion = "None",
+                     options = UNCOVER.opts(prior.override = TRUE,
+                                            rprior = rmviu,
+                                            dprior = dmviu,a=rep(0,3),
+                                            b=rep(1,3)),verbose = F)
+c(sum(UN.none$Log_Marginal_Likelihoods),
+  sum(UN.none.2$Log_Marginal_Likelihoods),
+  sum(UN.none.3$Log_Marginal_Likelihoods))
 }
 \seealso{
 [lbe.gen,one.stage.mst,two.stage.mst,remove.edge,deforest.noc,deforest.soc,deforest.maxreg,deforest.validation,deforest.balanced,IBIS.Z,memo.bic]

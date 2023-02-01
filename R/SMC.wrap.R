@@ -75,26 +75,38 @@
 ##' out.1$log_Bayesian_evidence
 ##'
 ##' # We can specify that the samples be weighted
-##' out.1.w <- IBIS.logreg(X = CM,y = rv,options = IBIS.logreg.opts(weighted = TRUE))
+##' out.1.w <- IBIS.logreg(X = CM,y = rv,
+##'                        options = IBIS.logreg.opts(weighted = TRUE))
 ##' out.1.w$weights
 ##' plot(out.1.w)
 ##'
 ##' # We can also specify different arguments for a specific prior
-##' out.2 <- IBIS.logreg(X = CM,y = rv,prior_mean = rep(-3,3),prior_var = 0.1*diag(3))
+##' out.2 <- IBIS.logreg(X = CM,y = rv,prior_mean = rep(-3,3),
+##'                      prior_var = 0.1*diag(3))
 ##' samp.df <- data.frame(rbind(out.1$samples,out.2$samples))
 ##' colnames(samp.df) <- paste0("beta[",c(0:2),"]")
-##' ggpairs(samp.df,labeller = "label_parsed",aes(color = as.factor(rep(c(1,2),each=1000))),upper = list(continuous = wrap("density")),lower = list(continuous = wrap("points",size=0.5)))
+##' ggpairs(samp.df,
+##'         labeller = "label_parsed",
+##'         aes(color = as.factor(rep(c(1,2),each=1000))),
+##'         upper = list(continuous = GGally::wrap("density")),
+##'         lower = list(continuous = GGally::wrap("points",size=0.5)))
 ##' out.2$log_Bayesian_evidence
-##' out.3 <- IBIS.logreg(X = CM,y = rv,prior_mean = rep(3,3),prior_var = 0.1*diag(3))
+##' out.3 <- IBIS.logreg(X = CM,y = rv,prior_mean = rep(3,3),
+##'                      prior_var = 0.1*diag(3))
 ##' samp.df <- data.frame(rbind(out.1$samples,out.2$samples,out.3$samples))
 ##' colnames(samp.df) <- paste0("beta[",c(0:2),"]")
-##' ggpairs(samp.df,labeller = "label_parsed",aes(color = as.factor(rep(c(1,2,3),each=1000))),upper = list(continuous = wrap("density")),lower = list(continuous = wrap("points",size=0.5)))
+##' ggpairs(samp.df,
+##'         labeller = "label_parsed",
+##'         aes(color = as.factor(rep(c(1,2,3),each=1000))),
+##'         upper = list(continuous = GGally::wrap("density")),
+##'         lower = list(continuous = GGally::wrap("points",size=0.5)))
 ##' out.3$log_Bayesian_evidence
 ##'
 ##' # We can also change the prior, for example a multivariate independent
 ##' # uniform
 ##' rmviu <- function(n,a,b){
-##' return(mapply(FUN = function(min.vec,max.vec,pn){runif(pn,a,b)},min.vec=a,max.vec=b,MoreArgs = list(pn = n)))
+##' return(mapply(FUN = function(min.vec,max.vec,pn){stats::runif(pn,a,b)},
+##'               min.vec=a,max.vec=b,MoreArgs = list(pn = n)))
 ##' }
 ##' dmviu <- function(x,a,b){
 ##' for(ii in 1:ncol(x)){
@@ -103,10 +115,18 @@
 ##' return(apply(x,1,prod))
 ##' }
 ##'
-##' out.4 <- IBIS.logreg(X = CM,y = rv,options = IBIS.logreg.opts(prior.override = TRUE,rprior = rmviu,dprior = dmviu,a=rep(0,3),b=rep(1,3)))
+##' out.4 <- IBIS.logreg(X = CM,y = rv,
+##'                      options = IBIS.logreg.opts(prior.override = TRUE,
+##'                                                 rprior = rmviu,
+##'                                                 dprior = dmviu,a=rep(0,3),
+##'                                                 b=rep(1,3)))
 ##' samp.df <- data.frame(rbind(out.1$samples,out.4$samples))
 ##' colnames(samp.df) <- paste0("beta[",c(0:2),"]")
-##' ggpairs(samp.df,labeller = "label_parsed",aes(color = as.factor(rep(c(1,4),each=1000))),upper = list(continuous = wrap("density")),lower = list(continuous = wrap("points",size=0.5)))
+##' ggpairs(samp.df,
+##'         labeller = "label_parsed",
+##'         aes(color = as.factor(rep(c(1,4),each=1000))),
+##'         upper = list(continuous = GGally::wrap("density")),
+##'         lower = list(continuous = GGally::wrap("points",size=0.5)))
 ##' out.4$log_Bayesian_evidence
 ##'
 
@@ -144,7 +164,7 @@ IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
                      PriorArgs = MoreArgs,diagnostics=TRUE)$output
   if(options$weighted==FALSE){
     if(length(unique(IBIS_out$weights))!=1){
-      ss <- cov.wt(IBIS_out$samples,wt=IBIS_out$weights,method = "ML")
+      ss <- stats::cov.wt(IBIS_out$samples,wt=IBIS_out$weights,method = "ML")
       mu <- ss$center
       Sigma <- ss$cov
       samp <- sample(as.integer(names(IBIS_out$duplication_table)),options$N,prob = IBIS_out$weights[as.integer(names(IBIS_out$duplication_table))]*IBIS_out$duplication_table,replace = TRUE)
@@ -163,7 +183,7 @@ IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
           TotArgs <- c(TotArgs,MoreArgs)
         }
         Log_2 <- colSums(Log_2) + log(do.call(dprior,TotArgs)) + log(mvnfast::dmvn(BC,mu=mu,sigma=Sigma))
-        A <- Log_1 - Log_2 - log(runif(length(Log_1)))
+        A <- Log_1 - Log_2 - log(stats::runif(length(Log_1)))
         IBIS_out$samples[which(A>0),] <- BC[which(A>0),]
       }
     }
@@ -184,9 +204,9 @@ IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
   res
 }
 
-print.IBIS <- function(x){
+print.IBIS <- function(x,...){
   if("weights" %in% names(x)){
-    ss <- cov.wt(x$samples,wt=x$weights,method = "ML")
+    ss <- stats::cov.wt(x$samples,wt=x$weights,method = "ML")
     xx <- ss$center
     names(xx) <- c("(Intercept)",colnames(x$covariate_matrix))
     cat(nrow(x$samples),"posterior samples with weighted mean:\n")
@@ -203,7 +223,7 @@ print.IBIS <- function(x){
   cat("Log Bayesian Evidence:",x$log_Bayesian_evidence)
 }
 
-predict.IBIS <- function(object,newX,type = "prob"){
+predict.IBIS <- function(object,newX,type = "prob",...){
   if(type!="prob" & type!="response"){
     stop("type not supported")
   }
@@ -220,7 +240,8 @@ predict.IBIS <- function(object,newX,type = "prob"){
   return(res)
 }
 
-plot.IBIS <- function(x,type = "samples",plot_var = NULL,diagnostic.x.axis = "full"){
+plot.IBIS <- function(x,type = "samples",plot_var = NULL,
+                      diagnostic.x.axis = "full",...){
   if(diagnostic.x.axis!="full" & diagnostic.x.axis!="minimal"){
     stop("diagnostic.x.axis must be either full or minimal")
   }
@@ -239,42 +260,65 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,diagnostic.x.axis = "fu
     colnames(samp.df) <- paste0("beta[",c(0,plot_var),"]")
     if("weights" %in% names(x)){
       overall_plot <- GGally::ggpairs(samp.df,labeller = "label_parsed",
-                                      upper = list(continuous = wrap("density",colour = "black")),
-                                      lower = list(continuous = wrap("points",size=0.5,alpha = x$weights)))
+                                      upper = list(continuous = GGally::wrap("density",colour = "black")),
+                                      lower = list(continuous = GGally::wrap("points",size=0.5,alpha = x$weights)))
     } else{
       overall_plot <- GGally::ggpairs(samp.df,labeller = "label_parsed",
-                                      upper = list(continuous = wrap("density",colour = "black")),
-                                      lower = list(continuous = wrap("points",size=0.5)))
+                                      upper = list(continuous = GGally::wrap("density",colour = "black")),
+                                      lower = list(continuous = GGally::wrap("points",size=0.5)))
     }
   }
   if(type=="fitted"){
     X_prob <- predict.IBIS(object = x,newX = x$covariate_matrix)[,2]
+    X_col <- X_prob>0.5
     x$covariate_matrix <- x$covariate_matrix[,plot_var,drop=F]
     if(ncol(x$covariate_matrix)==1){
       overall_plot <- ggplot2::ggplot(data.frame(Index = 1:nrow(x$covariate_matrix),x$covariate_matrix,
                                                  y = as.character(x$response_vector),
                                                  prob = X_prob),
-                                      aes(Index,
-                                          get(colnames(x$covariate_matrix)[1]),
-                                          label = y,colour = X_prob)) +
+                                      ggplot2::aes_string("Index",
+                                          colnames(x$covariate_matrix)[1],
+                                          label = "y",colour = "prob")) +
         ggplot2::geom_text(show.legend = FALSE,size = 3) +
-        scale_color_gradient(low = "red",high = "green") +
-        labs(y = colnames(x$covariate_matrix)[1])
+        ggplot2::scale_color_gradient(low = "red",high = "green") +
+        ggplot2::labs(y = colnames(x$covariate_matrix)[1])
     } else{
-      overall_plot <- GGally::ggpairs(x$covariate_matrix,upper = list(continuous = "points"))
+      legend_plot <- ggplot2::ggplot(data.frame(x$covariate_matrix[,c(1,2)],
+                                                Fitted.Probabilities = X_prob),
+                                     ggplot2::aes_string(colnames(x$covariate_matrix)[1],
+                                                         colnames(x$covariate_matrix)[2],
+                                                         colour = "Fitted.Probabilities")) +
+        ggplot2::geom_point() + ggplot2::theme(legend.position = "bottom") +
+        ggplot2::scale_color_gradient(low = "red",high = "green",name = "Fitted Probabilities",limits = c(0,1))
+      if(sum(X_col)<5 | sum(!X_col) < 5){
+        overall_plot <- GGally::ggpairs(x$covariate_matrix,
+                                        legend = GGally::grab_legend(legend_plot)) +
+          ggplot2::theme(legend.position = "bottom")
+      } else{
+        overall_plot <- GGally::ggpairs(x$covariate_matrix,
+                                        ggplot2::aes_string(alpha = 0.5,
+                                                            colour = X_col),
+                                        legend = GGally::grab_legend(legend_plot)) +
+          ggplot2::theme(legend.position = "bottom") +
+          ggplot2::scale_fill_manual(values = c("red","green"))
+      }
       for(i in 1:ncol(x$covariate_matrix)){
-        for(j in (1:ncol(x$covariate_matrix))[-i]){
-          df.ij <- data.frame(x$covariate_matrix[,c(j,i)],
-                              y = as.character(x$response_vector),
-                              prob = X_prob)
-          colnames(df.ij)[1:2] <- c("temp.i","temp.j")
-          overall_plot[j,i] <- ggplot2::ggplot(df.ij,
-                                               ggplot2::aes(temp.j,temp.i,
-                                                            label = y,colour = prob)) +
-            ggplot2::theme(axis.title.x = ggplot2::element_blank(),
-                           axis.title.y = ggplot2::element_blank()) +
-            ggplot2::geom_text(show.legend = FALSE,size = 3) +
-            ggplot2::scale_color_gradient(low = "red",high = "green",limits = c(0,1))
+        for(j in (1:ncol(x$covariate_matrix))){
+          if(i!=j){
+            df.ij <- data.frame(x$covariate_matrix[,c(i,j)],
+                                y = as.character(x$response_vector),
+                                prob = X_prob)
+            colnames(df.ij)[1:2] <- c("temp.i","temp.j")
+            overall_plot[i,j] <- ggplot2::ggplot(df.ij,
+                                                 ggplot2::aes_string(x = "temp.j",
+                                                                     y = "temp.i",
+                                                                     label = "y",
+                                                                     colour = "prob")) +
+              ggplot2::theme(axis.title.x = ggplot2::element_blank(),
+                             axis.title.y = ggplot2::element_blank()) +
+              ggplot2::geom_text(show.legend = FALSE,size = 3) +
+              ggplot2::scale_color_gradient(low = "red",high = "green",limits = c(0,1))
+          }
         }
       }
     }
@@ -283,21 +327,23 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,diagnostic.x.axis = "fu
     obs_lev <- x$diagnostics$log_Bayesian_evidence_tracker$Observations
     obs_lev_tics <- rep("",length(obs_lev))
     obs_lev_tics[c(1,round(length(obs_lev)*(1:4)/4))] <- obs_lev[c(1,round(length(obs_lev)*(1:4)/4))]
+    x$diagnostics$log_Bayesian_evidence_tracker$Observations <- factor(x$diagnostics$log_Bayesian_evidence_tracker$Observations,levels = obs_lev)
     plot_1 <- ggplot2::ggplot(x$diagnostics$log_Bayesian_evidence_tracker,
-                              aes(x = factor(Observations,levels = obs_lev),
-                                  y = Log_Bayesian_Evidence,group=1)) +
-      geom_line() + labs(x = "Observations", y = "Log Bayesian Evidence")
+                              ggplot2::aes_string(x = "Observations",
+                                  y = "Log_Bayesian_Evidence",group=1)) +
+      ggplot2::geom_line() + ggplot2::labs(x = "Observations", y = "Log Bayesian Evidence")
     if(diagnostic.x.axis=="minimal"){
-      plot_1 <- plot_1 + scale_x_discrete(labels = obs_lev_tics)
+      plot_1 <- plot_1 + ggplot2::scale_x_discrete(labels = obs_lev_tics)
     }
+    x$diagnostics$effective_sample_size_tracker$Observations <- factor(x$diagnostics$effective_sample_size_tracker$Observations,levels = obs_lev)
     plot_2 <- ggplot2::ggplot(x$diagnostics$effective_sample_size_tracker,
-                              aes(x = factor(Observations,levels = obs_lev),
-                                  y = ESS,group=1)) +
-      geom_line() + labs(x = "Observations") +
-      geom_hline(yintercept = x$diagnostics$ESS_threshold,linetype = 2) +
-      scale_y_continuous(breaks = unique(sort(c(round(nrow(x$samples)*(2:5)/5),x$diagnostics$ESS_threshold))))
+                              ggplot2::aes_string(x = "Observations",
+                                  y = "ESS",group=1)) +
+      ggplot2::geom_line() + ggplot2::labs(x = "Observations") +
+      ggplot2::geom_hline(yintercept = x$diagnostics$ESS_threshold,linetype = 2) +
+      ggplot2::scale_y_continuous(breaks = unique(sort(c(round(nrow(x$samples)*(2:5)/5),x$diagnostics$ESS_threshold))))
     if(diagnostic.x.axis=="minimal"){
-      plot_2 <- plot_2 + scale_x_discrete(labels = obs_lev_tics)
+      plot_2 <- plot_2 + ggplot2::scale_x_discrete(labels = obs_lev_tics)
     }
     if(nrow(x$diagnostics$acceptance_rate_tracker)==0){
       overall_plot <- ggpubr::ggarrange(plot_1,plot_2)
@@ -305,11 +351,11 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,diagnostic.x.axis = "fu
       obs_lev_tics2 <- rep("",length(x$diagnostics$acceptance_rate_tracker$Observations))
       obs_lev_tics2[c(1,round(length(obs_lev_tics2)*(1:4)/4))] <- x$diagnostics$acceptance_rate_tracker$Observations[c(1,round(length(obs_lev_tics2)*(1:4)/4))]
       plot_3 <- ggplot2::ggplot(x$diagnostics$acceptance_rate_tracker,
-                                aes(x = Observations,
-                                    y = Acceptance_Rate,group=1)) +
-        geom_line() + labs(y = "Acceptance Rate")
+                                ggplot2::aes_string(x = "Observations",
+                                    y = "Acceptance_Rate",group=1)) +
+        ggplot2::geom_line() + ggplot2::labs(y = "Acceptance Rate")
       if(diagnostic.x.axis=="minimal"){
-        plot_3 <- plot_3 + scale_x_discrete(labels = obs_lev_tics2)
+        plot_3 <- plot_3 + ggplot2::scale_x_discrete(labels = obs_lev_tics2)
       }
       overall_plot <- ggpubr::ggarrange(ggpubr::ggarrange(plot_1,plot_2,ncol=2),plot_3,nrow=2)
     }

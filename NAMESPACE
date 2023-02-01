@@ -1,4 +1,4 @@
-exportPattern("^[[:alpha:]]+")
+export(UNCOVER,IBIS.logreg,UNCOVER.opts,IBIS.logreg.opts)
 export(print.IBIS)
 S3method(print,IBIS)
 export(print.UNCOVER)
@@ -11,3 +11,20 @@ export(plot.IBIS)
 S3method(plot,IBIS)
 export(plot.UNCOVER)
 S3method(plot,UNCOVER)
+importFrom("stats", "BIC", "cov.wt", "dist", "glm", "runif")
+importFrom("utils", "txtProgressBar")
+importFrom("ggplot2", "ggplot","aes_string","scale_color_gradient","labs",
+           "geom_line","scale_x_discrete","geom_hline","scale_y_continuous",
+           "guides","guide_legend","theme","geom_text","element_blank",
+           "geom_point","geom_density","scale_colour_manual",
+           "scale_fill_manual","scale_x_continuous","layer_scales")
+importFrom("GGally","wrap","ggpairs","grab_legend","ggmatrix")
+importFrom("crayon","blue","green")
+importFrom("igraph","V","dfs","get_diameter","E","neighbors","get.edge.ids",
+           "get.edgelist","delete_edges","components","add_edges",
+           "graph_from_adjacency_matrix","mst","count_components")
+importFrom("mvnfast","rmvn","dmvn")
+importFrom("ggpubr","ggarrange")
+importFrom("memoise","forget","memoise")
+importFrom("cachem","cache_mem")
+importFrom("scales","hue_pal")

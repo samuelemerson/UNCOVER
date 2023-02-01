@@ -1,101 +1,12 @@
-################################################
-## R script for functions in UNCOVER package ##
-###############################################
-##
-## Sam Emerson
-## September 2022
-##
-
-
-############################################################
-## Function for Generating Types of Minimum Spanning Tree ##
-############################################################
-
-
-##' One stage minimum spanning tree generation
-##'
-##'
-##' @export
-##' @name one.stage.mst
-##' @description Generation of a minimum spanning tree induced subgraph using the covariate matrix provided.
-##'
-##' Used in UNCOVER to generate the initial graph for the algorithm if the pruning method does not involve validation data.
-##'
-##' @keywords minimum spanning tree
-##' @param obs Covariate matrix
-##' @param rho Vector of indices which indicate the variables of `obs` to use to construct the minimum spanning tree
-##' @return An `igraph` object of the minimum spanning tree induced subgraph
-##' @examples
-##'
-##' # First we generate a covariate matrix `obs`
-##' CM <- matrix(rnorm(300),100,3)
-##'
-##' # Assuming we require a minimum spanning tree induced subgraph using all
-##' # variables
-##' one.stage.mst(obs = CM)
-##'
-##' # If we only require the minimum spanning tree to be constructed from the
-##' # first two variables
-##' one.stage.mst(obs = CM,rho = 1:2)
-##'
-
 one.stage.mst <- function(obs,rho=NULL){
   if(is.null(rho)){
     rho <- 1:ncol(obs)
   }
-  conn <- as.matrix(dist(obs[,rho],method = "euclidean"))
+  conn <- as.matrix(stats::dist(obs[,rho],method = "euclidean"))
   g <- igraph::graph_from_adjacency_matrix(conn,weighted=T,mode="undirected")
   g <- igraph::mst(g,algorithm="prim")
   return(g)
 }
-
-##' Defunct Two stage minimum spanning tree generation
-##'
-##'
-##' @export
-##' @name two.stage.mst.defunct
-##' @description Generation of a two stage minimum spanning tree induced
-##' subgraph using the covariate matrix provided and an indictor of which rows
-##' are to be used as training data.
-##'
-##' Used in UNCOVER to generate the initial graph for the algorithm if the
-##' pruning method involves validation data.
-##'
-##' @keywords minimum spanning tree
-##' @param obs_mat Covariate matrix
-##' @param tr_ind Vector of indices of the observations that will be used as
-##' training data
-##' @param mst_sub Vector of indices which indicate the variables of `obs_mat`
-##' to use to construct the minimum spanning tree
-##' @return A list of two `igraph` objects; the minimum spanning tree induced
-##' subgraph of the training data and the two stage minimum spanning tree
-##' induced subgraph obtained by adding the validation data.
-##' @details A minimum spanning tree is first constructed on the training data,
-##' these edges are then fixed. Validation data is then added in the second
-##' stage and we continue with Prim's algorithm of constructing a minimum
-##' spanning tree (given the current edges) until all observations are
-##' connected.
-##' @examples
-##'
-##' # First we generate a covariate matrix `obs_mat` and assign observations as
-##' # training data or validation data
-##' CM <- matrix(rnorm(300),100,3)
-##' ti <- sort(sample(1:100,50))
-##'
-##' # Assuming we require a two stage minimum spanning tree induced subgraph
-##' # using all variables
-##' tsm <- two.stage.mst.defunct(obs_mat = CM,tr_ind = ti)
-##'
-##' # The edges from the first graph should also be present in the second graph
-##' E(tsm[[1]])
-##' E(tsm[[2]])
-##'
-##' # If we only require the two stage minimum spanning tree to be constructed
-##' # from the first two variables
-##' tsm.2 <- two.stage.mst.defunct(obs_mat = CM,tr_ind = ti,mst_sub = 1:2)
-##' E(tsm.2[[1]])
-##' E(tsm.2[[2]])
-##'
 
 two.stage.mst.defunct <- function(obs_mat,tr_ind,mst_sub=NULL){
   if(length(tr_ind)==nrow(obs_mat)){
@@ -104,7 +15,7 @@ two.stage.mst.defunct <- function(obs_mat,tr_ind,mst_sub=NULL){
   if(is.null(mst_sub)){
     mst_sub <- 1:ncol(obs_mat)
   }
-  conn <- as.matrix(dist(obs_mat[,mst_sub],method = "euclidean"))
+  conn <- as.matrix(stats::dist(obs_mat[,mst_sub],method = "euclidean"))
   conn_temp <- conn
   conn_tr <- conn[tr_ind,tr_ind]
   g_tr <- igraph::graph_from_adjacency_matrix(conn_tr,weighted=T,mode="undirected")
@@ -123,53 +34,6 @@ two.stage.mst.defunct <- function(obs_mat,tr_ind,mst_sub=NULL){
   return(list(g_tr,g))
 }
 
-##' Two stage minimum spanning tree generation
-##'
-##'
-##' @export
-##' @name two.stage.mst
-##' @description Generation of a two stage minimum spanning tree induced
-##' subgraph using the covariate matrix provided and an indicator of which rows
-##' are to be used as training data.
-##'
-##' Used in UNCOVER to generate the initial graph for the algorithm if the
-##' pruning method involves validation data.
-##'
-##' @keywords minimum spanning tree
-##' @param obs_mat Covariate matrix
-##' @param tr_ind Vector of indices of the observations that will be used as
-##' training data
-##' @param mst_sub Vector of indices which indicate the variables of `obs_mat`
-##' to use to construct the minimum spanning tree
-##' @return A list of two `igraph` objects; the minimum spanning tree induced
-##' subgraph of the training data and the two stage minimum spanning tree
-##' induced subgraph obtained by adding the validation data.
-##' @details A minimum spanning tree is first constructed on the training data,
-##' these edges are then fixed. Validation data is then added in the second
-##' stage by creating an edge between each validation observation and it's
-##' nearest training data observation.
-##' @examples
-##'
-##' # First we generate a covariate matrix `obs_mat` and assign observations as
-##' # training data or validation data
-##' CM <- matrix(rnorm(300),100,3)
-##' ti <- sort(sample(1:100,50))
-##'
-##' # Assuming we require a two stage minimum spanning tree induced subgraph
-##' # using all variables
-##' tsm <- two.stage.mst(obs_mat = CM,tr_ind = ti)
-##'
-##' # The edges from the first graph should also be present in the second graph
-##' E(tsm[[1]])
-##' E(tsm[[2]])
-##'
-##' # If we only require the two stage minimum spanning tree to be constructed
-##' # from the first two variables
-##' tsm.2 <- two.stage.mst(obs_mat = CM,tr_ind = ti,mst_sub = 1:2)
-##' E(tsm.2[[1]])
-##' E(tsm.2[[2]])
-##'
-
 two.stage.mst <- function(obs_mat,tr_ind,mst_sub=NULL){
   if(length(tr_ind)==nrow(obs_mat)){
     stop("There is no validation data to produce a two stage minimum spanning tree. Consider using one.stage.mst instead.")
@@ -177,7 +41,7 @@ two.stage.mst <- function(obs_mat,tr_ind,mst_sub=NULL){
   if(is.null(mst_sub)){
     mst_sub <- 1:ncol(obs_mat)
   }
-  conn <- as.matrix(dist(obs_mat[,mst_sub],method = "euclidean"))
+  conn <- as.matrix(stats::dist(obs_mat[,mst_sub],method = "euclidean"))
   conn_temp <- conn
   conn_tr <- conn[tr_ind,tr_ind]
   g_tr <- igraph::graph_from_adjacency_matrix(conn_tr,weighted=T,mode="undirected")
@@ -190,8 +54,8 @@ two.stage.mst <- function(obs_mat,tr_ind,mst_sub=NULL){
   add_edges_val[,1] <- as.character(val_ind)
   add_edges_val[,2] <- as.character(apply(conn_temp[val_ind,],1,which.min))
   conn_temp <- matrix(0,nrow(conn),ncol(conn),dimnames = dimnames(conn))
-  conn_temp[get.edgelist(g_tr)] <- conn[get.edgelist(g_tr)]
-  conn_temp[get.edgelist(g_tr)[,2:1]] <- conn[get.edgelist(g_tr)]
+  conn_temp[igraph::get.edgelist(g_tr)] <- conn[igraph::get.edgelist(g_tr)]
+  conn_temp[igraph::get.edgelist(g_tr)[,2:1]] <- conn[igraph::get.edgelist(g_tr)]
   conn_temp[add_edges_val] <- conn[add_edges_val]
   conn_temp[add_edges_val[,2:1]] <- conn[add_edges_val]
   g <- igraph::graph_from_adjacency_matrix(conn_temp,weighted = T,mode="undirected")
