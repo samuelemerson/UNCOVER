@@ -213,6 +213,8 @@
 ##' # variable
 ##' UN.none.4 <- UNCOVER(X = CM,y = rv,mst_var = 1,deforest_criterion = "None",
 ##'                      verbose = F)
+##' c(sum(UN.none$Model$Log_Marginal_Likelihoods),
+##'   sum(UN.none.4$Model$Log_Marginal_Likelihoods))
 ##'
 ##' # Increasing the stop criterion may uncover more clustering structure within
 ##' # the data, but comes with a time cost
@@ -291,8 +293,8 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                   memo_thres_smc = options$SMC_memo_thres,
                   p_num = options$N,rpri = rprior,p_pdf = dprior,MA = MoreArgs,
                   efs = options$ess,nm = options$n_move,
-                  cache_bic = options$BIC_cache,
-                  cache_smc = options$SMC_cache)
+                  cache_bic = options$BIC_cache,cache_smc = options$SMC_cache,
+                  SMC_fun = IBIS.Z,BIC_fun = memo.bic)
   if(options$diagnostics){
     n_min_size <- sum(table(z)<options$min_size)
     num_min_cla <- sum(table(y)<options$n_min_class)
@@ -358,7 +360,8 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                                par_no = options$N,rfun = rprior,
                                pdf_fun = dprior,efsamp = options$ess,
                                methas = options$n_move,cb = options$BIC_cache,
-                               cs = options$SMC_cache,PA = MoreArgs)
+                               cs = options$SMC_cache,PA = MoreArgs,
+                               SMC_f = IBIS.Z,BIC_f = memo.bic)
         if(sum(er_temp[[2]])>sum(system_save[[k]][[2]])){
           if(deforest_criterion=="Validation"){
             system_save[[k]] <- c(er_temp,list(igraph::get.edgelist(g)[i,]),
@@ -453,7 +456,8 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                                           efs = options$ess,nm = options$n_move,
                                           cache_bic = options$BIC_cache,
                                           cache_smc = options$SMC_cache,
-                                          MA = MoreArgs))
+                                          MA = MoreArgs,SMC_fun = IBIS.Z,
+                                          BIC_fun = memo.bic))
       }
       if(verbose){
         utils::txtProgressBar(min=1,max=nrow(edge_rem)+1,initial=j+1,style=3)
@@ -555,7 +559,7 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                          methas = options$n_move,vb = verbose,
                          cb = options$BIC_cache,cs = options$SMC_cache,
                          PA = MoreArgs,diagnostics = options$diagnostics,
-                         Tr = Track[,1:3])
+                         Tr = Track[,1:3],SMC_f = IBIS.Z,BIC_f = memo.bic)
     memoise::forget(memo.bic)
     memoise::forget(IBIS.Z)
     if(sum(model_selection[[2]])>sum(pnoc[[2]])){
@@ -589,7 +593,8 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                          methas = options$n_move,vb = verbose,
                          cb = options$BIC_cache,cs = options$SMC_cache,
                          PA = MoreArgs,diagnostics = options$diagnostics,
-                         Tr = Track[,c(1:2,4:5)])
+                         Tr = Track[,c(1:2,4:5)],SMC_f = IBIS.Z,
+                         BIC_f = memo.bic)
     memoise::forget(memo.bic)
     memoise::forget(IBIS.Z)
     if(sum(model_selection[[2]])>sum(psoc[[2]])){
@@ -627,7 +632,8 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                               vb = verbose,cb = options$BIC_cache,
                               cs = options$SMC_cache,PA = MoreArgs,
                               diagnostics = options$diagnostics,
-                              Tr = Track[,c(1:2,6:7)])
+                              Tr = Track[,c(1:2,6:7)],SMC_f = IBIS.Z,
+                              BIC_f = memo.bic)
     memoise::forget(memo.bic)
     memoise::forget(IBIS.Z)
     if(sum(model_selection[[2]])>sum(pbal[[2]])){
@@ -671,8 +677,9 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
     }
   }
   if(deforest_criterion=="MaxReg"){
-    pmaxreg <- deforest.maxreg(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,
-                               tau = options$reg,clu_al = z,c_s = combine_save,
+    pmaxreg <- deforest.maxreg(obs = X,res = y,gra = g,lbe = logZ,
+                               eps = edge_rem, tau = options$reg,clu_al = z,
+                               c_s = combine_save,
                                est_thres = options$SMC_thres,
                                mtb = options$BIC_memo_thres,
                                mts = options$SMC_memo_thres,par_no = options$N,
@@ -680,7 +687,8 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                                efsamp = options$ess,methas = options$n_move,
                                vb = verbose,cb = options$BIC_cache,
                                cs = options$SMC_cache,PA = MoreArgs,
-                               diagnostics = options$diagnostics,Tr = Track[,1:2])
+                               diagnostics = options$diagnostics,
+                               Tr = Track[,1:2],SMC_f = IBIS.Z,BIC_f = memo.bic)
     memoise::forget(memo.bic)
     memoise::forget(IBIS.Z)
     res <- (pmaxreg)
@@ -697,7 +705,8 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                                 rho = mst_var,vb = verbose,
                                 cb = options$BIC_cache,cs = options$SMC_cache,
                                 PA = MoreArgs,diagnostics = options$diagnostics,
-                                Tr = Track[,1:2])
+                                Tr = Track[,1:2],SMC_f = IBIS.Z,
+                                BIC_f = memo.bic)
     memoise::forget(memo.bic)
     memoise::forget(IBIS.Z)
     res <- pval

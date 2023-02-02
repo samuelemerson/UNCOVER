@@ -223,6 +223,8 @@ c(sum(UN.none$Model$Log_Marginal_Likelihoods),
 # variable
 UN.none.4 <- UNCOVER(X = CM,y = rv,mst_var = 1,deforest_criterion = "None",
                      verbose = F)
+c(sum(UN.none$Model$Log_Marginal_Likelihoods),
+  sum(UN.none.4$Model$Log_Marginal_Likelihoods))
 
 # Increasing the stop criterion may uncover more clustering structure within
 # the data, but comes with a time cost

@@ -224,7 +224,8 @@ memo.bic <- function(X,y,which_obs=1:length(y),param_start=NULL){
 
 lbe.gen <- function(obs_mat,res_vec,obs_ind = 1:length(res_vec),thres=30,
                     memo_thres_bic = Inf,memo_thres_smc = Inf,p_num=1000,rpri,
-                    p_pdf,efs = p_num/2,nm = 1,cache_bic,cache_smc,MA){
+                    p_pdf,efs = p_num/2,nm = 1,cache_bic,cache_smc,MA,SMC_fun,
+                    BIC_fun){
   cache_search_fun <- function(u,cs,oi){
     c_ind <- cs$get(u)$input
     lci <- length(c_ind)
@@ -252,27 +253,27 @@ lbe.gen <- function(obs_mat,res_vec,obs_ind = 1:length(res_vec),thres=30,
     }
   }
   logZ <- T
-  if(length(res_vec)>=thres){
-    if(length(res_vec)<memo_thres_bic | length(cache_bic$keys())==0){
-      logZ <- tryCatch(memo.bic(X = obs_mat, y = res_vec,which_obs = obs_ind)$logZ,
+  if(length(obs_ind)>=thres){
+    if(length(obs_ind)<memo_thres_bic | length(cache_bic$keys())==0){
+      logZ <- tryCatch(BIC_fun(X = obs_mat, y = res_vec,which_obs = obs_ind)$logZ,
                        warning=function(...)T)
     } else{
       sub_size <- sapply(cache_bic$keys(),FUN = cache_search_fun,cs = cache_bic,
                          oi = obs_ind)
       if(min(sub_size)==0 | min(sub_size)==Inf){
-        logZ <- tryCatch(memo.bic(X = obs_mat, y = res_vec, which_obs = obs_ind)$logZ,
+        logZ <- tryCatch(BIC_fun(X = obs_mat, y = res_vec, which_obs = obs_ind)$logZ,
                          warning=function(...)T)
       } else{
-        bic.start <- memo.bic(X = obs_mat, y = res_vec, which_obs = cache_bic$get(cache_bic$keys()[which.min(sub_size)])$input)$coeffs
-        logZ <- tryCatch(memo.bic(X = obs_mat, y = res_vec, which_obs = obs_ind,
+        bic.start <- BIC_fun(X = obs_mat, y = res_vec, which_obs = cache_bic$get(cache_bic$keys()[which.min(sub_size)])$input)$coeffs
+        logZ <- tryCatch(BIC_fun(X = obs_mat, y = res_vec, which_obs = obs_ind,
                                   param_start = bic.start)$logZ,
                          warning=function(...)T)
       }
     }
   }
   if(logZ==T){
-    if(length(res_vec)<memo_thres_smc | length(cache_smc$keys())==0){
-      logZ <- IBIS.Z(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,
+    if(length(obs_ind)<memo_thres_smc | length(cache_smc$keys())==0){
+      logZ <- SMC_fun(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,
                      rprior = rpri,N = p_num,prior_pdf = p_pdf,
                      target_set = obs_ind,ess = efs,n_move = nm,
                      PriorArgs = MA)$output$log_Bayesian_evidence
@@ -280,16 +281,16 @@ lbe.gen <- function(obs_mat,res_vec,obs_ind = 1:length(res_vec),thres=30,
       sub_size <- sapply(cache_smc$keys(),FUN = cache_search_fun,cs = cache_smc,
                          oi = obs_ind)
       if(min(sub_size)==0 | min(sub_size)==Inf){
-        logZ <- IBIS.Z(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,
+        logZ <- SMC_fun(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,
                        rprior = rpri,N = p_num,prior_pdf = p_pdf,
                        target_set = obs_ind,ess = efs,n_move = nm,
                        PriorArgs = MA)$output$log_Bayesian_evidence
       } else{
-        IBIS.sub <- IBIS.Z(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,
+        IBIS.sub <- SMC_fun(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,
                            rprior = rpri,N = p_num,prior_pdf = p_pdf,
                            target_set = cache_smc$get(cache_smc$keys()[which.min(sub_size)])$input,
                            ess = efs,n_move = nm,PriorArgs = MA)
-        logZ <- IBIS.Z(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,
+        logZ <- SMC_fun(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,
                        sampl = IBIS.sub$ouput,prior_pdf = p_pdf,
                        target_set = obs_ind,current_set = IBIS.sub$input,
                        ess = efs,n_move = nm,

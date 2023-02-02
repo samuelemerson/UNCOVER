@@ -1,7 +1,7 @@
 deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
                          est_thres=30,mtb = Inf,mts = Inf,par_no=1000,rfun=NULL,
                          pdf_fun=NULL,efsamp = par_no/2,methas = 1,vb = F,cb,cs,
-                         PA,diagnostics = FALSE,Tr=NULL){
+                         PA,diagnostics = FALSE,Tr=NULL,SMC_f,BIC_f){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -23,7 +23,8 @@ deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
                                memo_thres_bic = mtb,memo_thres_smc = mts,
                                p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
                                efs = efsamp,nm = methas,cache_bic = cb,
-                               cache_smc = cs,MA = PA))
+                               cache_smc = cs,MA = PA,SMC_fun = SMC_f,
+                               BIC_fun = BIC_f))
     }
     if(vb){
       utils::txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
@@ -80,7 +81,7 @@ deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
 deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
                          est_thres=30,mtb = Inf,mts = Inf,par_no=1000,rfun=NULL,
                          pdf_fun=NULL,efsamp = par_no/2,methas = 1,vb = F,cb,cs,
-                         PA,diagnostics=FALSE,Tr=NULL){
+                         PA,diagnostics=FALSE,Tr=NULL,SMC_f,BIC_f){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -102,7 +103,8 @@ deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
                                memo_thres_bic = mtb,memo_thres_smc = mts,
                                p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
                                efs = efsamp,nm = methas,cache_bic = cb,
-                               cache_smc = cs,MA = PA))
+                               cache_smc = cs,MA = PA,SMC_fun = SMC_f,
+                               BIC_fun = BIC_f))
     }
     if(vb){
       utils::txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
@@ -165,7 +167,8 @@ deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
 deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,
                             est_thres=30,mtb = Inf,mts = Inf,par_no=1000,
                             rfun=NULL,pdf_fun=NULL,efsamp = par_no/2,methas = 1,
-                            vb = F,cb,cs,PA,diagnostics=FALSE,Tr=NULL){
+                            vb = F,cb,cs,PA,diagnostics=FALSE,Tr=NULL,
+                            SMC_f,BIC_f){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -187,7 +190,8 @@ deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,
                                memo_thres_bic = mtb,memo_thres_smc = mts,
                                p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
                                efs = efsamp,nm = methas,cache_bic = cb,
-                               cache_smc = cs,MA = PA))
+                               cache_smc = cs,MA = PA,SMC_fun = SMC_f,
+                               BIC_fun = BIC_f))
     }
     if(vb){
       utils::txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
@@ -245,7 +249,8 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
                                 gra_all=NULL,which_tr=NULL,rho=NULL,clu_al=NULL,
                                 c_s=NULL,est_thres=30,mtb=Inf,mts=Inf,
                                 par_no=1000,rfun,pdf_fun,efsamp=par_no/2,
-                                methas=1,vb=F,cb,cs,PA,diagnostics=FALSE,Tr=NULL){
+                                methas=1,vb=F,cb,cs,PA,diagnostics=FALSE,Tr=NULL,
+                                SMC_f,BIC_f){
   if(diagnostics){
     if(is.null(Tr)){
       stop("If diagnostics=TRUE then Tr needs to be specified")
@@ -276,7 +281,8 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
                           obs_ind = which(clu_al_all==k),memo_thres_bic = mtb,
                           memo_thres_smc = mts,p_num = par_no,rpri = rfun,
                           p_pdf = pdf_fun,efs = efsamp,nm = methas,
-                          cache_bic = cb,cache_smc = cs,MA = PA)
+                          cache_bic = cb,cache_smc = cs,MA = PA,SMC_fun = SMC_f,
+                          BIC_fun = BIC_f)
   }
   RobS <- sum(lbe_all-lbe)
   if(diagnostics){
@@ -297,7 +303,8 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
                                memo_thres_bic = mtb,memo_thres_smc = mts,
                                p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
                                efs = efsamp,nm = methas,cache_bic = cb,
-                               cache_smc = cs,MA = PA))
+                               cache_smc = cs,MA = PA,SMC_fun = SMC_f,
+                               BIC_fun = BIC_f))
     }
     if(!identical(c_s_all[[j]][[1]],which(clu_al_all==edge_clu_al[1]| clu_al_all==edge_clu_al[2]))){
       c_s_all[[j]] <- list(which(clu_al_all==edge_clu_al[1]| clu_al_all==edge_clu_al[2]),
@@ -307,7 +314,8 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
                                    memo_thres_bic = mtb,memo_thres_smc = mts,
                                    p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
                                    efs = efsamp,nm = methas,cache_bic = cb,
-                                   cache_smc = cs,MA = PA))
+                                   cache_smc = cs,MA = PA,SMC_fun = SMC_f,
+                                   BIC_fun = BIC_f))
     }
     if(vb){
       utils::txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
@@ -384,7 +392,8 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
 deforest.balanced <- function(obs,res,gra,lbe,eps,ups,clu_al=NULL,c_s=NULL,
                               est_thres=30,mtb = Inf,mts = Inf,par_no=1000,
                               rfun=NULL,pdf_fun=NULL,efsamp=par_no/2,methas=1,
-                              vb = F,cb,cs,PA,diagnostics=FALSE,Tr=NULL){
+                              vb = F,cb,cs,PA,diagnostics=FALSE,Tr=NULL,
+                              SMC_f,BIC_f){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -406,7 +415,8 @@ deforest.balanced <- function(obs,res,gra,lbe,eps,ups,clu_al=NULL,c_s=NULL,
                                memo_thres_bic = mtb,memo_thres_smc = mts,
                                p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
                                efs = efsamp,nm = methas,cache_bic = cb,
-                               cache_smc = cs,MA = PA))
+                               cache_smc = cs,MA = PA,SMC_fun = SMC_f,
+                               BIC_fun = BIC_f))
     }
     if(vb){
       utils::txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
