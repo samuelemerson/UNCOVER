@@ -31,59 +31,59 @@ however for time and memory purposes specifying a number is highly
 recommended.}
 
 \item{deforest_criterion}{Criterion in which edges are reintroduced to allow
-the model to satisfy. Can be one of `"NoC"`,`"SoC"`,`"MaxReg"`,
-`"Validation"`, `"Balanced"` or `"None"`.}
+the model to satisfy. Can be one of \code{"NoC"},\code{"SoC"},\code{"MaxReg"},
+\code{"Validation"}, \code{"Balanced"} or \code{"None"}.}
 
 \item{verbose}{Do you want the progress of the algorithm to be shown?}
 
 \item{N}{Number of samples of the prior used for the SMC sampler. Not
-required if method `"BIC"` selected. If required but not specified the
-default value is set to `1000`.}
+required if method \code{"BIC"} selected. If required but not specified the
+default value is set to \code{1000}.}
 
 \item{train_frac}{What fraction of the data should be used for training. Should
-only be specified if `deforest_criterion == "Validation`. Defaults to `1`.}
+only be specified if \verb{deforest_criterion == "Validation}. Defaults to \code{1}.}
 
 \item{max_K}{The maximum number of clusters allowed in the final output.
-Should only be specified if `deforest_criterion == "NoC`. Defaults to `Inf`.}
+Should only be specified if \verb{deforest_criterion == "NoC}. Defaults to \code{Inf}.}
 
 \item{min_size}{The minimum number of observations allowed for any cluster
 in the final model. Should only be specified if
-`deforest_criterion == "SoC`. Defaults to `0`.}
+\verb{deforest_criterion == "SoC}. Defaults to \code{0}.}
 
 \item{reg}{Numerical natural logarithm of the tolerance parameter. Must be
-positive. Should only be specified if `deforest_criterion == "MaxReg`.
-Defaults to `0`.}
+positive. Should only be specified if \verb{deforest_criterion == "MaxReg}.
+Defaults to \code{0}.}
 
 \item{n_min_class}{The minimum number of observations in any cluster that
 has an associated response in the minority class of that cluster. Defaults
-to `0`.}
+to \code{0}.}
 
 \item{SMC_thres}{The threshold for which the number of observations needs to
 exceed to consider using BIC as an estimator. Defaults to 30 if not
 specified.}
 
 \item{BIC_memo_thres}{The threshold for when it is deemed worthwhile to
-check the cache of function `memo.bic` for similar observation indices.
+check the cache of function \code{memo.bic} for similar observation indices.
 Defaults to never checking the cache.}
 
 \item{SMC_memo_thres}{The threshold for when it is deemed worthwhile to
-check the cache of function `IBIS.Z` for similar observation indices.
+check the cache of function \code{IBIS.Z} for similar observation indices.
 Defaults to never checking the cache.}
 
 \item{rprior}{Function to sample from the prior. Must only have two
-arguments, `p_num` and `di` (Number of prior samples to generate and the
+arguments, \code{p_num} and \code{di} (Number of prior samples to generate and the
 number of dimensions of a single sample respectively).}
 
 \item{dprior}{Probability Density Function of the prior. Must only have
-two arguments, `th` and `di` (a vector or matrix of regression coefficients
+two arguments, \code{th} and \code{di} (a vector or matrix of regression coefficients
 samples and the number of dimensions of a single sample respectively).}
 
 \item{ess}{Threshold: if the effective sample size of the particle weights
 falls below this value then a resample move step is triggered. Defaults to
-`N/2`. See `IBIS.Z` for details.}
+\code{N/2}. See \code{IBIS.Z} for details.}
 
 \item{n_move}{Number of Metropolis-Hastings steps to apply each time a
-resample move step is triggered. Defaults to 1. See `IBIS.Z` for details.}
+resample move step is triggered. Defaults to 1. See \code{IBIS.Z} for details.}
 
 \item{plot_progress}{Do you want to plot the output of the clustering each
 time an edge is removed or reintroduced?}
@@ -115,62 +115,55 @@ of removed edges to see if it beneficial to reintroduce any previously
 removed edges. After this process has ended we then reintroduce edges in the
 removed set specifically to meet the criteria set by the user in the most
 optimal manner possible through a greedy approach. For more details see the
-help pages of `lbe.gen`,`one.stage.mst`,`two.stage.mst`,`remove.edge`,
-`deforest.noc`,`deforest.soc`,`deforest.maxreg`,`deforest.validation`,
-`deforest.balanced` and the paper *UNCOVER*.
+help pages of \code{lbe.gen},\code{one.stage.mst},\code{two.stage.mst},\code{remove.edge},
+\code{deforest.noc},\code{deforest.soc},\code{deforest.maxreg},\code{deforest.validation},
+\code{deforest.balanced} and the paper \emph{UNCOVER}.
 
-If `rprior` and `dprior` are not specified then the default prior is a
+If \code{rprior} and \code{dprior} are not specified then the default prior is a
 standard multivariate normal.
 
 The graph can be undergo deforestation to meet 6 possible criteria:
-
-1. `"NoC"`: Number of Clusters - we specify a maximum number of clusters
-(`max_K`) we can tolerate in the final output of the algorithm. See
-`deforest.noc` for more details.
-
-2. `"SoC"`: Size of Clusters - we specify a minimum number of observations
-(`min_size`) we can tolerate being assigned to a cluster in the final output
-of the algorithm. See `deforest.soc` for more details.
-
-3. `"MaxReg"`: Maximal Regret - we give a maximum tolerlance (`exp(reg)`)
+\enumerate{
+\item \code{"NoC"}: Number of Clusters - we specify a maximum number of clusters
+(\code{max_K}) we can tolerate in the final output of the algorithm. See
+\code{deforest.noc} for more details.
+\item \code{"SoC"}: Size of Clusters - we specify a minimum number of observations
+(\code{min_size}) we can tolerate being assigned to a cluster in the final output
+of the algorithm. See \code{deforest.soc} for more details.
+\item \code{"MaxReg"}: Maximal Regret - we give a maximum tolerlance (\code{exp(reg)})
 that we allow the Bayesian evidence to decrease by by reintroducing an edge.
-See `deforest.maxreg` for more details.
-
-4. `"Validation"`: Validation Data - we split (using `train_frac`) the data into
+See \code{deforest.maxreg} for more details.
+\item \code{"Validation"}: Validation Data - we split (using \code{train_frac}) the data into
 training and validation data, apply the first stage of the algorithm on the
 training data and the introduce the validation data for the deforestation
-stage. See `deforest.valaidation` for more details.
-
-5. `"Balanced"`: Balanced Response Class Within Clusters - We specify a
-minimum number of observations (`n_min_class`) in a cluster that have the
+stage. See \code{deforest.valaidation} for more details.
+\item \code{"Balanced"}: Balanced Response Class Within Clusters - We specify a
+minimum number of observations (\code{n_min_class}) in a cluster that have the
 minority response class associated to them (the minimum response class is
 determined for each cluster).
-
-6. `"None"`: No Criteria Specified - we do not go through the second
+\item \code{"None"}: No Criteria Specified - we do not go through the second
 deforestation stage of the algorithm.
+}
 
-For more details on the specifics of the possible values for `SMC_method`,
-see the help page of the function `lbe.gen`.
+For more details on the specifics of the possible values for \code{SMC_method},
+see the help page of the function \code{lbe.gen}.
 
-If any deforestation criterion other than `"Validation"` is chosen, then the
+If any deforestation criterion other than \code{"Validation"} is chosen, then the
 output will be a list of the following:
-
-1. Cluster Allocation - A vector indicating which cluster each observation
+\enumerate{
+\item Cluster Allocation - A vector indicating which cluster each observation
 belongs to.
-
-2. Log Marginal Likelihoods - A vector of the log Bayesian evidences (or log
+\item Log Marginal Likelihoods - A vector of the log Bayesian evidences (or log
 marginal likelihoods) of each of the clusters. The sum of this vector will
 be the log Bayesian evidence of the overall model.
-
-3. Graph - The final graph of the data.
-
-4. Number of Clusters - Total number of clusters (or cohorts) in the final
+\item Graph - The final graph of the data.
+\item Number of Clusters - Total number of clusters (or cohorts) in the final
 output.
-
-5. Edges Removed - A matrix of the edges removed, expressed as the two
+\item Edges Removed - A matrix of the edges removed, expressed as the two
 vertices in the graph that the edge connected.
+}
 
-If the deforestation criterion chosen is `"Validation"`, then we produce a
+If the deforestation criterion chosen is \code{"Validation"}, then we produce a
 list of two lists. The first is the list given above for only the training
 data, and the second is the list given above for both the training data and
 the valaidation data combined.
@@ -254,7 +247,7 @@ c(sum(UN.none$Log_Marginal_Likelihoods),
   sum(UN.none.3$Log_Marginal_Likelihoods))
 }
 \seealso{
-[lbe.gen,one.stage.mst,two.stage.mst,remove.edge,deforest.noc,deforest.soc,deforest.maxreg,deforest.validation,deforest.balanced,IBIS.Z,memo.bic]
+\link{lbe.gen,one.stage.mst,two.stage.mst,remove.edge,deforest.noc,deforest.soc,deforest.maxreg,deforest.validation,deforest.balanced,IBIS.Z,memo.bic}
 }
 \keyword{bayesian}
 \keyword{cluster}

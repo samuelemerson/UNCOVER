@@ -18,48 +18,48 @@
 ##'
 ##' @export
 ##' @name IBIS.logreg
-##' @description This function uses an iterated batch importance sampling scheme
-##' with batch size one to go from prior to full posterior. We
+##' @description This function uses an Iterated Batch Importance Sampling (IBIS)
+##' scheme with batch size one to go from prior to full posterior. We
 ##' assume a Bayesian logistic regression model.
 ##'
-##' @keywords sequential monte carlo
+##' @keywords sequential monte carlo IBIS
 ##' @param X Covariance matrix
 ##' @param y Binary response vector
-##' @param prior Name of prior. Can be one of; `"mvn"` for multivariate normal,
-##' `"mvl"` for multivariate laplace or `"mviu"` for multivariate independent
-##' uniform. See details. Defaults to `"mvn"`.
-##' @param N Number of prior samples. Defaults to 1000.
-##' @param ess Threshold: if the effective sample size of the particle weights
-##' falls below this value then a resample move step is triggered. Defaults to
-##' `N/2`.
-##' @param n_move Number of Metropolis-Hastings steps to apply each time a
-##' resample move step is triggered. Defaults to 1.
-##' @param weighted Should the outputted samples be weighted? As a default the
-##' samples are not weighted.
-##' @param ... Arguments for each of the priors. See details.
-##' @return A list consisting of posterior samples and the
-##' log Bayesian evidence of the full posterior. If `weighted==TRUE` the weights
-##' of the samples is also provided.
+##' @param options Additional arguments that can be specified for `IBIS.logreg`.
+##' See \link[UNCOVER]{IBIS.logreg.opts} for details. Can be ignored.
+##' @param prior_mean Mean for the multivariate normal prior used in the SMC
+##' sampler. See details. Defaults to the origin.
+##' @param prior_var Variance matrix for the multivariate normal prior used in
+##' the SMC sampler. See details. Defaults to the identity matrix.
+##' @return An object of class `"IBIS"`, which is a list consisting of:
+##'
+##' \describe{
+##' \item{`covariate_matrix`}{The covariance matrix provided.}
+##' \item{`response_vector`}{The binary response vector provided.}
+##' \item{`samples`}{A matrix of samples from the posterior.}
+##' \item{`log_Bayesian_evidence`}{An estimate of the log Bayesian evidence (or
+##' normalisation constant) of the posterior.}
+##' \item{`diagnostics`}{A data frame recording the features of the SMC sampler
+##' as the observations were added.}
+##' }
+##'
+##' If `weighted==TRUE` then an additional element of the list (`weights`) is
+##' added detailing the weights of the posterior samples.
 ##' @details Details of the internal mechanisms of the SMC sampler such as the
 ##' Metropolis-Hastings MCMC resample move can be found in *UNCOVER paper* and
 ##' Chopin (2002).
 ##'
-##' When selecting a prior the arguments for said prior must be specified or
-##' default values will be chosen. For a multivariate normal prior, mean `mu`
-##' and covariance matrix `sigma` must be specified or `mu = rep(0,ncol(X)+1)`,
-##' `sigma = diag(ncol(X)+1)` will be selected as default values. For a
-##' multivariate Laplace prior, mean `mu` and covariance matrix `Sigma` must be
-##' specified or `mu = rep(0,ncol(X)+1)`, `Sigma = diag(ncol(X)+1)` will be
-##' selected as default values. For a multivariate independent uniform prior
-##' (i.e. regression coefficients are independent under the prior), a minimum
-##' value vector `a` and a maximum value vector `b` must be specified or
-##' `a = rep(0,ncol(X)+1)`, `b = rep(1,ncol(X)+1)` will be selected as default
-##' values.
+##' It is never recommended to use anything other than
+##' `IBIS.logreg.opts` to provide the `options` argument. See
+##' examples and \link[UNCOVER]{IBIS.logreg.opts} for more information.
 ##'
-##' Note that decreasing `ess` and increasing `n_move` will lead to a more
-##' accurate estimate of the Bayesian evidence, but at the cost of increased
-##' computational time.
+##' The prior used for the IBIS procedure will take the form of a multivariate
+##' normal, where the parameters can be specified directly by the user. It is
+##' however possible to override this default prior distributional form by
+##' specifying `prior.override=TRUE` and providing the relevant prior functions
+##' in `IBIS.logreg.opts`.
 ##'
+##' @seealso [IBIS.logreg.opts, print.IBIS, predict.IBIS, plot.IBIS]
 ##' @references Chopin, N. (2002). A sequential particle filter method for
 ##' static models. Biometrika, 89(3), 539-552.
 ##' @examples
@@ -85,21 +85,21 @@
 ##'                      prior_var = 0.1*diag(3))
 ##' samp.df <- data.frame(rbind(out.1$samples,out.2$samples))
 ##' colnames(samp.df) <- paste0("beta[",c(0:2),"]")
-##' ggpairs(samp.df,
-##'         labeller = "label_parsed",
-##'         aes(color = as.factor(rep(c(1,2),each=1000))),
-##'         upper = list(continuous = GGally::wrap("density")),
-##'         lower = list(continuous = GGally::wrap("points",size=0.5)))
+##' GGally::ggpairs(samp.df,
+##'                 labeller = "label_parsed",
+##'                 ggplot2::aes(color = as.factor(rep(c(1,2),each=1000))),
+##'                 upper = list(continuous = GGally::wrap("density")),
+##'                 lower = list(continuous = GGally::wrap("points",size=0.5)))
 ##' out.2$log_Bayesian_evidence
 ##' out.3 <- IBIS.logreg(X = CM,y = rv,prior_mean = rep(3,3),
 ##'                      prior_var = 0.1*diag(3))
 ##' samp.df <- data.frame(rbind(out.1$samples,out.2$samples,out.3$samples))
 ##' colnames(samp.df) <- paste0("beta[",c(0:2),"]")
-##' ggpairs(samp.df,
-##'         labeller = "label_parsed",
-##'         aes(color = as.factor(rep(c(1,2,3),each=1000))),
-##'         upper = list(continuous = GGally::wrap("density")),
-##'         lower = list(continuous = GGally::wrap("points",size=0.5)))
+##' GGally::ggpairs(samp.df,
+##'                 labeller = "label_parsed",
+##'                 ggplot2::aes(color = as.factor(rep(c(1,2,3),each=1000))),
+##'                 upper = list(continuous = GGally::wrap("density")),
+##'                 lower = list(continuous = GGally::wrap("points",size=0.5)))
 ##' out.3$log_Bayesian_evidence
 ##'
 ##' # We can also change the prior, for example a multivariate independent
@@ -122,16 +122,17 @@
 ##'                                                 b=rep(1,3)))
 ##' samp.df <- data.frame(rbind(out.1$samples,out.4$samples))
 ##' colnames(samp.df) <- paste0("beta[",c(0:2),"]")
-##' ggpairs(samp.df,
-##'         labeller = "label_parsed",
-##'         aes(color = as.factor(rep(c(1,4),each=1000))),
-##'         upper = list(continuous = GGally::wrap("density")),
-##'         lower = list(continuous = GGally::wrap("points",size=0.5)))
+##' GGally::ggpairs(samp.df,
+##'                 labeller = "label_parsed",
+##'                 ggplot2::aes(color = as.factor(rep(c(1,4),each=1000))),
+##'                 upper = list(continuous = GGally::wrap("points",size=0.5)),
+##'                 lower = list(continuous = GGally::wrap("points",size=0.5)))
 ##' out.4$log_Bayesian_evidence
 ##'
 
 IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
-                        prior_mean = rep(0,ncol(X)+1),prior_var = diag(ncol(X)+1)){
+                        prior_mean = rep(0,ncol(X)+1),
+                        prior_var = diag(ncol(X)+1)){
   if(options$prior.override){
     MoreArgs <- options$MoreArgs
     TotArgs <- list(options$N)
@@ -159,7 +160,8 @@ IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
     MoreArgs <- list(mu = prior_mean,sigma = prior_var)
   }
   DM <- as.matrix(cbind(rep(1,length(y)),X))
-  IBIS_out <- IBIS.Z(X = DM,y = y,rprior = rprior,N = options$N,prior_pdf = dprior,
+  IBIS_out <- IBIS.Z(X = DM,y = y,rprior = rprior,N = options$N,
+                     prior_pdf = dprior,
                      ess = options$ess,n_move = options$n_move,
                      PriorArgs = MoreArgs,diagnostics=TRUE)$output
   if(options$weighted==FALSE){
@@ -204,6 +206,22 @@ IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
   res
 }
 
+##' Print IBIS
+##'
+##'
+##' @export
+##' @keywords print IBIS
+##' @name print.IBIS
+##' @description Prints summary information from an IBIS object.
+##'
+##' @param x Object of class `"IBIS"`
+##' @param ... Further arguments passed to or from other methods
+##' @details When running the function \link[UNCOVER]{IBIS.logreg} the printed information
+##' will contain information regarding; the number of samples, the mean of those
+##' samples and the log Bayesian evidence of the posterior.
+##' @seealso [IBIS.logreg]
+##'
+
 print.IBIS <- function(x,...){
   if("weights" %in% names(x)){
     ss <- stats::cov.wt(x$samples,wt=x$weights,method = "ML")
@@ -223,9 +241,51 @@ print.IBIS <- function(x,...){
   cat("Log Bayesian Evidence:",x$log_Bayesian_evidence)
 }
 
-predict.IBIS <- function(object,newX,type = "prob",...){
+##' Prediction method for IBIS
+##'
+##'
+##' @export
+##' @name predict.IBIS
+##' @description Predicts the response of new observations using an object of
+##' class `"IBIS"`.
+##'
+##' @keywords predict IBIS
+##' @param object Object of class `"IBIS"`
+##' @param newX Data frame containing new observations to predict. If not
+##' specified the fitted values will be returned instead.
+##' @param type Either `"prob"` for a probabilistic output or `"response"` for
+##' a hard output of the predicted response
+##' @param ... Additional arguments affecting the predictions produced
+##' @return Either a matrix of response probabilities for each observation or
+##' a vector of predicted responses for each observation.
+##' @details Note that this is a Bayesian prediction method as objects with
+##' class `"IBIS"` will provide samples from a posterior.
+##' @seealso [IBIS.logreg]
+##' @examples
+##'
+##' # First we generate a covariate matrix X and binary response vector y
+##' CM <- data.frame(X1 = rnorm(100),X2 = rnorm(100))
+##' rv <- sample(0:1,100,replace=T)
+##'
+##' # Now we can obtain 1000 samples from the posterior from a standard
+##' # multivariate normal prior
+##' out <- IBIS.logreg(X = CM,y = rv)
+##'
+##' # The fitted values of out.1 can be obtained
+##' predict(out)
+##' predict(out,type = "response")
+##'
+##' # We can also predict the response for new data
+##' CM.2 <- data.frame(X1 = rnorm(10),X2 = rnorm(10))
+##' cbind(CM.2,predict(out,newX = CM.2))
+##'
+
+predict.IBIS <- function(object,newX = NULL,type = "prob",...){
   if(type!="prob" & type!="response"){
     stop("type not supported")
+  }
+  if(is.null(newX)){
+    newX = object$covariate_matrix
   }
   newX <- as.matrix(newX,ncol = ncol(object$covariate_matrix))
   DM <- cbind(rep(1,nrow(newX)),newX)
@@ -240,10 +300,79 @@ predict.IBIS <- function(object,newX,type = "prob",...){
   return(res)
 }
 
+##' Plot various outputs of IBIS
+##'
+##'
+##' @export
+##' @name plot.IBIS
+##' @description Allows visualisation of many aspects of IBIS, including
+##' covariate, posterior and diagnostic plots.
+##'
+##' @keywords plot IBIS
+##' @param x Object of class `"IBIS"`
+##' @param type Can be one of; `"samples"` for posterior visualisation,
+##' `"fitted"` for covariate visualisation or `"diagnostics"` for diagnostic
+##' plots. See details. Defaults to `"samples"`.
+##' @param plot_var Vector specifying which columns (or associated logistic
+##' regression coefficients) of the covariate matrix should be plotted. Does not
+##' apply when `type=="diagnostics"`. Defaults to all columns being selected.
+##' @param diagnostic_x_axis Only applies if `"type=="diagnostics"`. Either
+##' `"full"` (default) for all observations indices to be plotted on the x-axis
+##' or `"minimal"` for only some observations indices to be plotted on the
+##' x-axis.
+##' @param ... Arguments to be passed to methods
+##' @details If `type=="samples"`, the resulting plot will be a ggpairs plot
+##' giving the coefficient densities in the diagonal, points plots of the
+##' posterior samples in the lower triangle and contour plots in the upper
+##' triangle.
+##'
+##' If `"type=="fitted"`, the resulting plot will be a ggpairs plot. The
+##' diagonal entries will be two density plots, one for training data predicted
+##' to have response 0 by the model (red) and one for training data predicted
+##' to have response 1 by the model (green). The off-diagonal elements are
+##' scatter-plots of the observations, given a label according to their actual
+##' response and a colour scale based on their predicted response. If
+##' `length(plot_var)==1` then the covariate variable is plotted against it's
+##' index and a density plot is not provided.
+##'
+##' If `"type==diagnostics"`, the resulting plot will be a combination of three
+##' plots; one tracking the log Bayesian evidence as observations are added to
+##' the posterior, one tracking the effective sample size of the particles for
+##' each step of the SMC sampler and one tracking the acceptance rate of the
+##' Metropolis-Hastings step when a resample-move is triggered. See
+##' *UNCOVER paper* and Chopin (2002) for more details. Multiple
+##' Metropolis-Hastings steps can be performed when a resample-move step is
+##' triggered, and so for the acceptance rate plot observations are suffixed
+##' with "." and then the index of current Metropolis-Hastings step. For example
+##' the x-axis label for the acceptance rate of the 2nd Metropolis-Hastings step
+##' which was triggered by adding observation 1 to the posterior would be
+##' labelled "1.2". When the training data for the `"IBIS"` object created is
+##' large setting `diagnostic_x_axis=="minimal"` is recommended as it gives a
+##' more visulally appealing output.
+##'
+##' @seealso [IBIS.logreg]
+##' @examples
+##'
+##' # First we generate a covariate matrix X and binary response vector y
+##' CM <- matrix(rnorm(200),100,2)
+##' rv <- sample(0:1,100,replace=T)
+##'
+##' # Now we can obtain 1000 samples from the posterior from a standard
+##' # multivariate normal prior and plot the results
+##' out <- IBIS.logreg(X = CM,y = rv)
+##' plot(out,type = "samples")
+##' plot(out,type = "fitted")
+##' plot(out,type = "diagnostics",diagnostic_x_axis = "minimal")
+##'
+##' # If we only wanted to view the second covariate
+##' plot(out,type = "samples",plot_var = 2)
+##' plot(out,type = "fitted","plot_var = 2)
+##'
+
 plot.IBIS <- function(x,type = "samples",plot_var = NULL,
-                      diagnostic.x.axis = "full",...){
-  if(diagnostic.x.axis!="full" & diagnostic.x.axis!="minimal"){
-    stop("diagnostic.x.axis must be either full or minimal")
+                      diagnostic_x_axis = "full",...){
+  if(diagnostic_x_axis!="full" & diagnostic_x_axis!="minimal"){
+    stop("diagnostic_x_axis must be either full or minimal")
   }
   if(is.null(plot_var)){
     plot_var <- 1:ncol(x$covariate_matrix)
@@ -269,7 +398,7 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
     }
   }
   if(type=="fitted"){
-    X_prob <- predict.IBIS(object = x,newX = x$covariate_matrix)[,2]
+    X_prob <- predict.IBIS(object = x)[,2]
     X_col <- X_prob>0.5
     x$covariate_matrix <- x$covariate_matrix[,plot_var,drop=F]
     if(ncol(x$covariate_matrix)==1){
@@ -332,7 +461,7 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
                               ggplot2::aes_string(x = "Observations",
                                   y = "Log_Bayesian_Evidence",group=1)) +
       ggplot2::geom_line() + ggplot2::labs(x = "Observations", y = "Log Bayesian Evidence")
-    if(diagnostic.x.axis=="minimal"){
+    if(diagnostic_x_axis=="minimal"){
       plot_1 <- plot_1 + ggplot2::scale_x_discrete(labels = obs_lev_tics)
     }
     x$diagnostics$effective_sample_size_tracker$Observations <- factor(x$diagnostics$effective_sample_size_tracker$Observations,levels = obs_lev)
@@ -342,7 +471,7 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
       ggplot2::geom_line() + ggplot2::labs(x = "Observations") +
       ggplot2::geom_hline(yintercept = x$diagnostics$ESS_threshold,linetype = 2) +
       ggplot2::scale_y_continuous(breaks = unique(sort(c(round(nrow(x$samples)*(2:5)/5),x$diagnostics$ESS_threshold))))
-    if(diagnostic.x.axis=="minimal"){
+    if(diagnostic_x_axis=="minimal"){
       plot_2 <- plot_2 + ggplot2::scale_x_discrete(labels = obs_lev_tics)
     }
     if(nrow(x$diagnostics$acceptance_rate_tracker)==0){
@@ -354,7 +483,7 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
                                 ggplot2::aes_string(x = "Observations",
                                     y = "Acceptance_Rate",group=1)) +
         ggplot2::geom_line() + ggplot2::labs(y = "Acceptance Rate")
-      if(diagnostic.x.axis=="minimal"){
+      if(diagnostic_x_axis=="minimal"){
         plot_3 <- plot_3 + ggplot2::scale_x_discrete(labels = obs_lev_tics2)
       }
       overall_plot <- ggpubr::ggarrange(ggpubr::ggarrange(plot_1,plot_2,ncol=2),plot_3,nrow=2)
@@ -362,6 +491,78 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
   }
   overall_plot
 }
+
+##' Additional argument generator for \link[UNCOVER]{IBIS.logreg}
+##'
+##'
+##' @export
+##' @name IBIS.logreg.opts
+##' @description This function is used to specify additional arguments to
+##' `IBIS.logreg`.
+##'
+##' @keywords IBIS options control
+##' @param N Number of paricles for the SMC sampler. Defaults to 1000.
+##' @param ess Effective Sample Size Threshold: If the effective sample size of
+##' the particles falls below this value then a resample move step is
+##' triggered. Defaults to `N/2`.
+##' @param n_move Number of Metropolis-Hastings steps to apply each time a
+##' resample move step is triggered. Defaults to 1.
+##' @param weighted Should the outputted samples be weighted? Defaults to
+##' `FALSE`.
+##' @param prior.override Are you overriding the default multivariate normal
+##' form of the prior? Defaults to `FALSE`.
+##' @param rprior Function which produces samples from your prior if the default
+##' prior form is to be overridden. If using the default prior form this does
+##' not need to be specified.
+##' @param dprior Function which produces your specified priors density for
+##' inputted samples if the default prior form is to be overridden. If using the
+##' default prior form this does not need to be specified.
+##' @param ... Additional arguments required for complete specification of the
+##' two prior functions given, if the default prior form is to be overridden.
+##' @return A list consisting of:
+##'
+##' \describe{
+##' \item{`N`}{Number of paricles for the SMC sampler}
+##' \item{`ess`}{Effective Sample Size Threshold}
+##' \item{`n_move`}{Number of Metropolis-Hastings steps}
+##' \item{`rprior`}{Function which produces samples from your prior. `NULL` if
+##' `prior.override==FALSE`.}
+##' \item{`dprior`}{Function which produces your specified priors density for
+##' inputted samples. `NULL` if `prior.override==FALSE`.}
+##' \item{`prior.override`}{Logical value indicating if the prior has been
+##' overridden or not.}
+##' \item{`weighted`}{Logical value indicating if the outputted particles of
+##' `IBIS.logreg` should be weighted or not.}
+##' \item{`MoreArgs`}{A list of the additional arguments required for `rprior`
+##' and `dprior`. `NULL` if `prior.override==FALSE`.}
+##' }
+##'
+##' @details This function should only be used to provide additional control
+##' arguments to `IBIS.logreg`.
+##'
+##' Specifying `rprior` and `dprior` will not override the default prior form
+##' unless `prior.override=TRUE`. If a multivariate normal form is required then
+##' the arguments for this prior should be specified in `IBIS.logreg`.
+##' @seealso [IBIS.logreg]
+##'
+##' @examples
+##'
+##' #Specifying a multivariate independent uniform prior
+##'
+##' rmviu <- function(n,a,b){
+##' return(mapply(FUN = function(min.vec,max.vec,pn){stats::runif(pn,a,b)},
+##'               min.vec=a,max.vec=b,MoreArgs = list(pn = n)))
+##' }
+##' dmviu <- function(x,a,b){
+##' for(ii in 1:ncol(x)){
+##'   x[,ii] <- dunif(x[,ii],a[ii],b[ii])
+##' }
+##' return(apply(x,1,prod))
+##' }
+##'
+##' IBIS.logreg.opts(prior.override = TRUE,rprior = rmviu,
+##'                  dprior = dmviu,a=rep(0,3),b=rep(1,3))
+##'
 
 IBIS.logreg.opts <- function(N=1000,ess = N/2,n_move = 1,weighted = FALSE,
                              prior.override = FALSE,rprior = NULL,

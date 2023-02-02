@@ -17,54 +17,50 @@ IBIS.logreg(
 
 \item{y}{Binary response vector}
 
-\item{prior}{Name of prior. Can be one of; `"mvn"` for multivariate normal,
-`"mvl"` for multivariate laplace or `"mviu"` for multivariate independent
-uniform. See details. Defaults to `"mvn"`.}
+\item{options}{Additional arguments that can be specified for \code{IBIS.logreg}.
+See \link[UNCOVER]{IBIS.logreg.opts} for details. Can be ignored.}
 
-\item{N}{Number of prior samples. Defaults to 1000.}
+\item{prior_mean}{Mean for the multivariate normal prior used in the SMC
+sampler. See details. Defaults to the origin.}
 
-\item{ess}{Threshold: if the effective sample size of the particle weights
-falls below this value then a resample move step is triggered. Defaults to
-`N/2`.}
-
-\item{n_move}{Number of Metropolis-Hastings steps to apply each time a
-resample move step is triggered. Defaults to 1.}
-
-\item{weighted}{Should the outputted samples be weighted? As a default the
-samples are not weighted.}
-
-\item{...}{Arguments for each of the priors. See details.}
+\item{prior_var}{Variance matrix for the multivariate normal prior used in
+the SMC sampler. See details. Defaults to the identity matrix.}
 }
 \value{
-A list consisting of posterior samples and the
-log Bayesian evidence of the full posterior. If `weighted==TRUE` the weights
-of the samples is also provided.
+An object of class \code{"IBIS"}, which is a list consisting of:
+
+\describe{
+\item{\code{covariate_matrix}}{The covariance matrix provided.}
+\item{\code{response_vector}}{The binary response vector provided.}
+\item{\code{samples}}{A matrix of samples from the posterior.}
+\item{\code{log_Bayesian_evidence}}{An estimate of the log Bayesian evidence (or
+normalisation constant) of the posterior.}
+\item{\code{diagnostics}}{A data frame recording the features of the SMC sampler
+as the observations were added.}
+}
+
+If \code{weighted==TRUE} then an additional element of the list (\code{weights}) is
+added detailing the weights of the posterior samples.
 }
 \description{
-This function uses an iterated batch importance sampling scheme
-with batch size one to go from prior to full posterior. We
+This function uses an Iterated Batch Importance Sampling (IBIS)
+scheme with batch size one to go from prior to full posterior. We
 assume a Bayesian logistic regression model.
 }
 \details{
 Details of the internal mechanisms of the SMC sampler such as the
-Metropolis-Hastings MCMC resample move can be found in *UNCOVER paper* and
+Metropolis-Hastings MCMC resample move can be found in \emph{UNCOVER paper} and
 Chopin (2002).
 
-When selecting a prior the arguments for said prior must be specified or
-default values will be chosen. For a multivariate normal prior, mean `mu`
-and covariance matrix `sigma` must be specified or `mu = rep(0,ncol(X)+1)`,
-`sigma = diag(ncol(X)+1)` will be selected as default values. For a
-multivariate Laplace prior, mean `mu` and covariance matrix `Sigma` must be
-specified or `mu = rep(0,ncol(X)+1)`, `Sigma = diag(ncol(X)+1)` will be
-selected as default values. For a multivariate independent uniform prior
-(i.e. regression coefficients are independent under the prior), a minimum
-value vector `a` and a maximum value vector `b` must be specified or
-`a = rep(0,ncol(X)+1)`, `b = rep(1,ncol(X)+1)` will be selected as default
-values.
+It is never recommended to use anything other than
+\code{IBIS.logreg.opts} to provide the \code{options} argument. See
+examples and \link[UNCOVER]{IBIS.logreg.opts} for more information.
 
-Note that decreasing `ess` and increasing `n_move` will lead to a more
-accurate estimate of the Bayesian evidence, but at the cost of increased
-computational time.
+The prior used for the IBIS procedure will take the form of a multivariate
+normal, where the parameters can be specified directly by the user. It is
+however possible to override this default prior distributional form by
+specifying \code{prior.override=TRUE} and providing the relevant prior functions
+in \code{IBIS.logreg.opts}.
 }
 \examples{
 
@@ -89,21 +85,21 @@ out.2 <- IBIS.logreg(X = CM,y = rv,prior_mean = rep(-3,3),
                      prior_var = 0.1*diag(3))
 samp.df <- data.frame(rbind(out.1$samples,out.2$samples))
 colnames(samp.df) <- paste0("beta[",c(0:2),"]")
-ggpairs(samp.df,
-        labeller = "label_parsed",
-        aes(color = as.factor(rep(c(1,2),each=1000))),
-        upper = list(continuous = GGally::wrap("density")),
-        lower = list(continuous = GGally::wrap("points",size=0.5)))
+GGally::ggpairs(samp.df,
+                labeller = "label_parsed",
+                ggplot2::aes(color = as.factor(rep(c(1,2),each=1000))),
+                upper = list(continuous = GGally::wrap("density")),
+                lower = list(continuous = GGally::wrap("points",size=0.5)))
 out.2$log_Bayesian_evidence
 out.3 <- IBIS.logreg(X = CM,y = rv,prior_mean = rep(3,3),
                      prior_var = 0.1*diag(3))
 samp.df <- data.frame(rbind(out.1$samples,out.2$samples,out.3$samples))
 colnames(samp.df) <- paste0("beta[",c(0:2),"]")
-ggpairs(samp.df,
-        labeller = "label_parsed",
-        aes(color = as.factor(rep(c(1,2,3),each=1000))),
-        upper = list(continuous = GGally::wrap("density")),
-        lower = list(continuous = GGally::wrap("points",size=0.5)))
+GGally::ggpairs(samp.df,
+                labeller = "label_parsed",
+                ggplot2::aes(color = as.factor(rep(c(1,2,3),each=1000))),
+                upper = list(continuous = GGally::wrap("density")),
+                lower = list(continuous = GGally::wrap("points",size=0.5)))
 out.3$log_Bayesian_evidence
 
 # We can also change the prior, for example a multivariate independent
@@ -126,11 +122,11 @@ out.4 <- IBIS.logreg(X = CM,y = rv,
                                                 b=rep(1,3)))
 samp.df <- data.frame(rbind(out.1$samples,out.4$samples))
 colnames(samp.df) <- paste0("beta[",c(0:2),"]")
-ggpairs(samp.df,
-        labeller = "label_parsed",
-        aes(color = as.factor(rep(c(1,4),each=1000))),
-        upper = list(continuous = GGally::wrap("density")),
-        lower = list(continuous = GGally::wrap("points",size=0.5)))
+GGally::ggpairs(samp.df,
+                labeller = "label_parsed",
+                ggplot2::aes(color = as.factor(rep(c(1,4),each=1000))),
+                upper = list(continuous = GGally::wrap("points",size=0.5)),
+                lower = list(continuous = GGally::wrap("points",size=0.5)))
 out.4$log_Bayesian_evidence
 
 }
@@ -138,6 +134,10 @@ out.4$log_Bayesian_evidence
 Chopin, N. (2002). A sequential particle filter method for
 static models. Biometrika, 89(3), 539-552.
 }
+\seealso{
+\link{IBIS.logreg.opts, print.IBIS, predict.IBIS, plot.IBIS}
+}
+\keyword{IBIS}
 \keyword{carlo}
 \keyword{monte}
 \keyword{sequential}
