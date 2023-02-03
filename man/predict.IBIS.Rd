@@ -39,7 +39,7 @@ rv <- sample(0:1,100,replace=T)
 # multivariate normal prior
 out <- IBIS.logreg(X = CM,y = rv)
 
-# The fitted values of out.1 can be obtained
+# The fitted values of out can be obtained
 predict(out)
 predict(out,type = "response")
 

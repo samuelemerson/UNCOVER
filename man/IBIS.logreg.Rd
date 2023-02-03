@@ -64,6 +64,7 @@ in \code{IBIS.logreg.opts}.
 }
 \examples{
 
+require(graphics)
 # First we generate a covariate matrix X and binary response vector y
 CM <- matrix(rnorm(200),100,2)
 rv <- sample(0:1,100,replace=T)

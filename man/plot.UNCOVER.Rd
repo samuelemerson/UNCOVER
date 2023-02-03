@@ -2,7 +2,7 @@
 % Please edit documentation in R/UNCOVER.R
 \name{plot.UNCOVER}
 \alias{plot.UNCOVER}
-\title{Utilising Normalisation Constant Optimisation Via Edge Removal}
+\title{Plot various outputs of UNCOVER}
 \usage{
 \method{plot}{UNCOVER}(
   x,
@@ -13,240 +13,123 @@
 )
 }
 \arguments{
-\item{X}{Covariate matrix}
+\item{x}{Object of class \code{"UNCOVER"}}
 
-\item{y}{Binary response vector}
+\item{type}{Can be one of; \code{"covariates"} for cluster assignment
+visualisation for the covariates, \code{"fitted"} for covariate visualisation
+with respect to their fitted values, \code{"samples"} for posterior visualisation
+or \code{"diagnostics"} for diagnostic plots. See details. Defaults to
+\code{"covariates"}.}
 
-\item{mst_var}{A vector specifying which variables of the covariate matrix
-will be used to form the graph. If not specified all variables will be used.}
+\item{plot_var}{Vector specifying which columns (or associated logistic
+regression coefficients) of the covariate matrix should be plotted. Does not
+apply when \code{type=="diagnostics"}. Defaults to all columns being selected.}
 
-\item{N}{Number of samples of the prior used for the SMC sampler. Not
-required if method \code{"BIC"} selected. If required but not specified the
-default value is set to \code{1000}.}
+\item{...}{Arguments to be passed to methods}
 
-\item{stop_criterion}{What is the maximum number of clusters allowed before
-we terminate the first stage and begin deforestation. If not specified the
-algorithm continues until the Bayesian evidence cannot be improved upon,
-however for time and memory purposes specifying a number is highly
-recommended.}
-
-\item{deforest_criterion}{Criterion in which edges are reintroduced to allow
-the model to satisfy. Can be one of \code{"NoC"},\code{"SoC"},\code{"MaxReg"},
-\code{"Validation"}, \code{"Balanced"} or \code{"None"}.}
-
-\item{train_frac}{What fraction of the data should be used for training. Should
-only be specified if \verb{deforest_criterion == "Validation}. Defaults to \code{1}.}
-
-\item{max_K}{The maximum number of clusters allowed in the final output.
-Should only be specified if \verb{deforest_criterion == "NoC}. Defaults to \code{Inf}.}
-
-\item{min_size}{The minimum number of observations allowed for any cluster
-in the final model. Should only be specified if
-\verb{deforest_criterion == "SoC}. Defaults to \code{0}.}
-
-\item{reg}{Numerical natural logarithm of the tolerance parameter. Must be
-positive. Should only be specified if \verb{deforest_criterion == "MaxReg}.
-Defaults to \code{0}.}
-
-\item{n_min_class}{The minimum number of observations in any cluster that
-has an associated response in the minority class of that cluster. Defaults
-to \code{0}.}
-
-\item{SMC_thres}{The threshold for which the number of observations needs to
-exceed to consider using BIC as an estimator. Defaults to 30 if not
-specified.}
-
-\item{BIC_memo_thres}{The threshold for when it is deemed worthwhile to
-check the cache of function \code{memo.bic} for similar observation indices.
-Defaults to never checking the cache.}
-
-\item{SMC_memo_thres}{The threshold for when it is deemed worthwhile to
-check the cache of function \code{IBIS.Z} for similar observation indices.
-Defaults to never checking the cache.}
-
-\item{rprior}{Function to sample from the prior. Must only have two
-arguments, \code{p_num} and \code{di} (Number of prior samples to generate and the
-number of dimensions of a single sample respectively).}
-
-\item{dprior}{Probability Density Function of the prior. Must only have
-two arguments, \code{th} and \code{di} (a vector or matrix of regression coefficients
-samples and the number of dimensions of a single sample respectively).}
-
-\item{ess}{Threshold: if the effective sample size of the particle weights
-falls below this value then a resample move step is triggered. Defaults to
-\code{N/2}. See \code{IBIS.Z} for details.}
-
-\item{n_move}{Number of Metropolis-Hastings steps to apply each time a
-resample move step is triggered. Defaults to 1. See \code{IBIS.Z} for details.}
-
-\item{plot_progress}{Do you want to plot the output of the clustering each
-time an edge is removed or reintroduced?}
-
-\item{verbose}{Do you want the progress of the algorithm to be shown?}
-}
-\value{
-Either a list or a list of two lists. See details.
+\item{diagnostic_x_axis}{Only applies if \verb{"type=="diagnostics"}. Either
+\code{"full"} (default) for all observations indices to be plotted on the x-axis
+or \code{"minimal"} for only some observations indices to be plotted on the
+x-axis.}
 }
 \description{
-Generates cohorts for a data set through removal of edges from
-a graphical representation of the covariates. Edges are removed (or
-reintroduced) by considering the normalisation constant (or Bayesian
-evidence) of a multiplicative Bayesian logistic regression model.
-
-The first stage of the function is concerned purely with a greedy
-optimisation of the Bayeisan evidence through edge manipulation. The second
-stage then addresses any other criteria (known as deforest conditions)
-expressed by the user through reintroduction of edges.
+Allows visualisation of many aspects of UNCOVER, including
+covariate, posterior and diagnostic plots.
 }
 \details{
-Assumes a Bayesian logistic regression model for each cohort, with
-the overall model being a product of these sub-models.
+If \code{type=="covariates"}, the resulting plot will be a ggpairs plot.
+The diagonal entries will be a plot of K density plots (K being the number
+of clusters). The off-diagonal elements are scatter-plots of the
+observations, given a label according to their true response and a colour
+based on their assigned cluster. If \code{length(plot_var)==1} then the density
+plot and the scatter-plot are combined. If a cluster contains less than two
+data points the density will not be plotted.
 
-A minimum spanning tree graph is first constructed from a subset of the
-covariates. Then at each iteration, each edge in the current graph is
-checked to see if removal to split a cohort is beneficial, and then either
-we selected the optimal edge to remove or we concluded it is not beneficial
-to remove any more edges. At the end of each iteration we also check the set
-of removed edges to see if it beneficial to reintroduce any previously
-removed edges. After this process has ended we then reintroduce edges in the
-removed set specifically to meet the criteria set by the user in the most
-optimal manner possible through a greedy approach. For more details see the
-help pages of \code{lbe.gen},\code{one.stage.mst},\code{two.stage.mst},\code{remove.edge},
-\code{deforest.noc},\code{deforest.soc},\code{deforest.maxreg},\code{deforest.validation},
-\code{deforest.balanced} and the paper \emph{UNCOVER}.
+If \verb{"type=="fitted"}, the resulting plot will be a ggpairs plot. The
+diagonal entries will be two density plots, one for data predicted to have
+response 0 by the model (red) and one for training data predicted to have
+response 1 by the model (green). The off-diagonal elements are
+scatter-plots of the observations, given a label according to their actual
+response and a colour scale based on their predicted response. If
+\code{length(plot_var)==1} then the density plot and the scatter-plot are
+combined. If a predicted class (0 or 1) contains less than two data points
+the density will not be plotted.
 
-If \code{rprior} and \code{dprior} are not specified then the default prior is a
-standard multivariate normal.
+If \code{type=="samples"}, the resulting plot will be a ggpairs plot of the
+clusters posteriors, giving the coefficient densities in the diagonal and
+scatter-plots of the posterior samples in the off-diagonal. The transparency
+is increased in the upper triangle for scenarios when posteriors overlap.
 
-The graph can be undergo deforestation to meet 6 possible criteria:
-\enumerate{
-\item \code{"NoC"}: Number of Clusters - we specify a maximum number of clusters
-(\code{max_K}) we can tolerate in the final output of the algorithm. See
-\code{deforest.noc} for more details.
-\item \code{"SoC"}: Size of Clusters - we specify a minimum number of observations
-(\code{min_size}) we can tolerate being assigned to a cluster in the final output
-of the algorithm. See \code{deforest.soc} for more details.
-\item \code{"MaxReg"}: Maximal Regret - we give a maximum tolerlance (\code{exp(reg)})
-that we allow the Bayesian evidence to decrease by by reintroducing an edge.
-See \code{deforest.maxreg} for more details.
-\item \code{"Validation"}: Validation Data - we split (using \code{train_frac}) the data into
-training and validation data, apply the first stage of the algorithm on the
-training data and the introduce the validation data for the deforestation
-stage. See \code{deforest.valaidation} for more details.
-\item \code{"Balanced"}: Balanced Response Class Within Clusters - We specify a
-minimum number of observations (\code{n_min_class}) in a cluster that have the
-minority response class associated to them (the minimum response class is
-determined for each cluster).
-\item \code{"None"}: No Criteria Specified - we do not go through the second
-deforestation stage of the algorithm.
+If \code{"type==diagnostics"}, the resulting plot depends on the deforestation
+criterion used to create the \code{"UNCOVER"} object:
+\describe{
+\item{\code{"None"}}{A plot tracking the overall log Bayesian evidence every time
+an action is executed.}
+\item{\code{"NoC"}}{A plot tracking the overall log Bayesian evidence after every
+action and a plot tracking the number of clusters after every action.}
+\item{\code{"SoC"}}{Three plots; one tracking the overall log Bayesian evidence
+after every action, one tracking the number of criterion breaking clusters
+after every action and one tracking the minimum cluster size after every
+action.}
+\item{\code{"MaxReg"}}{A plot tracking the overall log Bayesian evidence every
+time an action is executed. Actions are coloured and each action has an
+associated coloured dashed line indicating the log Bayesian evidence plus
+the logarithm of the maximum tolerance provided.}
+\item{\code{"Validation"}}{A plot tracking the overall log Bayesian evidence
+after every action (for both the training data and all of the data) and a
+plot tracking the robustness statistic after every deforestation action.}
+\item{\code{"Balanced"}}{Three plots; one tracking the overall log Bayesian
+evidence after every action, one tracking the number of criterion breaking
+clusters after every action and one tracking the minimum minority class
+across clusters after every action.}
 }
-
-For more details on the specifics of the possible values for \code{SMC_method},
-see the help page of the function \code{lbe.gen}.
-
-If any deforestation criterion other than \code{"Validation"} is chosen, then the
-output will be a list of the following:
-\enumerate{
-\item Cluster Allocation - A vector indicating which cluster each observation
-belongs to.
-\item Log Marginal Likelihoods - A vector of the log Bayesian evidences (or log
-marginal likelihoods) of each of the clusters. The sum of this vector will
-be the log Bayesian evidence of the overall model.
-\item Graph - The final graph of the data.
-\item Number of Clusters - Total number of clusters (or cohorts) in the final
-output.
-\item Edges Removed - A matrix of the edges removed, expressed as the two
-vertices in the graph that the edge connected.
-}
-
-If the deforestation criterion chosen is \code{"Validation"}, then we produce a
-list of two lists. The first is the list given above for only the training
-data, and the second is the list given above for both the training data and
-the valaidation data combined.
+Actions are defined as either edge removals, edge additions or edge
+additions in the deforesation stage. The syntax for an action will be the
+'type_of_action.edge'. For example the removal of an edge connecting
+observation 1 and observation 2 will be displayed 'Rem.1-2'. If the edge was
+being added this would be displayed 'Def.Add.1-2' if in the deforestation
+stage and 'Add.1-2' otherwise. When the data for the \code{"UNCOVER"} object
+created is large setting \code{diagnostic_x_axis=="minimal"} is recommended as it
+gives a more visulally appealing output.
 }
 \examples{
 
-# First we generate a covariate matrix `X` and binary response vector `y`
+require(graphics)
+# First we generate a covariate matrix and binary response vector
 CM <- matrix(rnorm(200),100,2)
 rv <- sample(0:1,100,replace=T)
 
-# We can then run our algorithm to see what cohorts are selected for each
-# of the different deforestation criteria
-UN.none <- UNCOVER(X = CM,y = rv, stop_criterion = 8,
-                   deforest_criterion = "None", verbose = F)
-UN.noc <- UNCOVER(X = CM,y = rv, stop_criterion = 8,
-                  deforest_criterion = "NoC",
+# We can then run our algorithm for each of the different deforestation
+# criteria
+UN.none <- UNCOVER(X = CM,y = rv, deforest_criterion = "None", verbose = F)
+UN.noc <- UNCOVER(X = CM,y = rv, deforest_criterion = "NoC",
                   options = UNCOVER.opts(max_K = 3), verbose = F)
-UN.soc <- UNCOVER(X = CM,y = rv, stop_criterion = 8,
-                  deforest_criterion = "SoC",
+UN.soc <- UNCOVER(X = CM,y = rv, deforest_criterion = "SoC",
                   options = UNCOVER.opts(min_size = 10), verbose = F)
-UN.maxreg <- UNCOVER(X = CM,y = rv, stop_criterion = 8,
-                     deforest_criterion = "MaxReg",
+UN.maxreg <- UNCOVER(X = CM,y = rv, deforest_criterion = "MaxReg",
                      options = UNCOVER.opts(reg = 1), verbose = F)
-UN.validation <- UNCOVER(X = CM,y = rv, stop_criterion = 8,
-                         deforest_criterion = "Validation",
+UN.validation <- UNCOVER(X = CM,y = rv, deforest_criterion = "Validation",
                          options = UNCOVER.opts(train_frac = 0.8),
                          verbose = F)
-UN.balanced <- UNCOVER(X = CM,y = rv, stop_criterion = 8,
-                       deforest_criterion = "Balanced",
+UN.balanced <- UNCOVER(X = CM,y = rv, deforest_criterion = "Balanced",
                        options = UNCOVER.opts(n_min_class = 2), verbose = F)
-clu_al_mat <- rbind(UN.none$Cluster_Allocation,UN.noc$Cluster_Allocation,
-                    UN.soc$Cluster_Allocation,UN.maxreg$Cluster_Allocation,
-                    UN.validation$All_Data$Cluster_Allocation,
-                    UN.balanced$Cluster_Allocation)
-# We can create a matrix where each entry shows in how many of the methods
-# did the indexed observations belong to the same cluster
-obs_con_mat <- matrix(0,100,100)
-for(i in 1:100){
-for(j in 1:100){
-obs_con_mat[i,j] <- length(which(clu_al_mat[,i]-clu_al_mat[,j]==0))/6
-obs_con_mat[j,i] <- obs_con_mat[i,j]
-}
-}
-head(obs_con_mat)
-# We can also view the outputted overall Bayesian evidence of the five
-# models as well
-c(sum(UN.none$Log_Marginal_Likelihoods),sum(UN.noc$Log_Marginal_Likelihoods),
-  sum(UN.soc$Log_Marginal_Likelihoods),sum(UN.maxreg$Log_Marginal_Likelihoods),
-  sum(UN.validation$All_Data$Log_Marginal_Likelihoods),
-  sum(UN.balanced$Log_Marginal_Likelihoods))
+plot(UN.none,type = "covariates")
+plot(UN.none,type = "fitted")
+plot(UN.none,type = "samples")
+plot(UN.none,type = "diagnostics",diagnostic_x_axis = "minimal")
+plot(UN.noc,type = "diagnostics",diagnostic_x_axis = "minimal")
+plot(UN.soc,type = "diagnostics",diagnostic_x_axis = "minimal")
+plot(UN.maxreg,type = "diagnostics",diagnostic_x_axis = "minimal")
+plot(UN.validation,type = "diagnostics",diagnostic_x_axis = "minimal")
+plot(UN.balanced,type = "diagnostics",diagnostic_x_axis = "minimal")
 
-# If we don't assume the prior for the regression coefficients is a
-# standard multivariate normal but instead a multivariate normal with
-# different parameters
-UN.none.2 <- UNCOVER(X = CM,y = rv, stop_criterion = 8,
-                     deforest_criterion = "None", prior_mean = rep(1,3),
-                     prior_var = 0.5*diag(3),verbose = F)
-c(sum(UN.none$Log_Marginal_Likelihoods),
-  sum(UN.none.2$Log_Marginal_Likelihoods))
-# We can also specify a completely different prior, for example a
-# multivariate independent uniform
-rmviu <- function(n,a,b){
-return(mapply(FUN = function(min.vec,max.vec,pn){
-                      stats::runif(pn,a,b)},min.vec=a,max.vec=b,
-                                     MoreArgs = list(pn = n)))
-}
-dmviu <- function(x,a,b){
-for(ii in 1:ncol(x)){
-  x[,ii] <- dunif(x[,ii],a[ii],b[ii])
-}
-return(apply(x,1,prod))
-}
-UN.none.3 <- UNCOVER(X = CM,y = rv, stop_criterion = 8,
-                     deforest_criterion = "None",
-                     options = UNCOVER.opts(prior.override = TRUE,
-                                            rprior = rmviu,
-                                            dprior = dmviu,a=rep(0,3),
-                                            b=rep(1,3)),verbose = F)
-c(sum(UN.none$Log_Marginal_Likelihoods),
-  sum(UN.none.2$Log_Marginal_Likelihoods),
-  sum(UN.none.3$Log_Marginal_Likelihoods))
+# If we only wanted to view the second covariate
+plot(UN.none,type = "covariates",plot_var=2)
+plot(UN.none,type = "fitted",plot_var=2)
+plot(UN.none,type = "samples",plot_var=2)
 }
 \seealso{
-\link{lbe.gen,one.stage.mst,two.stage.mst,remove.edge,deforest.noc,deforest.soc,deforest.maxreg,deforest.validation,deforest.balanced,IBIS.Z,memo.bic}
+\link{UNCOVER}
 }
-\keyword{bayesian}
-\keyword{cluster}
-\keyword{cohort}
-\keyword{evidence}
-\keyword{graph}
+\keyword{UNCOVER}
+\keyword{plot}

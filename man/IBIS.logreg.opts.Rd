@@ -16,7 +16,7 @@ IBIS.logreg.opts(
 )
 }
 \arguments{
-\item{N}{Number of paricles for the SMC sampler. Defaults to 1000.}
+\item{N}{Number of particles for the SMC sampler. Defaults to 1000.}
 
 \item{ess}{Effective Sample Size Threshold: If the effective sample size of
 the particles falls below this value then a resample move step is

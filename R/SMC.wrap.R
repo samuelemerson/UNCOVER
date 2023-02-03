@@ -64,6 +64,7 @@
 ##' static models. Biometrika, 89(3), 539-552.
 ##' @examples
 ##'
+##' require(graphics)
 ##' # First we generate a covariate matrix X and binary response vector y
 ##' CM <- matrix(rnorm(200),100,2)
 ##' rv <- sample(0:1,100,replace=T)
@@ -216,9 +217,9 @@ IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
 ##'
 ##' @param x Object of class `"IBIS"`
 ##' @param ... Further arguments passed to or from other methods
-##' @details When running the function \link[UNCOVER]{IBIS.logreg} the printed information
-##' will contain information regarding; the number of samples, the mean of those
-##' samples and the log Bayesian evidence of the posterior.
+##' @details When running the function \link[UNCOVER]{IBIS.logreg} the printed
+##' information will contain information regarding; the number of samples, the
+##' mean of those samples and the log Bayesian evidence of the posterior.
 ##' @seealso [IBIS.logreg]
 ##'
 
@@ -271,7 +272,7 @@ print.IBIS <- function(x,...){
 ##' # multivariate normal prior
 ##' out <- IBIS.logreg(X = CM,y = rv)
 ##'
-##' # The fitted values of out.1 can be obtained
+##' # The fitted values of out can be obtained
 ##' predict(out)
 ##' predict(out,type = "response")
 ##'
@@ -333,7 +334,9 @@ predict.IBIS <- function(object,newX = NULL,type = "prob",...){
 ##' scatter-plots of the observations, given a label according to their actual
 ##' response and a colour scale based on their predicted response. If
 ##' `length(plot_var)==1` then the covariate variable is plotted against it's
-##' index and a density plot is not provided.
+##' index and a density plot is not provided. If `length(plot_var)==1` then the
+##' density plot and the scatter-plot are combined. If a predicted class (0 or
+##' 1) contains less than two data points the density will not be plotted.
 ##'
 ##' If `"type==diagnostics"`, the resulting plot will be a combination of three
 ##' plots; one tracking the log Bayesian evidence as observations are added to
@@ -353,6 +356,7 @@ predict.IBIS <- function(object,newX = NULL,type = "prob",...){
 ##' @seealso [IBIS.logreg]
 ##' @examples
 ##'
+##' require(graphics)
 ##' # First we generate a covariate matrix X and binary response vector y
 ##' CM <- matrix(rnorm(200),100,2)
 ##' rv <- sample(0:1,100,replace=T)
@@ -389,28 +393,47 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
     colnames(samp.df) <- paste0("beta[",c(0,plot_var),"]")
     if("weights" %in% names(x)){
       overall_plot <- GGally::ggpairs(samp.df,labeller = "label_parsed",
-                                      upper = list(continuous = GGally::wrap("density",colour = "black")),
-                                      lower = list(continuous = GGally::wrap("points",size=0.5,alpha = x$weights)))
+                                      upper = list(continuous = GGally::wrap("density",
+                                                                             colour = "black")),
+                                      lower = list(continuous = GGally::wrap("points",
+                                                                             size=0.5,
+                                                                             alpha = x$weights)))
     } else{
       overall_plot <- GGally::ggpairs(samp.df,labeller = "label_parsed",
-                                      upper = list(continuous = GGally::wrap("density",colour = "black")),
-                                      lower = list(continuous = GGally::wrap("points",size=0.5)))
+                                      upper = list(continuous = GGally::wrap("density",
+                                                                             colour = "black")),
+                                      lower = list(continuous = GGally::wrap("points",
+                                                                             size=0.5)))
     }
   }
   if(type=="fitted"){
     X_prob <- predict.IBIS(object = x)[,2]
-    X_col <- X_prob>0.5
     x$covariate_matrix <- x$covariate_matrix[,plot_var,drop=F]
     if(ncol(x$covariate_matrix)==1){
-      overall_plot <- ggplot2::ggplot(data.frame(Index = 1:nrow(x$covariate_matrix),x$covariate_matrix,
+      overall_plot <- ggplot2::ggplot(data.frame(x$covariate_matrix,
+                                                 y.axis = rep(0,nrow(x$covariate_matrix)),
                                                  y = as.character(x$response_vector),
-                                                 prob = X_prob),
-                                      ggplot2::aes_string("Index",
-                                          colnames(x$covariate_matrix)[1],
-                                          label = "y",colour = "prob")) +
-        ggplot2::geom_text(show.legend = FALSE,size = 3) +
-        ggplot2::scale_color_gradient(low = "red",high = "green") +
-        ggplot2::labs(y = colnames(x$covariate_matrix)[1])
+                                                 Fitted.Probabilities = X_prob,
+                                                 Hard.Assignment = X_prob>=0.5)) +
+        ggplot2::geom_density(show.legend = FALSE,
+                              ggplot2::aes_string(colnames(x$covariate_matrix)[1],
+                                                  colour = "Hard.Assignment",
+                                                  fill = "Hard.Assignment"),alpha=0.25) +
+        ggplot2::scale_colour_manual(values = c("red","green")) +
+        ggplot2::scale_fill_manual(values = c("red","green")) +
+        ggnewscale::new_scale_color() +
+        ggplot2::geom_point(alpha=0,
+                            ggplot2::aes_string(colnames(x$covariate_matrix)[1],
+                                                "y.axis",
+                                                colour = "Fitted.Probabilities")) +
+        ggplot2::geom_text(alpha = 1,show.legend = FALSE,size = 3,
+                           ggplot2::aes_string(colnames(x$covariate_matrix)[1],
+                                               "y.axis",
+                                               label = "y",
+                                               colour = "Fitted.Probabilities")) +
+        ggplot2::scale_color_gradient(low = "red",high = "green",name = "Fitted Probabilities",limits = c(0,1)) +
+        ggplot2::labs(y = "density") +
+        ggplot2::theme(legend.position = "bottom")
     } else{
       legend_plot <- ggplot2::ggplot(data.frame(x$covariate_matrix[,c(1,2)],
                                                 Fitted.Probabilities = X_prob),
@@ -419,37 +442,35 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
                                                          colour = "Fitted.Probabilities")) +
         ggplot2::geom_point() + ggplot2::theme(legend.position = "bottom") +
         ggplot2::scale_color_gradient(low = "red",high = "green",name = "Fitted Probabilities",limits = c(0,1))
-      if(sum(X_col)<5 | sum(!X_col) < 5){
-        overall_plot <- GGally::ggpairs(x$covariate_matrix,
-                                        legend = GGally::grab_legend(legend_plot)) +
-          ggplot2::theme(legend.position = "bottom")
-      } else{
-        overall_plot <- GGally::ggpairs(x$covariate_matrix,
-                                        ggplot2::aes_string(alpha = 0.5,
-                                                            colour = X_col),
-                                        legend = GGally::grab_legend(legend_plot)) +
-          ggplot2::theme(legend.position = "bottom") +
+      diag_plot <- function(data,mapping,...){
+        ggplot2::ggplot(data = data,mapping = mapping) +
+          ggplot2::geom_density(ggplot2::aes_string(colour = "Hard.Assignment",
+                                                    fill = "Hard.Assignment")) +
+          ggplot2::scale_colour_manual(values = c("red","green")) +
           ggplot2::scale_fill_manual(values = c("red","green"))
       }
-      for(i in 1:ncol(x$covariate_matrix)){
-        for(j in (1:ncol(x$covariate_matrix))){
-          if(i!=j){
-            df.ij <- data.frame(x$covariate_matrix[,c(i,j)],
-                                y = as.character(x$response_vector),
-                                prob = X_prob)
-            colnames(df.ij)[1:2] <- c("temp.i","temp.j")
-            overall_plot[i,j] <- ggplot2::ggplot(df.ij,
-                                                 ggplot2::aes_string(x = "temp.j",
-                                                                     y = "temp.i",
-                                                                     label = "y",
-                                                                     colour = "prob")) +
-              ggplot2::theme(axis.title.x = ggplot2::element_blank(),
-                             axis.title.y = ggplot2::element_blank()) +
-              ggplot2::geom_text(show.legend = FALSE,size = 3) +
-              ggplot2::scale_color_gradient(low = "red",high = "green",limits = c(0,1))
-          }
-        }
+      label_plot_fitted <- function(data,mapping,...){
+        ggplot2::ggplot(data = data,mapping = mapping) +
+          ggplot2::geom_point(alpha=0,
+                              ggplot2::aes_string(colour = "Fitted.Probabilities")) +
+          ggplot2::geom_text(alpha = 1,size = 3,
+                             ggplot2::aes_string(colour = "Fitted.Probabilities",
+                                                 label = "y")) +
+          ggplot2::scale_color_gradient(low = "red",high = "green",
+                                        name = "Fitted Probabilities",
+                                        limits = c(0,1))
       }
+      overall_plot <- GGally::ggpairs(data.frame(x$covariate_matrix,
+                                                 y = as.character(x$response_vector),
+                                                 Fitted.Probabilities = X_prob,
+                                                 Hard.Assignment = X_prob>=0.5),
+                                      ggplot2::aes_string(alpha = 0.5),
+                                      columns = 1:ncol(x$covariate_matrix),
+                                      diag = list(continuous = diag_plot),
+                                      upper = list(continuous = label_plot_fitted),
+                                      lower = list(continuous = label_plot_fitted),
+                                      legend = GGally::grab_legend(legend_plot)) +
+        ggplot2::theme(legend.position = "bottom")
     }
   }
   if(type=="diagnostics"){
@@ -489,7 +510,7 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
       overall_plot <- ggpubr::ggarrange(ggpubr::ggarrange(plot_1,plot_2,ncol=2),plot_3,nrow=2)
     }
   }
-  overall_plot
+  suppressWarnings(print(overall_plot))
 }
 
 ##' Additional argument generator for \link[UNCOVER]{IBIS.logreg}
@@ -501,7 +522,7 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
 ##' `IBIS.logreg`.
 ##'
 ##' @keywords IBIS options control
-##' @param N Number of paricles for the SMC sampler. Defaults to 1000.
+##' @param N Number of particles for the SMC sampler. Defaults to 1000.
 ##' @param ess Effective Sample Size Threshold: If the effective sample size of
 ##' the particles falls below this value then a resample move step is
 ##' triggered. Defaults to `N/2`.

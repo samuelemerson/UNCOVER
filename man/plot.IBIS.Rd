@@ -41,7 +41,11 @@ to have response 1 by the model (green). The off-diagonal elements are
 scatter-plots of the observations, given a label according to their actual
 response and a colour scale based on their predicted response. If
 \code{length(plot_var)==1} then the covariate variable is plotted against it's
-index and a density plot is not provided.
+index and a density plot is not provided. If \code{length(plot_var)==1} then the
+density plot and the scatter-plot are combined. If a predicted class (0 or
+\enumerate{
+\item contains less than two data points the density will not be plotted.
+}
 
 If \code{"type==diagnostics"}, the resulting plot will be a combination of three
 plots; one tracking the log Bayesian evidence as observations are added to

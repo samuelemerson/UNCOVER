@@ -227,7 +227,7 @@ lbe.gen <- function(obs_mat,res_vec,obs_ind = 1:length(res_vec),thres=30,
                     p_pdf,efs = p_num/2,nm = 1,cache_bic,cache_smc,MA,SMC_fun,
                     BIC_fun){
   cache_search_fun <- function(u,cs,oi){
-    c_ind <- cs$get(u)$input
+    c_ind <- cs$get(u)$value$input
     lci <- length(c_ind)
     loi <- length(obs_ind)
     if(lci==loi){
@@ -264,7 +264,7 @@ lbe.gen <- function(obs_mat,res_vec,obs_ind = 1:length(res_vec),thres=30,
         logZ <- tryCatch(BIC_fun(X = obs_mat, y = res_vec, which_obs = obs_ind)$logZ,
                          warning=function(...)T)
       } else{
-        bic.start <- BIC_fun(X = obs_mat, y = res_vec, which_obs = cache_bic$get(cache_bic$keys()[which.min(sub_size)])$input)$coeffs
+        bic.start <- BIC_fun(X = obs_mat, y = res_vec, which_obs = cache_bic$get(cache_bic$keys()[which.min(sub_size)])$value$input)$coeffs
         logZ <- tryCatch(BIC_fun(X = obs_mat, y = res_vec, which_obs = obs_ind,
                                   param_start = bic.start)$logZ,
                          warning=function(...)T)
@@ -288,10 +288,10 @@ lbe.gen <- function(obs_mat,res_vec,obs_ind = 1:length(res_vec),thres=30,
       } else{
         IBIS.sub <- SMC_fun(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,
                            rprior = rpri,N = p_num,prior_pdf = p_pdf,
-                           target_set = cache_smc$get(cache_smc$keys()[which.min(sub_size)])$input,
+                           target_set = cache_smc$get(cache_smc$keys()[which.min(sub_size)])$value$input,
                            ess = efs,n_move = nm,PriorArgs = MA)
         logZ <- SMC_fun(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,
-                       sampl = IBIS.sub$ouput,prior_pdf = p_pdf,
+                       sampl = IBIS.sub$output,prior_pdf = p_pdf,
                        target_set = obs_ind,current_set = IBIS.sub$input,
                        ess = efs,n_move = nm,
                        PriorArgs = MA)$output$log_Bayesian_evidence
