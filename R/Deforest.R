@@ -1,7 +1,7 @@
 deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
                          est_thres=30,mtb = Inf,mts = Inf,par_no=1000,rfun=NULL,
-                         pdf_fun=NULL,efsamp = par_no/2,methas = 1,vb = F,cb,cs,
-                         PA,diagnostics = FALSE,Tr=NULL,SMC_f,BIC_f){
+                         pdf_fun=NULL,efsamp = par_no/2,methas = 1,vb = FALSE,
+                         cb,cs,PA,diagnostics = FALSE,Tr=NULL,SMC_f,BIC_f){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -50,7 +50,7 @@ deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
         if(diagnostics){
           Tr <- rbind(Tr,c(paste0("Def.Add.",eps[cut_comb,1],"-",eps[cut_comb,2]),sum(lbe),K-1))
         }
-        eps <- eps[-cut_comb,,drop=F]
+        eps <- eps[-cut_comb,,drop=FALSE]
         c_s[[cut_comb]] <- c()
         K <- K-1
         j <- 0
@@ -80,8 +80,8 @@ deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
 
 deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
                          est_thres=30,mtb = Inf,mts = Inf,par_no=1000,rfun=NULL,
-                         pdf_fun=NULL,efsamp = par_no/2,methas = 1,vb = F,cb,cs,
-                         PA,diagnostics=FALSE,Tr=NULL,SMC_f,BIC_f){
+                         pdf_fun=NULL,efsamp = par_no/2,methas = 1,vb = FALSE,
+                         cb,cs,PA,diagnostics=FALSE,Tr=NULL,SMC_f,BIC_f){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -136,7 +136,7 @@ deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
           Tr <- rbind(Tr,c(paste0("Def.Add.",eps[cut_comb,1],"-",eps[cut_comb,2]),
                            sum(lbe),min(tab_clu_al),sum(tab_clu_al<n_dag)))
         }
-        eps <- eps[-cut_comb,,drop=F]
+        eps <- eps[-cut_comb,,drop=FALSE]
         c_s[[cut_comb]] <- c()
         K <- K-1
         j <- 0
@@ -167,7 +167,7 @@ deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
 deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,
                             est_thres=30,mtb = Inf,mts = Inf,par_no=1000,
                             rfun=NULL,pdf_fun=NULL,efsamp = par_no/2,methas = 1,
-                            vb = F,cb,cs,PA,diagnostics=FALSE,Tr=NULL,
+                            vb = FALSE,cb,cs,PA,diagnostics=FALSE,Tr=NULL,
                             SMC_f,BIC_f){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
@@ -217,7 +217,7 @@ deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,
         if(diagnostics){
           Tr <- rbind(Tr,c(paste0("Def.Add.",eps[cut_comb,1],"-",eps[cut_comb,2]),sum(lbe)))
         }
-        eps <- eps[-cut_comb,,drop=F]
+        eps <- eps[-cut_comb,,drop=FALSE]
         c_s[[cut_comb]] <- c()
         K <- K-1
         j <- 0
@@ -249,8 +249,8 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
                                 gra_all=NULL,which_tr=NULL,rho=NULL,clu_al=NULL,
                                 c_s=NULL,est_thres=30,mtb=Inf,mts=Inf,
                                 par_no=1000,rfun,pdf_fun,efsamp=par_no/2,
-                                methas=1,vb=F,cb,cs,PA,diagnostics=FALSE,Tr=NULL,
-                                SMC_f,BIC_f){
+                                methas=1,vb=FALSE,cb,cs,PA,diagnostics=FALSE,
+                                Tr=NULL,SMC_f,BIC_f){
   if(diagnostics){
     if(is.null(Tr)){
       stop("If diagnostics=TRUE then Tr needs to be specified")
@@ -353,7 +353,7 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
         if(diagnostics){
           Tr <- rbind(Tr,c(paste0("Def.Add.",eps[cut_comb,1],"-",eps[cut_comb,2]),sum(lbe),sum(lbe_all),RobS))
         }
-        eps <- eps[-cut_comb,,drop=F]
+        eps <- eps[-cut_comb,,drop=FALSE]
         c_s[[cut_comb]] <- c()
         c_s_all[[cut_comb]] <- c()
         K <- K-1
@@ -392,7 +392,7 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
 deforest.balanced <- function(obs,res,gra,lbe,eps,ups,clu_al=NULL,c_s=NULL,
                               est_thres=30,mtb = Inf,mts = Inf,par_no=1000,
                               rfun=NULL,pdf_fun=NULL,efsamp=par_no/2,methas=1,
-                              vb = F,cb,cs,PA,diagnostics=FALSE,Tr=NULL,
+                              vb = FALSE,cb,cs,PA,diagnostics=FALSE,Tr=NULL,
                               SMC_f,BIC_f){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
@@ -452,7 +452,7 @@ deforest.balanced <- function(obs,res,gra,lbe,eps,ups,clu_al=NULL,c_s=NULL,
           sap_bal <- sapply(1:(K-1),FUN = function(u,y,z){min(table(factor(y[which(z==u)],levels=0:1)))},y=res,z=clu_al)
           Tr <- rbind(Tr,c(paste0("Def.Add.",eps[cut_comb,1],"-",eps[cut_comb,2]),sum(lbe),min(sap_bal),sum(sap_bal<ups)))
         }
-        eps <- eps[-cut_comb,,drop=F]
+        eps <- eps[-cut_comb,,drop=FALSE]
         c_s[[cut_comb]] <- c()
         K <- K-1
         j <- 0

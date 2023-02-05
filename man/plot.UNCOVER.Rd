@@ -8,7 +8,7 @@
   x,
   type = "covariates",
   plot_var = x$Minimum_Spanning_Tree_Variables,
-  diagnostic.x.axis = "full",
+  diagnostic_x_axis = "full",
   ...
 )
 }
@@ -25,12 +25,12 @@ or \code{"diagnostics"} for diagnostic plots. See details. Defaults to
 regression coefficients) of the covariate matrix should be plotted. Does not
 apply when \code{type=="diagnostics"}. Defaults to all columns being selected.}
 
-\item{...}{Arguments to be passed to methods}
-
 \item{diagnostic_x_axis}{Only applies if \verb{"type=="diagnostics"}. Either
 \code{"full"} (default) for all observations indices to be plotted on the x-axis
 or \code{"minimal"} for only some observations indices to be plotted on the
 x-axis.}
+
+\item{...}{Arguments to be passed to methods}
 }
 \description{
 Allows visualisation of many aspects of UNCOVER, including
@@ -97,22 +97,22 @@ gives a more visulally appealing output.
 require(graphics)
 # First we generate a covariate matrix and binary response vector
 CM <- matrix(rnorm(200),100,2)
-rv <- sample(0:1,100,replace=T)
+rv <- sample(0:1,100,replace=TRUE)
 
 # We can then run our algorithm for each of the different deforestation
 # criteria
-UN.none <- UNCOVER(X = CM,y = rv, deforest_criterion = "None", verbose = F)
+UN.none <- UNCOVER(X = CM,y = rv, deforest_criterion = "None", verbose = FALSE)
 UN.noc <- UNCOVER(X = CM,y = rv, deforest_criterion = "NoC",
-                  options = UNCOVER.opts(max_K = 3), verbose = F)
+                  options = UNCOVER.opts(max_K = 3), verbose = FALSE)
 UN.soc <- UNCOVER(X = CM,y = rv, deforest_criterion = "SoC",
-                  options = UNCOVER.opts(min_size = 10), verbose = F)
+                  options = UNCOVER.opts(min_size = 10), verbose = FALSE)
 UN.maxreg <- UNCOVER(X = CM,y = rv, deforest_criterion = "MaxReg",
-                     options = UNCOVER.opts(reg = 1), verbose = F)
+                     options = UNCOVER.opts(reg = 1), verbose = FALSE)
 UN.validation <- UNCOVER(X = CM,y = rv, deforest_criterion = "Validation",
                          options = UNCOVER.opts(train_frac = 0.8),
-                         verbose = F)
+                         verbose = FALSE)
 UN.balanced <- UNCOVER(X = CM,y = rv, deforest_criterion = "Balanced",
-                       options = UNCOVER.opts(n_min_class = 2), verbose = F)
+                       options = UNCOVER.opts(n_min_class = 2), verbose = FALSE)
 plot(UN.none,type = "covariates")
 plot(UN.none,type = "fitted")
 plot(UN.none,type = "samples")

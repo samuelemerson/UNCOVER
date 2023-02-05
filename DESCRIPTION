@@ -1,11 +1,10 @@
 Package: UNCOVER
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Joint Cohort and Predictive Modelling
 Version: 0.1.0
 Author: Samuel Emerson
 Maintainer: Samuel Emerson <samuel.emerson@hotmail.co.uk>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Description: Model data with a suspected clustering structure (either in covariate space, regression space or both) using a Bayesian product model with a logistic regression likelihood. Observations are represented graphically and clusters are formed through various edge removals or additions. Cluster quality is assessed through the log Bayesian evidence of the overall model, which is estimated using either a Sequential Monte Carlo (SMC) sampler or a suitable transformation of the Bayesian Information Criterion (BIC). The title of this method is Utilising Normalisation Constant Optimisation Via Edge Removal (UNCOVER).    Specifically, the SMC sampler is an Iterated Batch Importance Sampling (IBIS) scheme with batch size one. The IBIS procedure can be implemented separate from UNCOVER if required.
 License: GPL-2
 Encoding: UTF-8
 LazyData: true

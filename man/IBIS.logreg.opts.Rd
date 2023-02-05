@@ -2,7 +2,7 @@
 % Please edit documentation in R/SMC.wrap.R
 \name{IBIS.logreg.opts}
 \alias{IBIS.logreg.opts}
-\title{Additional argument generator for \link[UNCOVER]{IBIS.logreg}}
+\title{Additional argument generator for \link{IBIS.logreg}}
 \usage{
 IBIS.logreg.opts(
   N = 1000,

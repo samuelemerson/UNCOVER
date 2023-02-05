@@ -252,26 +252,26 @@ lbe.gen <- function(obs_mat,res_vec,obs_ind = 1:length(res_vec),thres=30,
       }
     }
   }
-  logZ <- T
+  logZ <- TRUE
   if(length(obs_ind)>=thres){
     if(length(obs_ind)<memo_thres_bic | length(cache_bic$keys())==0){
       logZ <- tryCatch(BIC_fun(X = obs_mat, y = res_vec,which_obs = obs_ind)$logZ,
-                       warning=function(...)T)
+                       warning=function(...)TRUE)
     } else{
       sub_size <- sapply(cache_bic$keys(),FUN = cache_search_fun,cs = cache_bic,
                          oi = obs_ind)
       if(min(sub_size)==0 | min(sub_size)==Inf){
         logZ <- tryCatch(BIC_fun(X = obs_mat, y = res_vec, which_obs = obs_ind)$logZ,
-                         warning=function(...)T)
+                         warning=function(...)TRUE)
       } else{
         bic.start <- BIC_fun(X = obs_mat, y = res_vec, which_obs = cache_bic$get(cache_bic$keys()[which.min(sub_size)])$value$input)$coeffs
         logZ <- tryCatch(BIC_fun(X = obs_mat, y = res_vec, which_obs = obs_ind,
                                   param_start = bic.start)$logZ,
-                         warning=function(...)T)
+                         warning=function(...)TRUE)
       }
     }
   }
-  if(logZ==T){
+  if(logZ==TRUE){
     if(length(obs_ind)<memo_thres_smc | length(cache_smc$keys())==0){
       logZ <- SMC_fun(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,
                      rprior = rpri,N = p_num,prior_pdf = p_pdf,

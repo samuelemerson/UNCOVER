@@ -29,17 +29,17 @@ assignment using an object of class \code{"UNCOVER"}.
 \details{
 Note that this is a Bayesian prediction method and so samples of
 the posterior, defined by \code{"UNCOVER"} object provided, will be obtained
-through SMC methods for prediction. See \link[UNCOVER]{IBIS.logreg} for
+through SMC methods for prediction. See \link{IBIS.logreg} for
 more details.
 }
 \examples{
 
 # First we generate a covariate matrix and binary response vector
 CM <- data.frame(X1 = rnorm(100),X2 = rnorm(100))
-rv <- sample(0:1,100,replace=T)
+rv <- sample(0:1,100,replace=TRUE)
 
 # We can then run UNCOVER with no deforestation criteria
-UN.none <- UNCOVER(X = CM,y = rv, deforest_criterion = "None", verbose = F)
+UN.none <- UNCOVER(X = CM,y = rv, deforest_criterion = "None", verbose = FALSE)
 
 # The fitted values of UN.none can then be obtained
 predict(UN.none)

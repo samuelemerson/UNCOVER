@@ -3,7 +3,7 @@ one.stage.mst <- function(obs,rho=NULL){
     rho <- 1:ncol(obs)
   }
   conn <- as.matrix(stats::dist(obs[,rho],method = "euclidean"))
-  g <- igraph::graph_from_adjacency_matrix(conn,weighted=T,mode="undirected")
+  g <- igraph::graph_from_adjacency_matrix(conn,weighted=TRUE,mode="undirected")
   g <- igraph::mst(g,algorithm="prim")
   return(g)
 }
@@ -18,7 +18,7 @@ two.stage.mst.defunct <- function(obs_mat,tr_ind,mst_sub=NULL){
   conn <- as.matrix(stats::dist(obs_mat[,mst_sub],method = "euclidean"))
   conn_temp <- conn
   conn_tr <- conn[tr_ind,tr_ind]
-  g_tr <- igraph::graph_from_adjacency_matrix(conn_tr,weighted=T,mode="undirected")
+  g_tr <- igraph::graph_from_adjacency_matrix(conn_tr,weighted=TRUE,mode="undirected")
   g_tr <- igraph::mst(g_tr,algorithm="prim")
   igraph::V(g_tr)$name <- as.character(tr_ind)
   e <- max(igraph::E(g_tr)$weight)
@@ -28,9 +28,9 @@ two.stage.mst.defunct <- function(obs_mat,tr_ind,mst_sub=NULL){
   conn_temp[edg_ind] <- conn_temp[edg_ind] - e
   conn_temp[edg_ind[,2:1]] <- conn_temp[edg_ind[,2:1]] - e
   diag(conn_temp) <- 0
-  g <- igraph::graph_from_adjacency_matrix(conn_temp,weighted = T,mode="undirected")
+  g <- igraph::graph_from_adjacency_matrix(conn_temp,weighted = TRUE,mode="undirected")
   g <- igraph::mst(g,algorithm = "prim")
-  igraph::E(g)$weight <- conn[igraph::get.edgelist(g,names=F)]
+  igraph::E(g)$weight <- conn[igraph::get.edgelist(g,names=FALSE)]
   return(list(g_tr,g))
 }
 
@@ -44,7 +44,7 @@ two.stage.mst <- function(obs_mat,tr_ind,mst_sub=NULL){
   conn <- as.matrix(stats::dist(obs_mat[,mst_sub],method = "euclidean"))
   conn_temp <- conn
   conn_tr <- conn[tr_ind,tr_ind]
-  g_tr <- igraph::graph_from_adjacency_matrix(conn_tr,weighted=T,mode="undirected")
+  g_tr <- igraph::graph_from_adjacency_matrix(conn_tr,weighted=TRUE,mode="undirected")
   g_tr <- igraph::mst(g_tr,algorithm="prim")
   igraph::V(g_tr)$name <- as.character(tr_ind)
   val_ind <- setdiff(1:nrow(obs_mat),tr_ind)
@@ -58,6 +58,6 @@ two.stage.mst <- function(obs_mat,tr_ind,mst_sub=NULL){
   conn_temp[igraph::get.edgelist(g_tr)[,2:1]] <- conn[igraph::get.edgelist(g_tr)]
   conn_temp[add_edges_val] <- conn[add_edges_val]
   conn_temp[add_edges_val[,2:1]] <- conn[add_edges_val]
-  g <- igraph::graph_from_adjacency_matrix(conn_temp,weighted = T,mode="undirected")
+  g <- igraph::graph_from_adjacency_matrix(conn_temp,weighted = TRUE,mode="undirected")
   return(list(g_tr,g))
 }

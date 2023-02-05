@@ -18,7 +18,7 @@ IBIS.logreg(
 \item{y}{Binary response vector}
 
 \item{options}{Additional arguments that can be specified for \code{IBIS.logreg}.
-See \link[UNCOVER]{IBIS.logreg.opts} for details. Can be ignored.}
+See \link{IBIS.logreg.opts} for details. Can be ignored.}
 
 \item{prior_mean}{Mean for the multivariate normal prior used in the SMC
 sampler. See details. Defaults to the origin.}
@@ -54,7 +54,7 @@ Chopin (2002).
 
 It is never recommended to use anything other than
 \code{IBIS.logreg.opts} to provide the \code{options} argument. See
-examples and \link[UNCOVER]{IBIS.logreg.opts} for more information.
+examples and \link{IBIS.logreg.opts} for more information.
 
 The prior used for the IBIS procedure will take the form of a multivariate
 normal, where the parameters can be specified directly by the user. It is
@@ -67,7 +67,7 @@ in \code{IBIS.logreg.opts}.
 require(graphics)
 # First we generate a covariate matrix X and binary response vector y
 CM <- matrix(rnorm(200),100,2)
-rv <- sample(0:1,100,replace=T)
+rv <- sample(0:1,100,replace=TRUE)
 
 # Now we can obtain 1000 samples from the posterior from a standard
 # multivariate normal prior

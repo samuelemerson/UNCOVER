@@ -15,7 +15,7 @@
 Prints summary information from an UNCOVER object.
 }
 \details{
-When running the function \link[UNCOVER]{UNCOVER} the printed
+When running the function \link{UNCOVER} the printed
 information will contain information regarding; the number of clusters, the
 cluster sizes, the sub-model log Bayesian evidences and the total model log
 Bayesian evidence.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/UNCOVER.R
 \name{UNCOVER.opts}
 \alias{UNCOVER.opts}
-\title{Additional argument generator for \link[UNCOVER]{UNCOVER}}
+\title{Additional argument generator for \link{UNCOVER}}
 \usage{
 UNCOVER.opts(
   N = 1000,
@@ -147,7 +147,7 @@ on BIC values is much faster than the SMC sampler).
 In an attempt to improve computational time, the SMC sampler along with the
 function which uses BIC values are memoised, with the cache for each of
 these memoised functions be specified by \code{SMC_cache} and \code{BIC_cache}
-respectively. See \link[memoise]{memoise} for more details. If we do not get
+respectively. See \link[memoise:memoise]{memoise::memoise} for more details. If we do not get
 and each match from the function input to a previously evaluated input, we
 may wish to search the cache for similar inputs which could provide a
 reasonable starting point. Checking the cache however takes time, and so we
@@ -183,19 +183,19 @@ UNCOVER.opts(prior.override = TRUE,rprior = rmviu,
 
 # If we generate a covariate matrix and binary response vector
 CM <- matrix(rnorm(200),100,2)
-rv <- sample(0:1,100,replace=T)
+rv <- sample(0:1,100,replace=TRUE)
 
 # We can then run our algorithm with a SMC threshold of 50 and a SMC cache
 # checking threshold of 25 to see if this is quicker than the standard
 # version
-system.time(UNCOVER(X = CM,y = rv,verbose = F))
+system.time(UNCOVER(X = CM,y = rv,verbose = FALSE))
 system.time(UNCOVER(X = CM,y = rv,
                     options = UNCOVER.opts(SMC_thres = 50),
-                    verbose = F))
+                    verbose = FALSE))
 system.time(UNCOVER(X = CM,y = rv,
                     options = UNCOVER.opts(SMC_thres = 50,
                                            SMC_memo_thres = 25),
-                    verbose = F))
+                    verbose = FALSE))
 
 }
 \seealso{

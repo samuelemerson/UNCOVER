@@ -26,7 +26,7 @@
 ##' @param X Covariance matrix
 ##' @param y Binary response vector
 ##' @param options Additional arguments that can be specified for `IBIS.logreg`.
-##' See \link[UNCOVER]{IBIS.logreg.opts} for details. Can be ignored.
+##' See [IBIS.logreg.opts] for details. Can be ignored.
 ##' @param prior_mean Mean for the multivariate normal prior used in the SMC
 ##' sampler. See details. Defaults to the origin.
 ##' @param prior_var Variance matrix for the multivariate normal prior used in
@@ -51,7 +51,7 @@
 ##'
 ##' It is never recommended to use anything other than
 ##' `IBIS.logreg.opts` to provide the `options` argument. See
-##' examples and \link[UNCOVER]{IBIS.logreg.opts} for more information.
+##' examples and [IBIS.logreg.opts] for more information.
 ##'
 ##' The prior used for the IBIS procedure will take the form of a multivariate
 ##' normal, where the parameters can be specified directly by the user. It is
@@ -67,7 +67,7 @@
 ##' require(graphics)
 ##' # First we generate a covariate matrix X and binary response vector y
 ##' CM <- matrix(rnorm(200),100,2)
-##' rv <- sample(0:1,100,replace=T)
+##' rv <- sample(0:1,100,replace=TRUE)
 ##'
 ##' # Now we can obtain 1000 samples from the posterior from a standard
 ##' # multivariate normal prior
@@ -217,7 +217,7 @@ IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
 ##'
 ##' @param x Object of class `"IBIS"`
 ##' @param ... Further arguments passed to or from other methods
-##' @details When running the function \link[UNCOVER]{IBIS.logreg} the printed
+##' @details When running the function [IBIS.logreg] the printed
 ##' information will contain information regarding; the number of samples, the
 ##' mean of those samples and the log Bayesian evidence of the posterior.
 ##' @seealso [IBIS.logreg]
@@ -266,7 +266,7 @@ print.IBIS <- function(x,...){
 ##'
 ##' # First we generate a covariate matrix X and binary response vector y
 ##' CM <- data.frame(X1 = rnorm(100),X2 = rnorm(100))
-##' rv <- sample(0:1,100,replace=T)
+##' rv <- sample(0:1,100,replace=TRUE)
 ##'
 ##' # Now we can obtain 1000 samples from the posterior from a standard
 ##' # multivariate normal prior
@@ -359,7 +359,7 @@ predict.IBIS <- function(object,newX = NULL,type = "prob",...){
 ##' require(graphics)
 ##' # First we generate a covariate matrix X and binary response vector y
 ##' CM <- matrix(rnorm(200),100,2)
-##' rv <- sample(0:1,100,replace=T)
+##' rv <- sample(0:1,100,replace=TRUE)
 ##'
 ##' # Now we can obtain 1000 samples from the posterior from a standard
 ##' # multivariate normal prior and plot the results
@@ -408,7 +408,7 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
   }
   if(type=="fitted"){
     X_prob <- predict.IBIS(object = x)[,2]
-    x$covariate_matrix <- x$covariate_matrix[,plot_var,drop=F]
+    x$covariate_matrix <- x$covariate_matrix[,plot_var,drop=FALSE]
     if(ncol(x$covariate_matrix)==1){
       overall_plot <- ggplot2::ggplot(data.frame(x$covariate_matrix,
                                                  y.axis = rep(0,nrow(x$covariate_matrix)),
@@ -513,7 +513,7 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
   suppressWarnings(print(overall_plot))
 }
 
-##' Additional argument generator for \link[UNCOVER]{IBIS.logreg}
+##' Additional argument generator for [IBIS.logreg]
 ##'
 ##'
 ##' @export

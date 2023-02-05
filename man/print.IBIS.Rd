@@ -15,7 +15,7 @@
 Prints summary information from an IBIS object.
 }
 \details{
-When running the function \link[UNCOVER]{IBIS.logreg} the printed
+When running the function \link{IBIS.logreg} the printed
 information will contain information regarding; the number of samples, the
 mean of those samples and the log Bayesian evidence of the posterior.
 }

@@ -33,7 +33,7 @@ class \code{"IBIS"} will provide samples from a posterior.
 
 # First we generate a covariate matrix X and binary response vector y
 CM <- data.frame(X1 = rnorm(100),X2 = rnorm(100))
-rv <- sample(0:1,100,replace=T)
+rv <- sample(0:1,100,replace=TRUE)
 
 # Now we can obtain 1000 samples from the posterior from a standard
 # multivariate normal prior
