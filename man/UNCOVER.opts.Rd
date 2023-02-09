@@ -2,7 +2,7 @@
 % Please edit documentation in R/UNCOVER.R
 \name{UNCOVER.opts}
 \alias{UNCOVER.opts}
-\title{Additional argument generator for \link{UNCOVER}}
+\title{Additional argument generator for \code{\link[=UNCOVER]{UNCOVER}}}
 \usage{
 UNCOVER.opts(
   N = 1000,
@@ -147,11 +147,11 @@ on BIC values is much faster than the SMC sampler).
 In an attempt to improve computational time, the SMC sampler along with the
 function which uses BIC values are memoised, with the cache for each of
 these memoised functions be specified by \code{SMC_cache} and \code{BIC_cache}
-respectively. See \link[memoise:memoise]{memoise::memoise} for more details. If we do not get
-and each match from the function input to a previously evaluated input, we
-may wish to search the cache for similar inputs which could provide a
-reasonable starting point. Checking the cache however takes time, and so we
-allow the user to specify at which size of cluster to they deem it
+respectively. See \code{\link[memoise:memoise]{memoise}} for more details. If we do
+not get and each match from the function input to a previously evaluated
+input, we may wish to search the cache for similar inputs which could
+provide a reasonable starting point. Checking the cache however takes time,
+and so we allow the user to specify at which size of cluster to they deem it
 worthwhile to check. Which value threshold to select to optimise run time is
 problem specific, however for \code{BIC_memo_thres} it is almost always
 beneficial to never check the cache (the exception for this being when the
@@ -165,6 +165,7 @@ the arguments for this prior should be specified in \code{UNCOVER}.
 }
 \examples{
 
+\donttest{
 #Specifying a multivariate independent uniform prior
 
 rmviu <- function(n,a,b){
@@ -196,10 +197,11 @@ system.time(UNCOVER(X = CM,y = rv,
                     options = UNCOVER.opts(SMC_thres = 50,
                                            SMC_memo_thres = 25),
                     verbose = FALSE))
+}
 
 }
 \seealso{
-\link{UNCOVER}
+\code{\link[=UNCOVER]{UNCOVER}}
 }
 \keyword{UNCOVER}
 \keyword{control}

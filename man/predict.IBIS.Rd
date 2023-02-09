@@ -49,7 +49,7 @@ cbind(CM.2,predict(out,newX = CM.2))
 
 }
 \seealso{
-\link{IBIS.logreg}
+\code{\link[=IBIS.logreg]{IBIS.logreg}}
 }
 \keyword{IBIS}
 \keyword{predict}

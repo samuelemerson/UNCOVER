@@ -62,8 +62,27 @@ labelled "1.2". When the training data for the \code{"IBIS"} object created is
 large setting \code{diagnostic_x_axis=="minimal"} is recommended as it gives a
 more visulally appealing output.
 }
+\examples{
+
+require(graphics)
+# First we generate a covariate matrix X and binary response vector y
+CM <- matrix(rnorm(200),100,2)
+rv <- sample(0:1,100,replace=TRUE)
+
+# Now we can obtain 1000 samples from the posterior from a standard
+# multivariate normal prior and plot the results
+out <- IBIS.logreg(X = CM,y = rv)
+plot(out,type = "samples")
+plot(out,type = "fitted")
+plot(out,type = "diagnostics",diagnostic_x_axis = "minimal")
+
+# If we only wanted to view the second covariate
+plot(out,type = "samples",plot_var = 2)
+plot(out,type = "fitted",plot_var = 2)
+
+}
 \seealso{
-\link{IBIS.logreg}
+\code{\link[=IBIS.logreg]{IBIS.logreg}}
 }
 \keyword{IBIS}
 \keyword{plot}

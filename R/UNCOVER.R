@@ -33,7 +33,7 @@
 ##' @param mst_var A vector specifying which variables of the covariate matrix
 ##' will be used to form the graph. If not specified all variables will be used.
 ##' @param options Additional arguments that can be specified for `UNCOVER`.
-##' See [UNCOVER.opts] for details. Can be ignored.
+##' See [`UNCOVER.opts`][UNCOVER.opts()] for details. Can be ignored.
 ##' @param stop_criterion What is the maximum number of clusters allowed before
 ##' we terminate the first stage and begin deforestation. Defaults to 5.
 ##' @param deforest_criterion Constraint type which the final model must satisfy.
@@ -111,8 +111,9 @@
 ##' }
 ##'
 ##' All deforestation criteria other than `"None"` require additional arguments
-##' to be specified in `options`. See examples and [UNCOVER.opts]
-##' for more information. It is never recommended to use anything other than
+##' to be specified in `options`. See examples and
+##' [`UNCOVER.opts`][UNCOVER.opts()] for more information. It is never
+##' recommended to use anything other than
 ##' `UNCOVER.opts` to provide the `options` argument.
 ##'
 ##' The prior used for the UNCOVER procedure will take the form of a
@@ -132,9 +133,10 @@
 ##' statistic and "`Balanced"` will track the minimum minority class across all
 ##' clusters alongside the number of criterion breaking clusters.
 ##'
-##' @seealso [UNCOVER.opts, print.UNCOVER, predict.UNCOVER, plot.UNCOVER]
+##' @seealso [`UNCOVER.opts`][UNCOVER.opts()], [`print.UNCOVER`][print.UNCOVER()], [`predict.UNCOVER`][predict.UNCOVER()], [`plot.UNCOVER`][plot.UNCOVER()]
 ##' @examples
 ##'
+##' \donttest{
 ##' # First we generate a covariate matrix and binary response vector
 ##' CM <- matrix(rnorm(200),100,2)
 ##' rv <- sample(0:1,100,replace=TRUE)
@@ -220,6 +222,7 @@
 ##' # the data, but comes with a time cost
 ##' system.time(UNCOVER(X = CM,y = rv,stop_criterion = 4,verbose = FALSE))
 ##' system.time(UNCOVER(X = CM,y = rv,stop_criterion = 6,verbose = FALSE))
+##' }
 ##'
 
 
@@ -737,11 +740,11 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
 ##'
 ##' @param x Object of class `"UNCOVER"`
 ##' @param ... Further arguments passed to or from other methods
-##' @details When running the function [UNCOVER] the printed
+##' @details When running the function [`UNCOVER`][UNCOVER()] the printed
 ##' information will contain information regarding; the number of clusters, the
 ##' cluster sizes, the sub-model log Bayesian evidences and the total model log
 ##' Bayesian evidence.
-##' @seealso [UNCOVER]
+##' @seealso [`UNCOVER`][UNCOVER()]
 ##'
 
 print.UNCOVER <- function(x,...){
@@ -785,11 +788,12 @@ print.UNCOVER <- function(x,...){
 ##' cluster assignment for each observation.
 ##' @details Note that this is a Bayesian prediction method and so samples of
 ##' the posterior, defined by `"UNCOVER"` object provided, will be obtained
-##' through SMC methods for prediction. See [IBIS.logreg] for
+##' through SMC methods for prediction. See [`IBIS.logreg`][IBIS.logreg()] for
 ##' more details.
-##' @seealso [UNCOVER, IBIS.logreg]
+##' @seealso [`UNCOVER`][UNCOVER()], [`IBIS.logreg`][IBIS.logreg()]
 ##' @examples
 ##'
+##' \donttest{
 ##' # First we generate a covariate matrix and binary response vector
 ##' CM <- data.frame(X1 = rnorm(100),X2 = rnorm(100))
 ##' rv <- sample(0:1,100,replace=TRUE)
@@ -804,6 +808,8 @@ print.UNCOVER <- function(x,...){
 ##' # We can also predict the response for new data
 ##' CM.2 <- data.frame(X1 = rnorm(10),X2 = rnorm(10))
 ##' cbind(CM.2,predict(UN.none,newX = CM.2))
+##' }
+##'
 
 predict.UNCOVER <- function(object,newX=NULL,type="prob",...){
   if(is.null(newX)){
@@ -911,9 +917,10 @@ predict.UNCOVER <- function(object,newX=NULL,type="prob",...){
 ##' created is large setting `diagnostic_x_axis=="minimal"` is recommended as it
 ##' gives a more visulally appealing output.
 ##'
-##' @seealso [UNCOVER]
+##' @seealso [`UNCOVER`][UNCOVER()]
 ##' @examples
 ##'
+##' \donttest{
 ##' require(graphics)
 ##' # First we generate a covariate matrix and binary response vector
 ##' CM <- matrix(rnorm(200),100,2)
@@ -947,6 +954,8 @@ predict.UNCOVER <- function(object,newX=NULL,type="prob",...){
 ##' plot(UN.none,type = "covariates",plot_var=2)
 ##' plot(UN.none,type = "fitted",plot_var=2)
 ##' plot(UN.none,type = "samples",plot_var=2)
+##' }
+##'
 
 
 plot.UNCOVER <- function(x,type = "covariates",
@@ -1285,7 +1294,7 @@ plot.UNCOVER <- function(x,type = "covariates",
   suppressWarnings(print(overall_plot))
 }
 
-##' Additional argument generator for [UNCOVER]
+##' Additional argument generator for [`UNCOVER`][UNCOVER()]
 ##'
 ##'
 ##' @export
@@ -1391,11 +1400,11 @@ plot.UNCOVER <- function(x,type = "covariates",
 ##' In an attempt to improve computational time, the SMC sampler along with the
 ##' function which uses BIC values are memoised, with the cache for each of
 ##' these memoised functions be specified by `SMC_cache` and `BIC_cache`
-##' respectively. See [memoise::memoise] for more details. If we do not get
-##' and each match from the function input to a previously evaluated input, we
-##' may wish to search the cache for similar inputs which could provide a
-##' reasonable starting point. Checking the cache however takes time, and so we
-##' allow the user to specify at which size of cluster to they deem it
+##' respectively. See [`memoise`][memoise::memoise()] for more details. If we do
+##' not get and each match from the function input to a previously evaluated
+##' input, we may wish to search the cache for similar inputs which could
+##' provide a reasonable starting point. Checking the cache however takes time,
+##' and so we allow the user to specify at which size of cluster to they deem it
 ##' worthwhile to check. Which value threshold to select to optimise run time is
 ##' problem specific, however for `BIC_memo_thres` it is almost always
 ##' beneficial to never check the cache (the exception for this being when the
@@ -1406,10 +1415,11 @@ plot.UNCOVER <- function(x,type = "covariates",
 ##' Specifying `rprior` and `dprior` will not override the default prior form
 ##' unless `prior.override=TRUE`. If a multivariate normal form is required then
 ##' the arguments for this prior should be specified in `UNCOVER`.
-##' @seealso [UNCOVER]
+##' @seealso [`UNCOVER`][UNCOVER()]
 ##'
 ##' @examples
 ##'
+##' \donttest{
 ##' #Specifying a multivariate independent uniform prior
 ##'
 ##' rmviu <- function(n,a,b){
@@ -1441,6 +1451,7 @@ plot.UNCOVER <- function(x,type = "covariates",
 ##'                     options = UNCOVER.opts(SMC_thres = 50,
 ##'                                            SMC_memo_thres = 25),
 ##'                     verbose = FALSE))
+##' }
 ##'
 
 UNCOVER.opts <- function(N = 1000,train_frac = 1,max_K = Inf,min_size = 0,

@@ -94,6 +94,7 @@ gives a more visulally appealing output.
 }
 \examples{
 
+\donttest{
 require(graphics)
 # First we generate a covariate matrix and binary response vector
 CM <- matrix(rnorm(200),100,2)
@@ -128,8 +129,10 @@ plot(UN.none,type = "covariates",plot_var=2)
 plot(UN.none,type = "fitted",plot_var=2)
 plot(UN.none,type = "samples",plot_var=2)
 }
+
+}
 \seealso{
-\link{UNCOVER}
+\code{\link[=UNCOVER]{UNCOVER}}
 }
 \keyword{UNCOVER}
 \keyword{plot}

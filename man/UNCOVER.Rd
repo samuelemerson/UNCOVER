@@ -25,7 +25,7 @@ UNCOVER(
 will be used to form the graph. If not specified all variables will be used.}
 
 \item{options}{Additional arguments that can be specified for \code{UNCOVER}.
-See \link{UNCOVER.opts} for details. Can be ignored.}
+See \code{\link[=UNCOVER.opts]{UNCOVER.opts}} for details. Can be ignored.}
 
 \item{stop_criterion}{What is the maximum number of clusters allowed before
 we terminate the first stage and begin deforestation. Defaults to 5.}
@@ -122,8 +122,9 @@ deforestation stage of the algorithm.
 }
 
 All deforestation criteria other than \code{"None"} require additional arguments
-to be specified in \code{options}. See examples and \link{UNCOVER.opts}
-for more information. It is never recommended to use anything other than
+to be specified in \code{options}. See examples and
+\code{\link[=UNCOVER.opts]{UNCOVER.opts}} for more information. It is never
+recommended to use anything other than
 \code{UNCOVER.opts} to provide the \code{options} argument.
 
 The prior used for the UNCOVER procedure will take the form of a
@@ -145,6 +146,7 @@ clusters alongside the number of criterion breaking clusters.
 }
 \examples{
 
+\donttest{
 # First we generate a covariate matrix and binary response vector
 CM <- matrix(rnorm(200),100,2)
 rv <- sample(0:1,100,replace=TRUE)
@@ -230,10 +232,11 @@ c(sum(UN.none$Model$Log_Marginal_Likelihoods),
 # the data, but comes with a time cost
 system.time(UNCOVER(X = CM,y = rv,stop_criterion = 4,verbose = FALSE))
 system.time(UNCOVER(X = CM,y = rv,stop_criterion = 6,verbose = FALSE))
+}
 
 }
 \seealso{
-\link{UNCOVER.opts, print.UNCOVER, predict.UNCOVER, plot.UNCOVER}
+\code{\link[=UNCOVER.opts]{UNCOVER.opts}}, \code{\link[=print.UNCOVER]{print.UNCOVER}}, \code{\link[=predict.UNCOVER]{predict.UNCOVER}}, \code{\link[=plot.UNCOVER]{plot.UNCOVER}}
 }
 \keyword{Bayesian}
 \keyword{cluster}

@@ -18,7 +18,7 @@ IBIS.logreg(
 \item{y}{Binary response vector}
 
 \item{options}{Additional arguments that can be specified for \code{IBIS.logreg}.
-See \link{IBIS.logreg.opts} for details. Can be ignored.}
+See \code{\link[=IBIS.logreg.opts]{IBIS.logreg.opts}} for details. Can be ignored.}
 
 \item{prior_mean}{Mean for the multivariate normal prior used in the SMC
 sampler. See details. Defaults to the origin.}
@@ -54,7 +54,7 @@ Chopin (2002).
 
 It is never recommended to use anything other than
 \code{IBIS.logreg.opts} to provide the \code{options} argument. See
-examples and \link{IBIS.logreg.opts} for more information.
+examples and \code{\link[=IBIS.logreg.opts]{IBIS.logreg.opts}} for more information.
 
 The prior used for the IBIS procedure will take the form of a multivariate
 normal, where the parameters can be specified directly by the user. It is
@@ -64,6 +64,7 @@ in \code{IBIS.logreg.opts}.
 }
 \examples{
 
+\donttest{
 require(graphics)
 # First we generate a covariate matrix X and binary response vector y
 CM <- matrix(rnorm(200),100,2)
@@ -129,6 +130,7 @@ GGally::ggpairs(samp.df,
                 upper = list(continuous = GGally::wrap("points",size=0.5)),
                 lower = list(continuous = GGally::wrap("points",size=0.5)))
 out.4$log_Bayesian_evidence
+}
 
 }
 \references{
@@ -136,7 +138,7 @@ Chopin, N. (2002). A sequential particle filter method for
 static models. Biometrika, 89(3), 539-552.
 }
 \seealso{
-\link{IBIS.logreg.opts, print.IBIS, predict.IBIS, plot.IBIS}
+\code{\link[=IBIS.logreg.opts]{IBIS.logreg.opts}}, \code{\link[=print.IBIS]{print.IBIS}}, \code{\link[=predict.IBIS]{predict.IBIS}}, \code{\link[=plot.IBIS]{plot.IBIS}}
 }
 \keyword{IBIS}
 \keyword{carlo}
