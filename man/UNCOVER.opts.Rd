@@ -2,7 +2,7 @@
 % Please edit documentation in R/UNCOVER.R
 \name{UNCOVER.opts}
 \alias{UNCOVER.opts}
-\title{Additional argument generator for \code{\link[=UNCOVER]{UNCOVER}}}
+\title{Additional argument generator for \code{\link[=UNCOVER]{UNCOVER()}}}
 \usage{
 UNCOVER.opts(
   N = 1000,
@@ -147,7 +147,7 @@ on BIC values is much faster than the SMC sampler).
 In an attempt to improve computational time, the SMC sampler along with the
 function which uses BIC values are memoised, with the cache for each of
 these memoised functions be specified by \code{SMC_cache} and \code{BIC_cache}
-respectively. See \code{\link[memoise:memoise]{memoise}} for more details. If we do
+respectively. See \code{\link[memoise:memoise]{memoise::memoise()}} for more details. If we do
 not get and each match from the function input to a previously evaluated
 input, we may wish to search the cache for similar inputs which could
 provide a reasonable starting point. Checking the cache however takes time,
@@ -157,7 +157,8 @@ problem specific, however for \code{BIC_memo_thres} it is almost always
 beneficial to never check the cache (the exception for this being when the
 cluster sizes are extremely large, for example containing a million
 observations). \code{SMC_memo_thres} can be much lower as the SMC sampler is a
-much more expensive function to run. See \emph{UNCOVER paper} for more details.
+much more expensive function to run. See Emerson and Aslett (2023) for more
+details.
 
 Specifying \code{rprior} and \code{dprior} will not override the default prior form
 unless \code{prior.override=TRUE}. If a multivariate normal form is required then
@@ -200,8 +201,14 @@ system.time(UNCOVER(X = CM,y = rv,
 }
 
 }
+\references{
+\itemize{
+\item Emerson, S.R. and Aslett, L.J.M. (2023). Joint cohort and prediction
+modelling through graphical structure analysis (to be released)
+}
+}
 \seealso{
-\code{\link[=UNCOVER]{UNCOVER}}
+\code{\link[=UNCOVER]{UNCOVER()}}
 }
 \keyword{UNCOVER}
 \keyword{control}

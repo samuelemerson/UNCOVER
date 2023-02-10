@@ -132,7 +132,7 @@ plot(UN.none,type = "samples",plot_var=2)
 
 }
 \seealso{
-\code{\link[=UNCOVER]{UNCOVER}}
+\code{\link[=UNCOVER]{UNCOVER()}}
 }
 \keyword{UNCOVER}
 \keyword{plot}

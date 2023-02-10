@@ -2,7 +2,7 @@
 % Please edit documentation in R/SMC.wrap.R
 \name{IBIS.logreg.opts}
 \alias{IBIS.logreg.opts}
-\title{Additional argument generator for \code{\link[=IBIS.logreg]{IBIS.logreg}}}
+\title{Additional argument generator for \code{\link[=IBIS.logreg]{IBIS.logreg()}}}
 \usage{
 IBIS.logreg.opts(
   N = 1000,
@@ -93,7 +93,7 @@ IBIS.logreg.opts(prior.override = TRUE,rprior = rmviu,
 
 }
 \seealso{
-\code{\link[=IBIS.logreg]{IBIS.logreg}}
+\code{\link[=IBIS.logreg]{IBIS.logreg()}}
 }
 \keyword{IBIS}
 \keyword{control}

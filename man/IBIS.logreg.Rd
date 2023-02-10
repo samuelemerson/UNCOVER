@@ -18,7 +18,7 @@ IBIS.logreg(
 \item{y}{Binary response vector}
 
 \item{options}{Additional arguments that can be specified for \code{IBIS.logreg}.
-See \code{\link[=IBIS.logreg.opts]{IBIS.logreg.opts}} for details. Can be ignored.}
+See \code{\link[=IBIS.logreg.opts]{IBIS.logreg.opts()}} for details. Can be ignored.}
 
 \item{prior_mean}{Mean for the multivariate normal prior used in the SMC
 sampler. See details. Defaults to the origin.}
@@ -49,12 +49,12 @@ assume a Bayesian logistic regression model.
 }
 \details{
 Details of the internal mechanisms of the SMC sampler such as the
-Metropolis-Hastings MCMC resample move can be found in \emph{UNCOVER paper} and
-Chopin (2002).
+Metropolis-Hastings MCMC resample move can be found in Emerson and Aslett
+(2023) and Chopin (2002).
 
 It is never recommended to use anything other than
 \code{IBIS.logreg.opts} to provide the \code{options} argument. See
-examples and \code{\link[=IBIS.logreg.opts]{IBIS.logreg.opts}} for more information.
+examples and \code{\link[=IBIS.logreg.opts]{IBIS.logreg.opts()}} for more information.
 
 The prior used for the IBIS procedure will take the form of a multivariate
 normal, where the parameters can be specified directly by the user. It is
@@ -134,11 +134,15 @@ out.4$log_Bayesian_evidence
 
 }
 \references{
-Chopin, N. (2002). A sequential particle filter method for
-static models. Biometrika, 89(3), 539-552.
+\itemize{
+\item Emerson, S.R. and Aslett, L.J.M. (2023). Joint cohort and prediction
+modelling through graphical structure analysis (to be released)
+\item Chopin, N. (2002). A sequential particle filter method for
+static models. Biometrika, 89(3), 539-552,
+\url{https://doi.org/10.1093/biomet/89.3.539}}
 }
 \seealso{
-\code{\link[=IBIS.logreg.opts]{IBIS.logreg.opts}}, \code{\link[=print.IBIS]{print.IBIS}}, \code{\link[=predict.IBIS]{predict.IBIS}}, \code{\link[=plot.IBIS]{plot.IBIS}}
+\code{\link[=IBIS.logreg.opts]{IBIS.logreg.opts()}}, \code{\link[=print.IBIS]{print.IBIS()}}, \code{\link[=predict.IBIS]{predict.IBIS()}}, \code{\link[=plot.IBIS]{plot.IBIS()}}
 }
 \keyword{IBIS}
 \keyword{carlo}

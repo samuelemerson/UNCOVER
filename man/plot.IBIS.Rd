@@ -52,7 +52,7 @@ plots; one tracking the log Bayesian evidence as observations are added to
 the posterior, one tracking the effective sample size of the particles for
 each step of the SMC sampler and one tracking the acceptance rate of the
 Metropolis-Hastings step when a resample-move is triggered. See
-\emph{UNCOVER paper} and Chopin (2002) for more details. Multiple
+Emerson and Aslett (2023) and Chopin (2002) for more details. Multiple
 Metropolis-Hastings steps can be performed when a resample-move step is
 triggered, and so for the acceptance rate plot observations are suffixed
 with "." and then the index of current Metropolis-Hastings step. For example
@@ -81,8 +81,16 @@ plot(out,type = "samples",plot_var = 2)
 plot(out,type = "fitted",plot_var = 2)
 
 }
+\references{
+\itemize{
+\item Emerson, S.R. and Aslett, L.J.M. (2023). Joint cohort and prediction
+modelling through graphical structure analysis (to be released)
+\item Chopin, N. (2002). A sequential particle filter method for
+static models. Biometrika, 89(3), 539-552,
+\url{https://doi.org/10.1093/biomet/89.3.539}}
+}
 \seealso{
-\code{\link[=IBIS.logreg]{IBIS.logreg}}
+\code{\link[=IBIS.logreg]{IBIS.logreg()}}
 }
 \keyword{IBIS}
 \keyword{plot}

@@ -29,7 +29,7 @@ assignment using an object of class \code{"UNCOVER"}.
 \details{
 Note that this is a Bayesian prediction method and so samples of
 the posterior, defined by \code{"UNCOVER"} object provided, will be obtained
-through SMC methods for prediction. See \code{\link[=IBIS.logreg]{IBIS.logreg}} for
+through SMC methods for prediction. See \code{\link[=IBIS.logreg]{IBIS.logreg()}} for
 more details.
 }
 \examples{
@@ -53,7 +53,7 @@ cbind(CM.2,predict(UN.none,newX = CM.2))
 
 }
 \seealso{
-\code{\link[=UNCOVER]{UNCOVER}}, \code{\link[=IBIS.logreg]{IBIS.logreg}}
+\code{\link[=UNCOVER]{UNCOVER()}}, \code{\link[=IBIS.logreg]{IBIS.logreg()}}
 }
 \keyword{UNCOVER}
 \keyword{predict}

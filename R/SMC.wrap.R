@@ -26,7 +26,7 @@
 ##' @param X Covariance matrix
 ##' @param y Binary response vector
 ##' @param options Additional arguments that can be specified for `IBIS.logreg`.
-##' See [`IBIS.logreg.opts`][IBIS.logreg.opts()] for details. Can be ignored.
+##' See [IBIS.logreg.opts()] for details. Can be ignored.
 ##' @param prior_mean Mean for the multivariate normal prior used in the SMC
 ##' sampler. See details. Defaults to the origin.
 ##' @param prior_var Variance matrix for the multivariate normal prior used in
@@ -46,12 +46,12 @@
 ##' If `weighted==TRUE` then an additional element of the list (`weights`) is
 ##' added detailing the weights of the posterior samples.
 ##' @details Details of the internal mechanisms of the SMC sampler such as the
-##' Metropolis-Hastings MCMC resample move can be found in *UNCOVER paper* and
-##' Chopin (2002).
+##' Metropolis-Hastings MCMC resample move can be found in Emerson and Aslett
+##' (2023) and Chopin (2002).
 ##'
 ##' It is never recommended to use anything other than
 ##' `IBIS.logreg.opts` to provide the `options` argument. See
-##' examples and [`IBIS.logreg.opts`][IBIS.logreg.opts()] for more information.
+##' examples and [IBIS.logreg.opts()] for more information.
 ##'
 ##' The prior used for the IBIS procedure will take the form of a multivariate
 ##' normal, where the parameters can be specified directly by the user. It is
@@ -59,9 +59,13 @@
 ##' specifying `prior.override=TRUE` and providing the relevant prior functions
 ##' in `IBIS.logreg.opts`.
 ##'
-##' @seealso [`IBIS.logreg.opts`][IBIS.logreg.opts()], [`print.IBIS`][print.IBIS()], [`predict.IBIS`][predict.IBIS()], [`plot.IBIS`][plot.IBIS()]
-##' @references Chopin, N. (2002). A sequential particle filter method for
-##' static models. Biometrika, 89(3), 539-552.
+##' @seealso [IBIS.logreg.opts()], [print.IBIS()], [predict.IBIS()], [plot.IBIS()]
+##' @references \itemize{
+##' \item Emerson, S.R. and Aslett, L.J.M. (2023). Joint cohort and prediction
+##' modelling through graphical structure analysis (to be released)
+##' \item Chopin, N. (2002). A sequential particle filter method for
+##' static models. Biometrika, 89(3), 539-552,
+##' <https://doi.org/10.1093/biomet/89.3.539>}
 ##' @examples
 ##'
 ##' \donttest{
@@ -219,10 +223,10 @@ IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
 ##'
 ##' @param x Object of class `"IBIS"`
 ##' @param ... Further arguments passed to or from other methods
-##' @details When running the function [`IBIS.logreg`][IBIS.logreg()] the printed
+##' @details When running the function [IBIS.logreg()] the printed
 ##' information will contain information regarding; the number of samples, the
 ##' mean of those samples and the log Bayesian evidence of the posterior.
-##' @seealso [`IBIS.logreg`][IBIS.logreg()]
+##' @seealso [IBIS.logreg()]
 ##'
 
 print.IBIS <- function(x,...){
@@ -263,7 +267,7 @@ print.IBIS <- function(x,...){
 ##' a vector of predicted responses for each observation.
 ##' @details Note that this is a Bayesian prediction method as objects with
 ##' class `"IBIS"` will provide samples from a posterior.
-##' @seealso [`IBIS.logreg`][IBIS.logreg()]
+##' @seealso [IBIS.logreg()]
 ##' @examples
 ##'
 ##' # First we generate a covariate matrix X and binary response vector y
@@ -345,7 +349,7 @@ predict.IBIS <- function(object,newX = NULL,type = "prob",...){
 ##' the posterior, one tracking the effective sample size of the particles for
 ##' each step of the SMC sampler and one tracking the acceptance rate of the
 ##' Metropolis-Hastings step when a resample-move is triggered. See
-##' *UNCOVER paper* and Chopin (2002) for more details. Multiple
+##' Emerson and Aslett (2023) and Chopin (2002) for more details. Multiple
 ##' Metropolis-Hastings steps can be performed when a resample-move step is
 ##' triggered, and so for the acceptance rate plot observations are suffixed
 ##' with "." and then the index of current Metropolis-Hastings step. For example
@@ -355,7 +359,13 @@ predict.IBIS <- function(object,newX = NULL,type = "prob",...){
 ##' large setting `diagnostic_x_axis=="minimal"` is recommended as it gives a
 ##' more visulally appealing output.
 ##'
-##' @seealso [`IBIS.logreg`][IBIS.logreg()]
+##' @seealso [IBIS.logreg()]
+##' @references \itemize{
+##' \item Emerson, S.R. and Aslett, L.J.M. (2023). Joint cohort and prediction
+##' modelling through graphical structure analysis (to be released)
+##' \item Chopin, N. (2002). A sequential particle filter method for
+##' static models. Biometrika, 89(3), 539-552,
+##' <https://doi.org/10.1093/biomet/89.3.539>}
 ##' @examples
 ##'
 ##' require(graphics)
@@ -515,7 +525,7 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
   suppressWarnings(print(overall_plot))
 }
 
-##' Additional argument generator for [`IBIS.logreg`][IBIS.logreg()]
+##' Additional argument generator for [IBIS.logreg()]
 ##'
 ##'
 ##' @export
@@ -566,7 +576,7 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
 ##' Specifying `rprior` and `dprior` will not override the default prior form
 ##' unless `prior.override=TRUE`. If a multivariate normal form is required then
 ##' the arguments for this prior should be specified in `IBIS.logreg`.
-##' @seealso [`IBIS.logreg`][IBIS.logreg()]
+##' @seealso [IBIS.logreg()]
 ##'
 ##' @examples
 ##'

@@ -25,7 +25,7 @@ UNCOVER(
 will be used to form the graph. If not specified all variables will be used.}
 
 \item{options}{Additional arguments that can be specified for \code{UNCOVER}.
-See \code{\link[=UNCOVER.opts]{UNCOVER.opts}} for details. Can be ignored.}
+See \code{\link[=UNCOVER.opts]{UNCOVER.opts()}} for details. Can be ignored.}
 
 \item{stop_criterion}{What is the maximum number of clusters allowed before
 we terminate the first stage and begin deforestation. Defaults to 5.}
@@ -94,7 +94,7 @@ of removed edges to see if it is beneficial to reintroduce any previously
 removed edges. After this process has ended we then reintroduce edges in the
 removed set specifically to meet the criteria set by the user in the most
 optimal manner possible through a greedy approach. For more details see the
-paper \emph{UNCOVER}.
+Emerson and Aslett (2023).
 
 The graph can be undergo deforestation to meet 6 possible criteria:
 
@@ -123,7 +123,7 @@ deforestation stage of the algorithm.
 
 All deforestation criteria other than \code{"None"} require additional arguments
 to be specified in \code{options}. See examples and
-\code{\link[=UNCOVER.opts]{UNCOVER.opts}} for more information. It is never
+\code{\link[=UNCOVER.opts]{UNCOVER.opts()}} for more information. It is never
 recommended to use anything other than
 \code{UNCOVER.opts} to provide the \code{options} argument.
 
@@ -235,8 +235,14 @@ system.time(UNCOVER(X = CM,y = rv,stop_criterion = 6,verbose = FALSE))
 }
 
 }
+\references{
+\itemize{
+\item Emerson, S.R. and Aslett, L.J.M. (2023). Joint cohort and prediction
+modelling through graphical structure analysis (to be released)
+}
+}
 \seealso{
-\code{\link[=UNCOVER.opts]{UNCOVER.opts}}, \code{\link[=print.UNCOVER]{print.UNCOVER}}, \code{\link[=predict.UNCOVER]{predict.UNCOVER}}, \code{\link[=plot.UNCOVER]{plot.UNCOVER}}
+\code{\link[=UNCOVER.opts]{UNCOVER.opts()}}, \code{\link[=print.UNCOVER]{print.UNCOVER()}}, \code{\link[=predict.UNCOVER]{predict.UNCOVER()}}, \code{\link[=plot.UNCOVER]{plot.UNCOVER()}}
 }
 \keyword{Bayesian}
 \keyword{cluster}

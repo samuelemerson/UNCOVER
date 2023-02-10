@@ -15,12 +15,12 @@
 Prints summary information from an IBIS object.
 }
 \details{
-When running the function \code{\link[=IBIS.logreg]{IBIS.logreg}} the printed
+When running the function \code{\link[=IBIS.logreg]{IBIS.logreg()}} the printed
 information will contain information regarding; the number of samples, the
 mean of those samples and the log Bayesian evidence of the posterior.
 }
 \seealso{
-\code{\link[=IBIS.logreg]{IBIS.logreg}}
+\code{\link[=IBIS.logreg]{IBIS.logreg()}}
 }
 \keyword{IBIS}
 \keyword{print}

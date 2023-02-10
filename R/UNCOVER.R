@@ -33,7 +33,7 @@
 ##' @param mst_var A vector specifying which variables of the covariate matrix
 ##' will be used to form the graph. If not specified all variables will be used.
 ##' @param options Additional arguments that can be specified for `UNCOVER`.
-##' See [`UNCOVER.opts`][UNCOVER.opts()] for details. Can be ignored.
+##' See [UNCOVER.opts()] for details. Can be ignored.
 ##' @param stop_criterion What is the maximum number of clusters allowed before
 ##' we terminate the first stage and begin deforestation. Defaults to 5.
 ##' @param deforest_criterion Constraint type which the final model must satisfy.
@@ -83,7 +83,7 @@
 ##' removed edges. After this process has ended we then reintroduce edges in the
 ##' removed set specifically to meet the criteria set by the user in the most
 ##' optimal manner possible through a greedy approach. For more details see the
-##' paper *UNCOVER*.
+##' Emerson and Aslett (2023).
 ##'
 ##' The graph can be undergo deforestation to meet 6 possible criteria:
 ##'
@@ -112,7 +112,7 @@
 ##'
 ##' All deforestation criteria other than `"None"` require additional arguments
 ##' to be specified in `options`. See examples and
-##' [`UNCOVER.opts`][UNCOVER.opts()] for more information. It is never
+##' [UNCOVER.opts()] for more information. It is never
 ##' recommended to use anything other than
 ##' `UNCOVER.opts` to provide the `options` argument.
 ##'
@@ -133,7 +133,11 @@
 ##' statistic and "`Balanced"` will track the minimum minority class across all
 ##' clusters alongside the number of criterion breaking clusters.
 ##'
-##' @seealso [`UNCOVER.opts`][UNCOVER.opts()], [`print.UNCOVER`][print.UNCOVER()], [`predict.UNCOVER`][predict.UNCOVER()], [`plot.UNCOVER`][plot.UNCOVER()]
+##' @seealso [UNCOVER.opts()], [print.UNCOVER()], [predict.UNCOVER()], [plot.UNCOVER()]
+##' @references \itemize{
+##' \item Emerson, S.R. and Aslett, L.J.M. (2023). Joint cohort and prediction
+##' modelling through graphical structure analysis (to be released)
+##' }
 ##' @examples
 ##'
 ##' \donttest{
@@ -740,11 +744,11 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
 ##'
 ##' @param x Object of class `"UNCOVER"`
 ##' @param ... Further arguments passed to or from other methods
-##' @details When running the function [`UNCOVER`][UNCOVER()] the printed
+##' @details When running the function [UNCOVER()] the printed
 ##' information will contain information regarding; the number of clusters, the
 ##' cluster sizes, the sub-model log Bayesian evidences and the total model log
 ##' Bayesian evidence.
-##' @seealso [`UNCOVER`][UNCOVER()]
+##' @seealso [UNCOVER()]
 ##'
 
 print.UNCOVER <- function(x,...){
@@ -788,9 +792,9 @@ print.UNCOVER <- function(x,...){
 ##' cluster assignment for each observation.
 ##' @details Note that this is a Bayesian prediction method and so samples of
 ##' the posterior, defined by `"UNCOVER"` object provided, will be obtained
-##' through SMC methods for prediction. See [`IBIS.logreg`][IBIS.logreg()] for
+##' through SMC methods for prediction. See [IBIS.logreg()] for
 ##' more details.
-##' @seealso [`UNCOVER`][UNCOVER()], [`IBIS.logreg`][IBIS.logreg()]
+##' @seealso [UNCOVER()], [IBIS.logreg()]
 ##' @examples
 ##'
 ##' \donttest{
@@ -917,7 +921,7 @@ predict.UNCOVER <- function(object,newX=NULL,type="prob",...){
 ##' created is large setting `diagnostic_x_axis=="minimal"` is recommended as it
 ##' gives a more visulally appealing output.
 ##'
-##' @seealso [`UNCOVER`][UNCOVER()]
+##' @seealso [UNCOVER()]
 ##' @examples
 ##'
 ##' \donttest{
@@ -1294,7 +1298,7 @@ plot.UNCOVER <- function(x,type = "covariates",
   suppressWarnings(print(overall_plot))
 }
 
-##' Additional argument generator for [`UNCOVER`][UNCOVER()]
+##' Additional argument generator for [UNCOVER()]
 ##'
 ##'
 ##' @export
@@ -1400,7 +1404,7 @@ plot.UNCOVER <- function(x,type = "covariates",
 ##' In an attempt to improve computational time, the SMC sampler along with the
 ##' function which uses BIC values are memoised, with the cache for each of
 ##' these memoised functions be specified by `SMC_cache` and `BIC_cache`
-##' respectively. See [`memoise`][memoise::memoise()] for more details. If we do
+##' respectively. See [memoise::memoise()] for more details. If we do
 ##' not get and each match from the function input to a previously evaluated
 ##' input, we may wish to search the cache for similar inputs which could
 ##' provide a reasonable starting point. Checking the cache however takes time,
@@ -1410,13 +1414,17 @@ plot.UNCOVER <- function(x,type = "covariates",
 ##' beneficial to never check the cache (the exception for this being when the
 ##' cluster sizes are extremely large, for example containing a million
 ##' observations). `SMC_memo_thres` can be much lower as the SMC sampler is a
-##' much more expensive function to run. See *UNCOVER paper* for more details.
+##' much more expensive function to run. See Emerson and Aslett (2023) for more
+##' details.
 ##'
 ##' Specifying `rprior` and `dprior` will not override the default prior form
 ##' unless `prior.override=TRUE`. If a multivariate normal form is required then
 ##' the arguments for this prior should be specified in `UNCOVER`.
-##' @seealso [`UNCOVER`][UNCOVER()]
-##'
+##' @seealso [UNCOVER()]
+##' @references \itemize{
+##' \item Emerson, S.R. and Aslett, L.J.M. (2023). Joint cohort and prediction
+##' modelling through graphical structure analysis (to be released)
+##' }
 ##' @examples
 ##'
 ##' \donttest{
