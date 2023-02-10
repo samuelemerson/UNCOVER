@@ -1,6 +1,6 @@
 Package: UNCOVER
 Type: Package
-Title: Utilising Normalisation Constant Optimisation Via Edge Removal
+Title: Utilising Normalisation Constant Optimisation via Edge Removal (UNCOVER)
 Version: 0.1.0
 Author: Samuel Emerson
 Maintainer: Samuel Emerson <samuel.emerson@hotmail.co.uk>
@@ -13,7 +13,7 @@ Description: Model data with a suspected clustering structure (either in
     sampler or a suitable transformation of the Bayesian Information Criterion. 
     Specifically, the Sequential Monte Carlo sampler is an Iterated Batch 
     Importance Sampling scheme (Chopin (2002 
-    <https://doi.org/10.1093/biomet/89.3.539>)) with batch size one.
+    <doi:10.1093/biomet/89.3.539>)) with batch size one.
 License: GPL-2
 Encoding: UTF-8
 LazyData: true

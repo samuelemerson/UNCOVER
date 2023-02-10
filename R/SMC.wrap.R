@@ -64,8 +64,8 @@
 ##' \item Emerson, S.R. and Aslett, L.J.M. (2023). Joint cohort and prediction
 ##' modelling through graphical structure analysis (to be released)
 ##' \item Chopin, N. (2002). A sequential particle filter method for
-##' static models. Biometrika, 89(3), 539-552,
-##' <https://doi.org/10.1093/biomet/89.3.539>}
+##' static models. Biometrika, 89(3), 539-552, \doi{10.1093/biomet/89.3.539}
+##' }
 ##' @examples
 ##'
 ##' \donttest{
@@ -270,6 +270,7 @@ print.IBIS <- function(x,...){
 ##' @seealso [IBIS.logreg()]
 ##' @examples
 ##'
+##' \donttest{
 ##' # First we generate a covariate matrix X and binary response vector y
 ##' CM <- data.frame(X1 = rnorm(100),X2 = rnorm(100))
 ##' rv <- sample(0:1,100,replace=TRUE)
@@ -285,6 +286,7 @@ print.IBIS <- function(x,...){
 ##' # We can also predict the response for new data
 ##' CM.2 <- data.frame(X1 = rnorm(10),X2 = rnorm(10))
 ##' cbind(CM.2,predict(out,newX = CM.2))
+##' }
 ##'
 
 predict.IBIS <- function(object,newX = NULL,type = "prob",...){
@@ -364,10 +366,11 @@ predict.IBIS <- function(object,newX = NULL,type = "prob",...){
 ##' \item Emerson, S.R. and Aslett, L.J.M. (2023). Joint cohort and prediction
 ##' modelling through graphical structure analysis (to be released)
 ##' \item Chopin, N. (2002). A sequential particle filter method for
-##' static models. Biometrika, 89(3), 539-552,
-##' <https://doi.org/10.1093/biomet/89.3.539>}
+##' static models. Biometrika, 89(3), 539-552, \doi{10.1093/biomet/89.3.539}
+##' }
 ##' @examples
 ##'
+##' \donttest{
 ##' require(graphics)
 ##' # First we generate a covariate matrix X and binary response vector y
 ##' CM <- matrix(rnorm(200),100,2)
@@ -383,6 +386,7 @@ predict.IBIS <- function(object,newX = NULL,type = "prob",...){
 ##' # If we only wanted to view the second covariate
 ##' plot(out,type = "samples",plot_var = 2)
 ##' plot(out,type = "fitted",plot_var = 2)
+##' }
 ##'
 
 plot.IBIS <- function(x,type = "samples",plot_var = NULL,
@@ -580,6 +584,7 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
 ##'
 ##' @examples
 ##'
+##' \donttest{
 ##' #Specifying a multivariate independent uniform prior
 ##'
 ##' rmviu <- function(n,a,b){
@@ -595,6 +600,7 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
 ##'
 ##' IBIS.logreg.opts(prior.override = TRUE,rprior = rmviu,
 ##'                  dprior = dmviu,a=rep(0,3),b=rep(1,3))
+##' }
 ##'
 
 IBIS.logreg.opts <- function(N=1000,ess = N/2,n_move = 1,weighted = FALSE,

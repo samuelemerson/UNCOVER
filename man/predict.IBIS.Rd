@@ -31,6 +31,7 @@ class \code{"IBIS"} will provide samples from a posterior.
 }
 \examples{
 
+\donttest{
 # First we generate a covariate matrix X and binary response vector y
 CM <- data.frame(X1 = rnorm(100),X2 = rnorm(100))
 rv <- sample(0:1,100,replace=TRUE)
@@ -46,6 +47,7 @@ predict(out,type = "response")
 # We can also predict the response for new data
 CM.2 <- data.frame(X1 = rnorm(10),X2 = rnorm(10))
 cbind(CM.2,predict(out,newX = CM.2))
+}
 
 }
 \seealso{

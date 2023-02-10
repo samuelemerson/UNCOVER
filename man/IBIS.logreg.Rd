@@ -138,8 +138,8 @@ out.4$log_Bayesian_evidence
 \item Emerson, S.R. and Aslett, L.J.M. (2023). Joint cohort and prediction
 modelling through graphical structure analysis (to be released)
 \item Chopin, N. (2002). A sequential particle filter method for
-static models. Biometrika, 89(3), 539-552,
-\url{https://doi.org/10.1093/biomet/89.3.539}}
+static models. Biometrika, 89(3), 539-552, \doi{10.1093/biomet/89.3.539}
+}
 }
 \seealso{
 \code{\link[=IBIS.logreg.opts]{IBIS.logreg.opts()}}, \code{\link[=print.IBIS]{print.IBIS()}}, \code{\link[=predict.IBIS]{predict.IBIS()}}, \code{\link[=plot.IBIS]{plot.IBIS()}}

@@ -64,6 +64,7 @@ more visulally appealing output.
 }
 \examples{
 
+\donttest{
 require(graphics)
 # First we generate a covariate matrix X and binary response vector y
 CM <- matrix(rnorm(200),100,2)
@@ -79,6 +80,7 @@ plot(out,type = "diagnostics",diagnostic_x_axis = "minimal")
 # If we only wanted to view the second covariate
 plot(out,type = "samples",plot_var = 2)
 plot(out,type = "fitted",plot_var = 2)
+}
 
 }
 \references{
@@ -86,8 +88,8 @@ plot(out,type = "fitted",plot_var = 2)
 \item Emerson, S.R. and Aslett, L.J.M. (2023). Joint cohort and prediction
 modelling through graphical structure analysis (to be released)
 \item Chopin, N. (2002). A sequential particle filter method for
-static models. Biometrika, 89(3), 539-552,
-\url{https://doi.org/10.1093/biomet/89.3.539}}
+static models. Biometrika, 89(3), 539-552, \doi{10.1093/biomet/89.3.539}
+}
 }
 \seealso{
 \code{\link[=IBIS.logreg]{IBIS.logreg()}}
