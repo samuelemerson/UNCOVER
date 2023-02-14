@@ -99,7 +99,7 @@ two prior functions given, if the default prior form is to be overridden.}
 A list consisting of:
 
 \describe{
-\item{\code{N}}{Number of paricles for the SMC sampler}
+\item{\code{N}}{Number of particles for the SMC sampler}
 \item{\code{train_frac}}{Training data fraction}
 \item{\code{max_K}}{Maximum number of clusters allowed}
 \item{\code{min_size}}{Minimum size of clusters allowed}

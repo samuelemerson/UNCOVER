@@ -572,7 +572,7 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
 ##' @return A list consisting of:
 ##'
 ##' \describe{
-##' \item{`N`}{Number of paricles for the SMC sampler}
+##' \item{`N`}{Number ofparticles for the SMC sampler}
 ##' \item{`ess`}{Effective Sample Size Threshold}
 ##' \item{`n_move`}{Number of Metropolis-Hastings steps}
 ##' \item{`rprior`}{Function which produces samples from your prior. `NULL` if

@@ -84,7 +84,7 @@ clusters after every action and one tracking the minimum minority class
 across clusters after every action.}
 }
 Actions are defined as either edge removals, edge additions or edge
-additions in the deforesation stage. The syntax for an action will be the
+additions in the deforestation stage. The syntax for an action will be the
 'type_of_action.edge'. For example the removal of an edge connecting
 observation 1 and observation 2 will be displayed 'Rem.1-2'. If the edge was
 being added this would be displayed 'Def.Add.1-2' if in the deforestation
