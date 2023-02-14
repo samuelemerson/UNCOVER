@@ -1,8 +1,8 @@
 Package: UNCOVER
 Type: Package
 Title: Utilising Normalisation Constant Optimisation via Edge Removal (UNCOVER)
-Version: 0.1.0
-Author: Samuel Emerson
+Version: 1.0.0
+Author: Samuel R. Emerson
 Maintainer: Samuel Emerson <samuel.emerson@hotmail.co.uk>
 Description: Model data with a suspected clustering structure (either in 
     covariate space, regression space or both) using a Bayesian product model 
@@ -10,10 +10,10 @@ Description: Model data with a suspected clustering structure (either in
     graphically and clusters are formed through various edge removals or 
     additions. Cluster quality is assessed through the log Bayesian evidence of 
     the overall model, which is estimated using either a Sequential Monte Carlo 
-    sampler or a suitable transformation of the Bayesian Information Criterion. 
-    Specifically, the Sequential Monte Carlo sampler is an Iterated Batch 
-    Importance Sampling scheme (Chopin (2002 
-    <doi:10.1093/biomet/89.3.539>)) with batch size one.
+    sampler or a suitable transformation of the Bayesian Information Criterion 
+    as a fast approximation of the former. The internal Iterated Batch 
+    Importance Sampling scheme (Chopin (2002 <doi:10.1093/biomet/89.3.539>)) is 
+    made available as a free standing function.
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
