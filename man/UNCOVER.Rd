@@ -153,7 +153,8 @@ rv <- sample(0:1,100,replace=TRUE)
 
 # We can then run our algorithm to see what cohorts are selected for each
 # of the different deforestation criteria
-UN.none <- UNCOVER(X = CM,y = rv, deforest_criterion = "None", verbose = FALSE)
+UN.none <- UNCOVER(X = CM,y = rv, deforest_criterion = "None",
+                   verbose = FALSE)
 UN.noc <- UNCOVER(X = CM,y = rv, deforest_criterion = "NoC",
                   options = UNCOVER.opts(max_K = 3), verbose = FALSE)
 UN.soc <- UNCOVER(X = CM,y = rv, deforest_criterion = "SoC",
@@ -164,7 +165,8 @@ UN.validation <- UNCOVER(X = CM,y = rv, deforest_criterion = "Validation",
                          options = UNCOVER.opts(train_frac = 0.8),
                          verbose = FALSE)
 UN.balanced <- UNCOVER(X = CM,y = rv, deforest_criterion = "Balanced",
-                       options = UNCOVER.opts(n_min_class = 2), verbose = FALSE)
+                       options = UNCOVER.opts(n_min_class = 2),
+                       verbose = FALSE)
 clu_al_mat <- rbind(UN.none$Model$Cluster_Allocation,
                     UN.noc$Model$Cluster_Allocation,
                     UN.soc$Model$Cluster_Allocation,
@@ -233,6 +235,12 @@ c(sum(UN.none$Model$Log_Marginal_Likelihoods),
 system.time(UNCOVER(X = CM,y = rv,stop_criterion = 4,verbose = FALSE))
 system.time(UNCOVER(X = CM,y = rv,stop_criterion = 6,verbose = FALSE))
 }
+
+# Quick example for CRAN
+
+CM <- matrix(rnorm(200),100,2)
+rv <- sample(0:1,100,replace=TRUE)
+UNCOVER(X = CM,y = rv, deforest_criterion = "None", verbose = FALSE)
 
 }
 \references{

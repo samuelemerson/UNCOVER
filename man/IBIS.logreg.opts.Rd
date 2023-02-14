@@ -75,7 +75,6 @@ the arguments for this prior should be specified in \code{IBIS.logreg}.
 }
 \examples{
 
-\donttest{
 #Specifying a multivariate independent uniform prior
 
 rmviu <- function(n,a,b){
@@ -91,7 +90,7 @@ return(apply(x,1,prod))
 
 IBIS.logreg.opts(prior.override = TRUE,rprior = rmviu,
                  dprior = dmviu,a=rep(0,3),b=rep(1,3))
-}
+
 
 }
 \seealso{

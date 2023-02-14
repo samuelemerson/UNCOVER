@@ -147,7 +147,8 @@
 ##'
 ##' # We can then run our algorithm to see what cohorts are selected for each
 ##' # of the different deforestation criteria
-##' UN.none <- UNCOVER(X = CM,y = rv, deforest_criterion = "None", verbose = FALSE)
+##' UN.none <- UNCOVER(X = CM,y = rv, deforest_criterion = "None",
+##'                    verbose = FALSE)
 ##' UN.noc <- UNCOVER(X = CM,y = rv, deforest_criterion = "NoC",
 ##'                   options = UNCOVER.opts(max_K = 3), verbose = FALSE)
 ##' UN.soc <- UNCOVER(X = CM,y = rv, deforest_criterion = "SoC",
@@ -158,7 +159,8 @@
 ##'                          options = UNCOVER.opts(train_frac = 0.8),
 ##'                          verbose = FALSE)
 ##' UN.balanced <- UNCOVER(X = CM,y = rv, deforest_criterion = "Balanced",
-##'                        options = UNCOVER.opts(n_min_class = 2), verbose = FALSE)
+##'                        options = UNCOVER.opts(n_min_class = 2),
+##'                        verbose = FALSE)
 ##' clu_al_mat <- rbind(UN.none$Model$Cluster_Allocation,
 ##'                     UN.noc$Model$Cluster_Allocation,
 ##'                     UN.soc$Model$Cluster_Allocation,
@@ -227,6 +229,12 @@
 ##' system.time(UNCOVER(X = CM,y = rv,stop_criterion = 4,verbose = FALSE))
 ##' system.time(UNCOVER(X = CM,y = rv,stop_criterion = 6,verbose = FALSE))
 ##' }
+##'
+##' # Quick example for CRAN
+##'
+##' CM <- matrix(rnorm(200),100,2)
+##' rv <- sample(0:1,100,replace=TRUE)
+##' UNCOVER(X = CM,y = rv, deforest_criterion = "None", verbose = FALSE)
 ##'
 
 
@@ -813,6 +821,13 @@ print.UNCOVER <- function(x,...){
 ##' CM.2 <- data.frame(X1 = rnorm(10),X2 = rnorm(10))
 ##' cbind(CM.2,predict(UN.none,newX = CM.2))
 ##' }
+##'
+##' # Quick example for CRAN
+##'
+##' CM <- matrix(rnorm(200),100,2)
+##' rv <- sample(0:1,100,replace=TRUE)
+##' out <- UNCOVER(X = CM,y = rv, deforest_criterion = "None", verbose = FALSE)
+##' predict(out)
 ##'
 
 predict.UNCOVER <- function(object,newX=NULL,type="prob",...){
@@ -1427,7 +1442,6 @@ plot.UNCOVER <- function(x,type = "covariates",
 ##' }
 ##' @examples
 ##'
-##' \donttest{
 ##' #Specifying a multivariate independent uniform prior
 ##'
 ##' rmviu <- function(n,a,b){
@@ -1444,6 +1458,7 @@ plot.UNCOVER <- function(x,type = "covariates",
 ##' UNCOVER.opts(prior.override = TRUE,rprior = rmviu,
 ##'                  dprior = dmviu,a=rep(0,3),b=rep(1,3))
 ##'
+##' \donttest{
 ##' # If we generate a covariate matrix and binary response vector
 ##' CM <- matrix(rnorm(200),100,2)
 ##' rv <- sample(0:1,100,replace=TRUE)

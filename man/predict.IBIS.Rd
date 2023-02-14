@@ -49,6 +49,13 @@ CM.2 <- data.frame(X1 = rnorm(10),X2 = rnorm(10))
 cbind(CM.2,predict(out,newX = CM.2))
 }
 
+# Quick example for CRAN
+
+CM <- matrix(rnorm(200),100,2)
+rv <- sample(0:1,100,replace=TRUE)
+out <- IBIS.logreg(X = CM,y = rv,options = IBIS.logreg.opts(weighted=TRUE))
+predict(out)
+
 }
 \seealso{
 \code{\link[=IBIS.logreg]{IBIS.logreg()}}

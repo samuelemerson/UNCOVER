@@ -134,10 +134,9 @@ out.4$log_Bayesian_evidence
 
 # Quick example for CRAN
 
-CM <- matrix(rnorm(20),10,2)
-rv <- sample(0:1,10,replace=TRUE)
-IBIS.logreg(X = CM,y = rv,options = IBIS.logreg.opts(N = 10,
-                                                     weighted = TRUE))
+CM <- matrix(rnorm(200),100,2)
+rv <- sample(0:1,100,replace=TRUE)
+IBIS.logreg(X = CM,y = rv,options = IBIS.logreg.opts(weighted = TRUE))
 
 }
 \references{

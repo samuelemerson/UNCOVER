@@ -138,10 +138,9 @@
 ##'
 ##' # Quick example for CRAN
 ##'
-##' CM <- matrix(rnorm(20),10,2)
-##' rv <- sample(0:1,10,replace=TRUE)
-##' IBIS.logreg(X = CM,y = rv,options = IBIS.logreg.opts(N = 10,
-##'                                                      weighted = TRUE))
+##' CM <- matrix(rnorm(200),100,2)
+##' rv <- sample(0:1,100,replace=TRUE)
+##' IBIS.logreg(X = CM,y = rv,options = IBIS.logreg.opts(weighted = TRUE))
 ##'
 
 IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
@@ -294,6 +293,13 @@ print.IBIS <- function(x,...){
 ##' CM.2 <- data.frame(X1 = rnorm(10),X2 = rnorm(10))
 ##' cbind(CM.2,predict(out,newX = CM.2))
 ##' }
+##'
+##' # Quick example for CRAN
+##'
+##' CM <- matrix(rnorm(200),100,2)
+##' rv <- sample(0:1,100,replace=TRUE)
+##' out <- IBIS.logreg(X = CM,y = rv,options = IBIS.logreg.opts(weighted=TRUE))
+##' predict(out)
 ##'
 
 predict.IBIS <- function(object,newX = NULL,type = "prob",...){
@@ -591,7 +597,6 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
 ##'
 ##' @examples
 ##'
-##' \donttest{
 ##' #Specifying a multivariate independent uniform prior
 ##'
 ##' rmviu <- function(n,a,b){
@@ -607,7 +612,7 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
 ##'
 ##' IBIS.logreg.opts(prior.override = TRUE,rprior = rmviu,
 ##'                  dprior = dmviu,a=rep(0,3),b=rep(1,3))
-##' }
+##'
 ##'
 
 IBIS.logreg.opts <- function(N=1000,ess = N/2,n_move = 1,weighted = FALSE,
