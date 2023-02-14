@@ -136,6 +136,13 @@
 ##' out.4$log_Bayesian_evidence
 ##' }
 ##'
+##' # Quick example for CRAN
+##'
+##' CM <- matrix(rnorm(20),10,2)
+##' rv <- sample(0:1,10,replace=TRUE)
+##' IBIS.logreg(X = CM,y = rv,options = IBIS.logreg.opts(N = 10,
+##'                                                      weighted = TRUE))
+##'
 
 IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
                         prior_mean = rep(0,ncol(X)+1),
@@ -626,7 +633,7 @@ IBIS.logreg.opts <- function(N=1000,ess = N/2,n_move = 1,weighted = FALSE,
   if(!is.logical(weighted)){
     stop("weighted must be logical")
   }
-  return(list(N = 1000,ess = N/2,n_move = 1,rprior = rprior,dprior = dprior,
+  return(list(N = N,ess = ess,n_move = n_move,rprior = rprior,dprior = dprior,
               prior.override = prior.override,weighted = weighted,
               MoreArgs = MoreArgs))
 }
