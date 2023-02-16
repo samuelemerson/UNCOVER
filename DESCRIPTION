@@ -3,7 +3,7 @@ Type: Package
 Title: Utilising Normalisation Constant Optimisation via Edge Removal (UNCOVER)
 Version: 1.0.0
 Author: Samuel R. Emerson
-Maintainer: Samuel Emerson <samuel.emerson@hotmail.co.uk>
+Maintainer: Samuel R. Emerson <samuel.emerson@hotmail.co.uk>
 Description: Model data with a suspected clustering structure (either in 
     covariate space, regression space or both) using a Bayesian product model 
     with a logistic regression likelihood. Observations are represented 
