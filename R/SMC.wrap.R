@@ -360,7 +360,7 @@ predict.IBIS <- function(object,newX = NULL,type = "prob",...){
 ##' which was triggered by adding observation 1 to the posterior would be
 ##' labelled "1.2". When the training data for the `"IBIS"` object created is
 ##' large setting `diagnostic_x_axis=="minimal"` is recommended as it gives a
-##' more visulally appealing output.
+##' more visually appealing output.
 ##'
 ##' @seealso [IBIS.logreg()]
 ##' @references \itemize{
@@ -560,7 +560,7 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
 ##' @return A list consisting of:
 ##'
 ##' \describe{
-##' \item{`N`}{Number ofparticles for the SMC sampler}
+##' \item{`N`}{Number of particles for the SMC sampler}
 ##' \item{`ess`}{Effective Sample Size Threshold}
 ##' \item{`n_move`}{Number of Metropolis-Hastings steps}
 ##' \item{`rprior`}{Function which produces samples from your prior. `NULL` if

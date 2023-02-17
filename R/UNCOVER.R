@@ -922,7 +922,7 @@ predict.UNCOVER <- function(object,newX=NULL,type="prob",...){
 ##' being added this would be displayed 'Def.Add.1-2' if in the deforestation
 ##' stage and 'Add.1-2' otherwise. When the data for the `"UNCOVER"` object
 ##' created is large setting `diagnostic_x_axis=="minimal"` is recommended as it
-##' gives a more visulally appealing output.
+##' gives a more visually appealing output.
 ##'
 ##' @seealso [UNCOVER()]
 ##' @examples

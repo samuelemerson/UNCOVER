@@ -46,7 +46,7 @@ two prior functions given, if the default prior form is to be overridden.}
 A list consisting of:
 
 \describe{
-\item{\code{N}}{Number ofparticles for the SMC sampler}
+\item{\code{N}}{Number of particles for the SMC sampler}
 \item{\code{ess}}{Effective Sample Size Threshold}
 \item{\code{n_move}}{Number of Metropolis-Hastings steps}
 \item{\code{rprior}}{Function which produces samples from your prior. \code{NULL} if

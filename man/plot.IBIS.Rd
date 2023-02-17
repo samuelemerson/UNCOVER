@@ -60,7 +60,7 @@ the x-axis label for the acceptance rate of the 2nd Metropolis-Hastings step
 which was triggered by adding observation 1 to the posterior would be
 labelled "1.2". When the training data for the \code{"IBIS"} object created is
 large setting \code{diagnostic_x_axis=="minimal"} is recommended as it gives a
-more visulally appealing output.
+more visually appealing output.
 }
 \examples{
 

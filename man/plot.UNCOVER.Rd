@@ -90,7 +90,7 @@ observation 1 and observation 2 will be displayed 'Rem.1-2'. If the edge was
 being added this would be displayed 'Def.Add.1-2' if in the deforestation
 stage and 'Add.1-2' otherwise. When the data for the \code{"UNCOVER"} object
 created is large setting \code{diagnostic_x_axis=="minimal"} is recommended as it
-gives a more visulally appealing output.
+gives a more visually appealing output.
 }
 \examples{
 
