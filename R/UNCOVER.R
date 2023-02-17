@@ -747,6 +747,7 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
 ##'
 ##' @param x Object of class `"UNCOVER"`
 ##' @param ... Further arguments passed to or from other methods
+##' @return No return value, called for side effects
 ##' @details When running the function [UNCOVER()] the printed
 ##' information will contain information regarding; the number of clusters, the
 ##' cluster sizes, the sub-model log Bayesian evidences and the total model log
@@ -869,6 +870,7 @@ predict.UNCOVER <- function(object,newX=NULL,type="prob",...){
 ##' or `"minimal"` for only some observations indices to be plotted on the
 ##' x-axis.
 ##' @param ... Arguments to be passed to methods
+##' @return No return value, called for side effects
 ##' @details If `type=="covariates"`, the resulting plot will be a ggpairs plot.
 ##' The diagonal entries will be a plot of K density plots (K being the number
 ##' of clusters). The off-diagonal elements are scatter-plots of the

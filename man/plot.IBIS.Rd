@@ -24,6 +24,9 @@ x-axis.}
 
 \item{...}{Arguments to be passed to methods}
 }
+\value{
+No return value, called for side effects
+}
 \description{
 Allows visualisation of many aspects of IBIS, including
 co-variate, posterior and diagnostic plots.

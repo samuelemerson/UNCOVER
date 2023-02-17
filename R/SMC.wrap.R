@@ -223,6 +223,7 @@ IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
 ##'
 ##' @param x Object of class `"IBIS"`
 ##' @param ... Further arguments passed to or from other methods
+##' @return No return value, called for side effects
 ##' @details When running the function [IBIS.logreg()] the printed
 ##' information will contain information regarding; the number of samples, the
 ##' mean of those samples and the log Bayesian evidence of the posterior.
@@ -331,6 +332,7 @@ predict.IBIS <- function(object,newX = NULL,type = "prob",...){
 ##' or `"minimal"` for only some observations indices to be plotted on the
 ##' x-axis.
 ##' @param ... Arguments to be passed to methods
+##' @return No return value, called for side effects
 ##' @details If `type=="samples"`, the resulting plot will be a ggpairs plot
 ##' giving the coefficient densities in the diagonal, points plots of the
 ##' posterior samples in the lower triangle and contour plots in the upper
