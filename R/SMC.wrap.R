@@ -23,7 +23,7 @@
 ##' assume a Bayesian logistic regression model.
 ##'
 ##' @keywords sequential monte carlo IBIS
-##' @param X Covariance matrix
+##' @param X Co-variate matrix
 ##' @param y Binary response vector
 ##' @param options Additional arguments that can be specified for `IBIS.logreg`.
 ##' See [IBIS.logreg.opts()] for details. Can be ignored.
@@ -34,7 +34,7 @@
 ##' @return An object of class `"IBIS"`, which is a list consisting of:
 ##'
 ##' \describe{
-##' \item{`covariate_matrix`}{The covariance matrix provided.}
+##' \item{`covariate_matrix`}{The co-variate matrix provided.}
 ##' \item{`response_vector`}{The binary response vector provided.}
 ##' \item{`samples`}{A matrix of samples from the posterior.}
 ##' \item{`log_Bayesian_evidence`}{An estimate of the log Bayesian evidence (or
@@ -70,7 +70,7 @@
 ##'
 ##' \donttest{
 ##' require(graphics)
-##' # First we generate a covariate matrix X and binary response vector y
+##' # First we generate a co-variate matrix X and binary response vector y
 ##' CM <- matrix(rnorm(200),100,2)
 ##' rv <- sample(0:1,100,replace=TRUE)
 ##'
@@ -135,12 +135,6 @@
 ##'                 lower = list(continuous = GGally::wrap("points",size=0.5)))
 ##' out.4$log_Bayesian_evidence
 ##' }
-##'
-##' # Quick example for CRAN
-##'
-##' CM <- matrix(rnorm(200),100,2)
-##' rv <- sample(0:1,100,replace=TRUE)
-##' IBIS.logreg(X = CM,y = rv,options = IBIS.logreg.opts(weighted = TRUE))
 ##'
 
 IBIS.logreg <- function(X,y,options = IBIS.logreg.opts(),
@@ -277,7 +271,7 @@ print.IBIS <- function(x,...){
 ##' @examples
 ##'
 ##' \donttest{
-##' # First we generate a covariate matrix X and binary response vector y
+##' # First we generate a co-variate matrix X and binary response vector y
 ##' CM <- data.frame(X1 = rnorm(100),X2 = rnorm(100))
 ##' rv <- sample(0:1,100,replace=TRUE)
 ##'
@@ -294,13 +288,7 @@ print.IBIS <- function(x,...){
 ##' cbind(CM.2,predict(out,newX = CM.2))
 ##' }
 ##'
-##' # Quick example for CRAN
-##'
-##' CM <- matrix(rnorm(200),100,2)
-##' rv <- sample(0:1,100,replace=TRUE)
-##' out <- IBIS.logreg(X = CM,y = rv,options = IBIS.logreg.opts(weighted=TRUE))
-##' predict(out)
-##'
+
 
 predict.IBIS <- function(object,newX = NULL,type = "prob",...){
   if(type!="prob" & type!="response"){
@@ -328,15 +316,15 @@ predict.IBIS <- function(object,newX = NULL,type = "prob",...){
 ##' @export
 ##' @name plot.IBIS
 ##' @description Allows visualisation of many aspects of IBIS, including
-##' covariate, posterior and diagnostic plots.
+##' co-variate, posterior and diagnostic plots.
 ##'
 ##' @keywords plot IBIS
 ##' @param x Object of class `"IBIS"`
 ##' @param type Can be one of; `"samples"` for posterior visualisation,
-##' `"fitted"` for covariate visualisation or `"diagnostics"` for diagnostic
+##' `"fitted"` for co-variate visualisation or `"diagnostics"` for diagnostic
 ##' plots. See details. Defaults to `"samples"`.
 ##' @param plot_var Vector specifying which columns (or associated logistic
-##' regression coefficients) of the covariate matrix should be plotted. Does not
+##' regression coefficients) of the co-variate matrix should be plotted. Does not
 ##' apply when `type=="diagnostics"`. Defaults to all columns being selected.
 ##' @param diagnostic_x_axis Only applies if `"type=="diagnostics"`. Either
 ##' `"full"` (default) for all observations indices to be plotted on the x-axis
@@ -354,7 +342,7 @@ predict.IBIS <- function(object,newX = NULL,type = "prob",...){
 ##' to have response 1 by the model (green). The off-diagonal elements are
 ##' scatter-plots of the observations, given a label according to their actual
 ##' response and a colour scale based on their predicted response. If
-##' `length(plot_var)==1` then the covariate variable is plotted against it's
+##' `length(plot_var)==1` then the co-variate variable is plotted against it's
 ##' index and a density plot is not provided. If `length(plot_var)==1` then the
 ##' density plot and the scatter-plot are combined. If a predicted class (0 or
 ##' 1) contains less than two data points the density will not be plotted.
@@ -385,7 +373,7 @@ predict.IBIS <- function(object,newX = NULL,type = "prob",...){
 ##'
 ##' \donttest{
 ##' require(graphics)
-##' # First we generate a covariate matrix X and binary response vector y
+##' # First we generate a co-variate matrix X and binary response vector y
 ##' CM <- matrix(rnorm(200),100,2)
 ##' rv <- sample(0:1,100,replace=TRUE)
 ##'
@@ -396,7 +384,7 @@ predict.IBIS <- function(object,newX = NULL,type = "prob",...){
 ##' plot(out,type = "fitted")
 ##' plot(out,type = "diagnostics",diagnostic_x_axis = "minimal")
 ##'
-##' # If we only wanted to view the second covariate
+##' # If we only wanted to view the second co-variate
 ##' plot(out,type = "samples",plot_var = 2)
 ##' plot(out,type = "fitted",plot_var = 2)
 ##' }
@@ -411,7 +399,7 @@ plot.IBIS <- function(x,type = "samples",plot_var = NULL,
     plot_var <- 1:ncol(x$covariate_matrix)
   }
   if(any(is.na(match(plot_var,1:ncol(x$covariate_matrix))))){
-    stop("cannot subset the covariate matrix with plot_var provided")
+    stop("cannot subset the co-variate matrix with plot_var provided")
   }
   if(type!="samples" & type!="fitted" & type!="diagnostics"){
     stop("type not supported")

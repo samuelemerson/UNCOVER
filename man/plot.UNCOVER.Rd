@@ -16,13 +16,13 @@
 \item{x}{Object of class \code{"UNCOVER"}}
 
 \item{type}{Can be one of; \code{"covariates"} for cluster assignment
-visualisation for the covariates, \code{"fitted"} for covariate visualisation
+visualisation for the co-variates, \code{"fitted"} for co-variate visualisation
 with respect to their fitted values, \code{"samples"} for posterior visualisation
 or \code{"diagnostics"} for diagnostic plots. See details. Defaults to
 \code{"covariates"}.}
 
 \item{plot_var}{Vector specifying which columns (or associated logistic
-regression coefficients) of the covariate matrix should be plotted. Does not
+regression coefficients) of the co-variate matrix should be plotted. Does not
 apply when \code{type=="diagnostics"}. Defaults to all columns being selected.}
 
 \item{diagnostic_x_axis}{Only applies if \verb{"type=="diagnostics"}. Either
@@ -34,7 +34,7 @@ x-axis.}
 }
 \description{
 Allows visualisation of many aspects of UNCOVER, including
-covariate, posterior and diagnostic plots.
+co-variate, posterior and diagnostic plots.
 }
 \details{
 If \code{type=="covariates"}, the resulting plot will be a ggpairs plot.
@@ -96,7 +96,7 @@ gives a more visulally appealing output.
 
 \donttest{
 require(graphics)
-# First we generate a covariate matrix and binary response vector
+# First we generate a co-variate matrix and binary response vector
 CM <- matrix(rnorm(200),100,2)
 rv <- sample(0:1,100,replace=TRUE)
 
@@ -124,7 +124,7 @@ plot(UN.maxreg,type = "diagnostics",diagnostic_x_axis = "minimal")
 plot(UN.validation,type = "diagnostics",diagnostic_x_axis = "minimal")
 plot(UN.balanced,type = "diagnostics",diagnostic_x_axis = "minimal")
 
-# If we only wanted to view the second covariate
+# If we only wanted to view the second co-variate
 plot(UN.none,type = "covariates",plot_var=2)
 plot(UN.none,type = "fitted",plot_var=2)
 plot(UN.none,type = "samples",plot_var=2)

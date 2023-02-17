@@ -5,7 +5,7 @@ Version: 1.0.0
 Author: Samuel R. Emerson
 Maintainer: Samuel R. Emerson <samuel.emerson@hotmail.co.uk>
 Description: Model data with a suspected clustering structure (either in 
-    covariate space, regression space or both) using a Bayesian product model 
+    co-variate space, regression space or both) using a Bayesian product model 
     with a logistic regression likelihood. Observations are represented 
     graphically and clusters are formed through various edge removals or 
     additions. Cluster quality is assessed through the log Bayesian evidence of 

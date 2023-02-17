@@ -18,7 +18,7 @@
 ##' @export
 ##' @name UNCOVER
 ##' @description Generates cohorts for a data set through removal of edges from
-##' a graphical representation of the covariates. Edges are removed (or
+##' a graphical representation of the co-variates. Edges are removed (or
 ##' reintroduced) by considering the normalisation constant (or Bayesian
 ##' evidence) of a multiplicative Bayesian logistic regression model.
 ##'
@@ -28,9 +28,9 @@
 ##' expressed by the user through reintroduction of edges.
 ##'
 ##' @keywords graph cohort cluster Bayesian evidence
-##' @param X Covariate matrix
+##' @param X Co-variate matrix
 ##' @param y Binary response vector
-##' @param mst_var A vector specifying which variables of the covariate matrix
+##' @param mst_var A vector specifying which variables of the co-variate matrix
 ##' will be used to form the graph. If not specified all variables will be used.
 ##' @param options Additional arguments that can be specified for `UNCOVER`.
 ##' See [UNCOVER.opts()] for details. Can be ignored.
@@ -48,10 +48,10 @@
 ##' @return An object of class `"UNCOVER"`, which is a list consisting of:
 ##'
 ##' \describe{
-##' \item{`Covariate_Matrix`}{The covariance matrix provided.}
+##' \item{`Covariate_Matrix`}{The co-variate matrix provided.}
 ##' \item{`Response_Vector`}{The binary response vector provided.}
 ##' \item{`Minimum_Spanning_Tree_Variables`}{A vector of indices for the
-##' covariates used to construct the minimum spanning tree.}
+##' co-variates used to construct the minimum spanning tree.}
 ##' \item{`Control`}{A list of the additional arguments specified by `options`.}
 ##' \item{`Deforestation_Criterion`}{The deforestation criterion specified.}
 ##' \item{`Prior_Mean`}{The mean of multivariate normal prior. Meaningless if
@@ -75,7 +75,7 @@
 ##' the overall model being a product of these sub-models.
 ##'
 ##' A minimum spanning tree graph is first constructed from a subset of the
-##' covariates. Then at each iteration, each edge in the current graph is
+##' co-variates. Then at each iteration, each edge in the current graph is
 ##' checked to see if removal to split a cohort is beneficial, and then either
 ##' we selected the optimal edge to remove or we conclude it is not beneficial
 ##' to remove any more edges. At the end of each iteration we also check the set
@@ -141,7 +141,7 @@
 ##' @examples
 ##'
 ##' \donttest{
-##' # First we generate a covariate matrix and binary response vector
+##' # First we generate a co-variate matrix and binary response vector
 ##' CM <- matrix(rnorm(200),100,2)
 ##' rv <- sample(0:1,100,replace=TRUE)
 ##'
@@ -230,12 +230,7 @@
 ##' system.time(UNCOVER(X = CM,y = rv,stop_criterion = 6,verbose = FALSE))
 ##' }
 ##'
-##' # Quick example for CRAN
-##'
-##' CM <- matrix(rnorm(200),100,2)
-##' rv <- sample(0:1,100,replace=TRUE)
-##' UNCOVER(X = CM,y = rv, deforest_criterion = "None", verbose = FALSE)
-##'
+
 
 
 UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
@@ -806,7 +801,7 @@ print.UNCOVER <- function(x,...){
 ##' @examples
 ##'
 ##' \donttest{
-##' # First we generate a covariate matrix and binary response vector
+##' # First we generate a co-variate matrix and binary response vector
 ##' CM <- data.frame(X1 = rnorm(100),X2 = rnorm(100))
 ##' rv <- sample(0:1,100,replace=TRUE)
 ##'
@@ -821,13 +816,6 @@ print.UNCOVER <- function(x,...){
 ##' CM.2 <- data.frame(X1 = rnorm(10),X2 = rnorm(10))
 ##' cbind(CM.2,predict(UN.none,newX = CM.2))
 ##' }
-##'
-##' # Quick example for CRAN
-##'
-##' CM <- matrix(rnorm(200),100,2)
-##' rv <- sample(0:1,100,replace=TRUE)
-##' out <- UNCOVER(X = CM,y = rv, deforest_criterion = "None", verbose = FALSE)
-##' predict(out)
 ##'
 
 predict.UNCOVER <- function(object,newX=NULL,type="prob",...){
@@ -864,17 +852,17 @@ predict.UNCOVER <- function(object,newX=NULL,type="prob",...){
 ##' @export
 ##' @name plot.UNCOVER
 ##' @description Allows visualisation of many aspects of UNCOVER, including
-##' covariate, posterior and diagnostic plots.
+##' co-variate, posterior and diagnostic plots.
 ##'
 ##' @keywords plot UNCOVER
 ##' @param x Object of class `"UNCOVER"`
 ##' @param type Can be one of; `"covariates"` for cluster assignment
-##' visualisation for the covariates, `"fitted"` for covariate visualisation
+##' visualisation for the co-variates, `"fitted"` for co-variate visualisation
 ##' with respect to their fitted values, `"samples"` for posterior visualisation
 ##' or `"diagnostics"` for diagnostic plots. See details. Defaults to
 ##' `"covariates"`.
 ##' @param plot_var Vector specifying which columns (or associated logistic
-##' regression coefficients) of the covariate matrix should be plotted. Does not
+##' regression coefficients) of the co-variate matrix should be plotted. Does not
 ##' apply when `type=="diagnostics"`. Defaults to all columns being selected.
 ##' @param diagnostic_x_axis Only applies if `"type=="diagnostics"`. Either
 ##' `"full"` (default) for all observations indices to be plotted on the x-axis
@@ -941,7 +929,7 @@ predict.UNCOVER <- function(object,newX=NULL,type="prob",...){
 ##'
 ##' \donttest{
 ##' require(graphics)
-##' # First we generate a covariate matrix and binary response vector
+##' # First we generate a co-variate matrix and binary response vector
 ##' CM <- matrix(rnorm(200),100,2)
 ##' rv <- sample(0:1,100,replace=TRUE)
 ##'
@@ -969,7 +957,7 @@ predict.UNCOVER <- function(object,newX=NULL,type="prob",...){
 ##' plot(UN.validation,type = "diagnostics",diagnostic_x_axis = "minimal")
 ##' plot(UN.balanced,type = "diagnostics",diagnostic_x_axis = "minimal")
 ##'
-##' # If we only wanted to view the second covariate
+##' # If we only wanted to view the second co-variate
 ##' plot(UN.none,type = "covariates",plot_var=2)
 ##' plot(UN.none,type = "fitted",plot_var=2)
 ##' plot(UN.none,type = "samples",plot_var=2)
@@ -984,7 +972,7 @@ plot.UNCOVER <- function(x,type = "covariates",
     stop("diagnostic_x_axis must be either full or minimal")
   }
   if(any(is.na(match(plot_var,1:ncol(x$Covariate_Matrix))))){
-    stop("cannot subset the covariate matrix with plot_var provided")
+    stop("cannot subset the co-variate matrix with plot_var provided")
   }
   if(type!="covariates" & type!="fitted" & type!="samples" & type!="diagnostics"){
     stop("type not supported")
@@ -1459,7 +1447,7 @@ plot.UNCOVER <- function(x,type = "covariates",
 ##'                  dprior = dmviu,a=rep(0,3),b=rep(1,3))
 ##'
 ##' \donttest{
-##' # If we generate a covariate matrix and binary response vector
+##' # If we generate a co-variate matrix and binary response vector
 ##' CM <- matrix(rnorm(200),100,2)
 ##' rv <- sample(0:1,100,replace=TRUE)
 ##'

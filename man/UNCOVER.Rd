@@ -17,11 +17,11 @@ UNCOVER(
 )
 }
 \arguments{
-\item{X}{Covariate matrix}
+\item{X}{Co-variate matrix}
 
 \item{y}{Binary response vector}
 
-\item{mst_var}{A vector specifying which variables of the covariate matrix
+\item{mst_var}{A vector specifying which variables of the co-variate matrix
 will be used to form the graph. If not specified all variables will be used.}
 
 \item{options}{Additional arguments that can be specified for \code{UNCOVER}.
@@ -47,10 +47,10 @@ Defaults to \code{TRUE}.}
 An object of class \code{"UNCOVER"}, which is a list consisting of:
 
 \describe{
-\item{\code{Covariate_Matrix}}{The covariance matrix provided.}
+\item{\code{Covariate_Matrix}}{The co-variate matrix provided.}
 \item{\code{Response_Vector}}{The binary response vector provided.}
 \item{\code{Minimum_Spanning_Tree_Variables}}{A vector of indices for the
-covariates used to construct the minimum spanning tree.}
+co-variates used to construct the minimum spanning tree.}
 \item{\code{Control}}{A list of the additional arguments specified by \code{options}.}
 \item{\code{Deforestation_Criterion}}{The deforestation criterion specified.}
 \item{\code{Prior_Mean}}{The mean of multivariate normal prior. Meaningless if
@@ -72,7 +72,7 @@ list.
 }
 \description{
 Generates cohorts for a data set through removal of edges from
-a graphical representation of the covariates. Edges are removed (or
+a graphical representation of the co-variates. Edges are removed (or
 reintroduced) by considering the normalisation constant (or Bayesian
 evidence) of a multiplicative Bayesian logistic regression model.
 
@@ -86,7 +86,7 @@ Assumes a Bayesian logistic regression model for each cohort, with
 the overall model being a product of these sub-models.
 
 A minimum spanning tree graph is first constructed from a subset of the
-covariates. Then at each iteration, each edge in the current graph is
+co-variates. Then at each iteration, each edge in the current graph is
 checked to see if removal to split a cohort is beneficial, and then either
 we selected the optimal edge to remove or we conclude it is not beneficial
 to remove any more edges. At the end of each iteration we also check the set
@@ -147,7 +147,7 @@ clusters alongside the number of criterion breaking clusters.
 \examples{
 
 \donttest{
-# First we generate a covariate matrix and binary response vector
+# First we generate a co-variate matrix and binary response vector
 CM <- matrix(rnorm(200),100,2)
 rv <- sample(0:1,100,replace=TRUE)
 
@@ -235,12 +235,6 @@ c(sum(UN.none$Model$Log_Marginal_Likelihoods),
 system.time(UNCOVER(X = CM,y = rv,stop_criterion = 4,verbose = FALSE))
 system.time(UNCOVER(X = CM,y = rv,stop_criterion = 6,verbose = FALSE))
 }
-
-# Quick example for CRAN
-
-CM <- matrix(rnorm(200),100,2)
-rv <- sample(0:1,100,replace=TRUE)
-UNCOVER(X = CM,y = rv, deforest_criterion = "None", verbose = FALSE)
 
 }
 \references{

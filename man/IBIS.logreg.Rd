@@ -13,7 +13,7 @@ IBIS.logreg(
 )
 }
 \arguments{
-\item{X}{Covariance matrix}
+\item{X}{Co-variate matrix}
 
 \item{y}{Binary response vector}
 
@@ -30,7 +30,7 @@ the SMC sampler. See details. Defaults to the identity matrix.}
 An object of class \code{"IBIS"}, which is a list consisting of:
 
 \describe{
-\item{\code{covariate_matrix}}{The covariance matrix provided.}
+\item{\code{covariate_matrix}}{The co-variate matrix provided.}
 \item{\code{response_vector}}{The binary response vector provided.}
 \item{\code{samples}}{A matrix of samples from the posterior.}
 \item{\code{log_Bayesian_evidence}}{An estimate of the log Bayesian evidence (or
@@ -66,7 +66,7 @@ in \code{IBIS.logreg.opts}.
 
 \donttest{
 require(graphics)
-# First we generate a covariate matrix X and binary response vector y
+# First we generate a co-variate matrix X and binary response vector y
 CM <- matrix(rnorm(200),100,2)
 rv <- sample(0:1,100,replace=TRUE)
 
@@ -131,12 +131,6 @@ GGally::ggpairs(samp.df,
                 lower = list(continuous = GGally::wrap("points",size=0.5)))
 out.4$log_Bayesian_evidence
 }
-
-# Quick example for CRAN
-
-CM <- matrix(rnorm(200),100,2)
-rv <- sample(0:1,100,replace=TRUE)
-IBIS.logreg(X = CM,y = rv,options = IBIS.logreg.opts(weighted = TRUE))
 
 }
 \references{

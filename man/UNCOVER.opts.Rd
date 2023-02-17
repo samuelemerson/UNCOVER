@@ -183,7 +183,7 @@ UNCOVER.opts(prior.override = TRUE,rprior = rmviu,
                  dprior = dmviu,a=rep(0,3),b=rep(1,3))
 
 \donttest{
-# If we generate a covariate matrix and binary response vector
+# If we generate a co-variate matrix and binary response vector
 CM <- matrix(rnorm(200),100,2)
 rv <- sample(0:1,100,replace=TRUE)
 

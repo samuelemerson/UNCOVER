@@ -10,11 +10,11 @@
 \item{x}{Object of class \code{"IBIS"}}
 
 \item{type}{Can be one of; \code{"samples"} for posterior visualisation,
-\code{"fitted"} for covariate visualisation or \code{"diagnostics"} for diagnostic
+\code{"fitted"} for co-variate visualisation or \code{"diagnostics"} for diagnostic
 plots. See details. Defaults to \code{"samples"}.}
 
 \item{plot_var}{Vector specifying which columns (or associated logistic
-regression coefficients) of the covariate matrix should be plotted. Does not
+regression coefficients) of the co-variate matrix should be plotted. Does not
 apply when \code{type=="diagnostics"}. Defaults to all columns being selected.}
 
 \item{diagnostic_x_axis}{Only applies if \verb{"type=="diagnostics"}. Either
@@ -26,7 +26,7 @@ x-axis.}
 }
 \description{
 Allows visualisation of many aspects of IBIS, including
-covariate, posterior and diagnostic plots.
+co-variate, posterior and diagnostic plots.
 }
 \details{
 If \code{type=="samples"}, the resulting plot will be a ggpairs plot
@@ -40,7 +40,7 @@ to have response 0 by the model (red) and one for training data predicted
 to have response 1 by the model (green). The off-diagonal elements are
 scatter-plots of the observations, given a label according to their actual
 response and a colour scale based on their predicted response. If
-\code{length(plot_var)==1} then the covariate variable is plotted against it's
+\code{length(plot_var)==1} then the co-variate variable is plotted against it's
 index and a density plot is not provided. If \code{length(plot_var)==1} then the
 density plot and the scatter-plot are combined. If a predicted class (0 or
 \enumerate{
@@ -66,7 +66,7 @@ more visulally appealing output.
 
 \donttest{
 require(graphics)
-# First we generate a covariate matrix X and binary response vector y
+# First we generate a co-variate matrix X and binary response vector y
 CM <- matrix(rnorm(200),100,2)
 rv <- sample(0:1,100,replace=TRUE)
 
@@ -77,7 +77,7 @@ plot(out,type = "samples")
 plot(out,type = "fitted")
 plot(out,type = "diagnostics",diagnostic_x_axis = "minimal")
 
-# If we only wanted to view the second covariate
+# If we only wanted to view the second co-variate
 plot(out,type = "samples",plot_var = 2)
 plot(out,type = "fitted",plot_var = 2)
 }

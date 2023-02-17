@@ -32,7 +32,7 @@ class \code{"IBIS"} will provide samples from a posterior.
 \examples{
 
 \donttest{
-# First we generate a covariate matrix X and binary response vector y
+# First we generate a co-variate matrix X and binary response vector y
 CM <- data.frame(X1 = rnorm(100),X2 = rnorm(100))
 rv <- sample(0:1,100,replace=TRUE)
 
@@ -48,13 +48,6 @@ predict(out,type = "response")
 CM.2 <- data.frame(X1 = rnorm(10),X2 = rnorm(10))
 cbind(CM.2,predict(out,newX = CM.2))
 }
-
-# Quick example for CRAN
-
-CM <- matrix(rnorm(200),100,2)
-rv <- sample(0:1,100,replace=TRUE)
-out <- IBIS.logreg(X = CM,y = rv,options = IBIS.logreg.opts(weighted=TRUE))
-predict(out)
 
 }
 \seealso{

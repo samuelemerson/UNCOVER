@@ -35,7 +35,7 @@ more details.
 \examples{
 
 \donttest{
-# First we generate a covariate matrix and binary response vector
+# First we generate a co-variate matrix and binary response vector
 CM <- data.frame(X1 = rnorm(100),X2 = rnorm(100))
 rv <- sample(0:1,100,replace=TRUE)
 
@@ -50,13 +50,6 @@ predict(UN.none,type = "response")
 CM.2 <- data.frame(X1 = rnorm(10),X2 = rnorm(10))
 cbind(CM.2,predict(UN.none,newX = CM.2))
 }
-
-# Quick example for CRAN
-
-CM <- matrix(rnorm(200),100,2)
-rv <- sample(0:1,100,replace=TRUE)
-out <- UNCOVER(X = CM,y = rv, deforest_criterion = "None", verbose = FALSE)
-predict(out)
 
 }
 \seealso{
