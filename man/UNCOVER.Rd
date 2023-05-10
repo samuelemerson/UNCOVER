@@ -31,7 +31,7 @@ See \code{\link[=UNCOVER.opts]{UNCOVER.opts()}} for details. Can be ignored.}
 we terminate the first stage and begin deforestation. Defaults to 5.}
 
 \item{deforest_criterion}{Constraint type which the final model must satisfy.
-Can be one of \code{"NoC"}, \code{"SoC"}, \code{"MaxReg"}, \code{"Validation"}, \code{"Balanced"} or
+Can be one of \code{"NoC"}, \code{"SoC"}, \code{"MaxReg"}, \code{"Validation"}, \code{"Diverse"} or
 \code{"None"}. See details. Defaults to \code{"None"}.}
 
 \item{prior_mean}{Mean for the multivariate normal prior used in the SMC
@@ -113,7 +113,7 @@ first stage of the algorithm on the training data and the introduce the
 validation data for the deforestation stage. Edges are reintroduced if they
 lead to improved prediction of the validation data using the training data
 model (i.e. we aim to maximise a robustness statistic).
-\item \code{"Balanced"}: Balanced Response Class Within Clusters - We specify a
+\item \code{"Diverse"}: Diverse Response Class Within Clusters - We specify a
 minimum number of observations (\code{options$n_min_class}) in a cluster that
 have the minority response class associated to them (the minimum response
 class is determined for each cluster).
@@ -141,7 +141,7 @@ action (for \code{"Validation"} this will be two columns, one for the training
 data and one for all of the data). \code{"NoC"} will also track the number of
 clusters, \code{"SoC"} will track the minimum cluster size and the number of
 criterion breaking clusters, \code{"Validation"} will track the robustness
-statistic and "\verb{Balanced"} will track the minimum minority class across all
+statistic and "\verb{Diverse"} will track the minimum minority class across all
 clusters alongside the number of criterion breaking clusters.
 }
 \examples{
@@ -164,7 +164,7 @@ UN.maxreg <- UNCOVER(X = CM,y = rv, deforest_criterion = "MaxReg",
 UN.validation <- UNCOVER(X = CM,y = rv, deforest_criterion = "Validation",
                          options = UNCOVER.opts(train_frac = 0.8),
                          verbose = FALSE)
-UN.balanced <- UNCOVER(X = CM,y = rv, deforest_criterion = "Balanced",
+UN.diverse <- UNCOVER(X = CM,y = rv, deforest_criterion = "Diverse",
                        options = UNCOVER.opts(n_min_class = 2),
                        verbose = FALSE)
 clu_al_mat <- rbind(UN.none$Model$Cluster_Allocation,
@@ -172,7 +172,7 @@ clu_al_mat <- rbind(UN.none$Model$Cluster_Allocation,
                     UN.soc$Model$Cluster_Allocation,
                     UN.maxreg$Model$Cluster_Allocation,
                     UN.validation$Model$All_Data$Cluster_Allocation,
-                    UN.balanced$Model$Cluster_Allocation)
+                    UN.diverse$Model$Cluster_Allocation)
 # We can create a matrix where each entry shows in how many of the methods
 # did the indexed observations belong to the same cluster
 obs_con_mat <- matrix(0,100,100)
@@ -191,7 +191,7 @@ c(sum(UN.none$Model$Log_Marginal_Likelihoods),
   sum(UN.soc$Model$Log_Marginal_Likelihoods),
   sum(UN.maxreg$Model$Log_Marginal_Likelihoods),
   sum(UN.validation$Model$All_Data$Log_Marginal_Likelihoods),
-  sum(UN.balanced$Model$Log_Marginal_Likelihoods))
+  sum(UN.diverse$Model$Log_Marginal_Likelihoods))
 
 # If we don't assume the prior for the regression coefficients is a
 # standard multivariate normal but instead a multivariate normal with

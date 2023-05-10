@@ -1,7 +1,7 @@
 deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
                          est_thres=30,mtb = Inf,mts = Inf,par_no=1000,rfun=NULL,
                          pdf_fun=NULL,efsamp = par_no/2,methas = 1,vb = FALSE,
-                         cb,cs,PA,diagnostics = FALSE,Tr=NULL,SMC_f,BIC_f){
+                         cb,cs,PA,diagnostics = FALSE,Tr=NULL,SMC_f,BIC_f,rt = 30){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -24,7 +24,7 @@ deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
                                p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
                                efs = efsamp,nm = methas,cache_bic = cb,
                                cache_smc = cs,MA = PA,SMC_fun = SMC_f,
-                               BIC_fun = BIC_f))
+                               BIC_fun = BIC_f, ribis_thres = rt))
     }
     if(vb){
       utils::txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
@@ -81,7 +81,8 @@ deforest.noc <- function(obs,res,gra,lbe,eps,K_dag,clu_al=NULL,c_s=NULL,
 deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
                          est_thres=30,mtb = Inf,mts = Inf,par_no=1000,rfun=NULL,
                          pdf_fun=NULL,efsamp = par_no/2,methas = 1,vb = FALSE,
-                         cb,cs,PA,diagnostics=FALSE,Tr=NULL,SMC_f,BIC_f){
+                         cb,cs,PA,diagnostics=FALSE,Tr=NULL,SMC_f,BIC_f,
+                         rt = 30){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -104,7 +105,7 @@ deforest.soc <- function(obs,res,gra,lbe,eps,n_dag,clu_al=NULL,c_s=NULL,
                                p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
                                efs = efsamp,nm = methas,cache_bic = cb,
                                cache_smc = cs,MA = PA,SMC_fun = SMC_f,
-                               BIC_fun = BIC_f))
+                               BIC_fun = BIC_f, ribis_thres = rt))
     }
     if(vb){
       utils::txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
@@ -168,7 +169,7 @@ deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,
                             est_thres=30,mtb = Inf,mts = Inf,par_no=1000,
                             rfun=NULL,pdf_fun=NULL,efsamp = par_no/2,methas = 1,
                             vb = FALSE,cb,cs,PA,diagnostics=FALSE,Tr=NULL,
-                            SMC_f,BIC_f){
+                            SMC_f,BIC_f,rt = 30){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -191,7 +192,7 @@ deforest.maxreg <- function(obs,res,gra,lbe,eps,tau,clu_al=NULL,c_s=NULL,
                                p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
                                efs = efsamp,nm = methas,cache_bic = cb,
                                cache_smc = cs,MA = PA,SMC_fun = SMC_f,
-                               BIC_fun = BIC_f))
+                               BIC_fun = BIC_f,ribis_thres = rt))
     }
     if(vb){
       utils::txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
@@ -250,7 +251,7 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
                                 c_s=NULL,est_thres=30,mtb=Inf,mts=Inf,
                                 par_no=1000,rfun,pdf_fun,efsamp=par_no/2,
                                 methas=1,vb=FALSE,cb,cs,PA,diagnostics=FALSE,
-                                Tr=NULL,SMC_f,BIC_f){
+                                Tr=NULL,SMC_f,BIC_f,rt=30){
   if(diagnostics){
     if(is.null(Tr)){
       stop("If diagnostics=TRUE then Tr needs to be specified")
@@ -282,7 +283,7 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
                           memo_thres_smc = mts,p_num = par_no,rpri = rfun,
                           p_pdf = pdf_fun,efs = efsamp,nm = methas,
                           cache_bic = cb,cache_smc = cs,MA = PA,SMC_fun = SMC_f,
-                          BIC_fun = BIC_f)
+                          BIC_fun = BIC_f,ribis_thres = rt)
   }
   RobS <- sum(lbe_all-lbe)
   if(diagnostics){
@@ -304,7 +305,7 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
                                p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
                                efs = efsamp,nm = methas,cache_bic = cb,
                                cache_smc = cs,MA = PA,SMC_fun = SMC_f,
-                               BIC_fun = BIC_f))
+                               BIC_fun = BIC_f,ribis_thres = rt))
     }
     if(!identical(c_s_all[[j]][[1]],which(clu_al_all==edge_clu_al[1]| clu_al_all==edge_clu_al[2]))){
       c_s_all[[j]] <- list(which(clu_al_all==edge_clu_al[1]| clu_al_all==edge_clu_al[2]),
@@ -315,7 +316,7 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
                                    p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
                                    efs = efsamp,nm = methas,cache_bic = cb,
                                    cache_smc = cs,MA = PA,SMC_fun = SMC_f,
-                                   BIC_fun = BIC_f))
+                                   BIC_fun = BIC_f,ribis_thres = rt))
     }
     if(vb){
       utils::txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
@@ -389,11 +390,11 @@ deforest.validation <- function(obs,obs_all,res,res_all,gra,lbe,eps,
               All_Data = AD))
 }
 
-deforest.balanced <- function(obs,res,gra,lbe,eps,ups,clu_al=NULL,c_s=NULL,
+deforest.diverse <- function(obs,res,gra,lbe,eps,ups,clu_al=NULL,c_s=NULL,
                               est_thres=30,mtb = Inf,mts = Inf,par_no=1000,
                               rfun=NULL,pdf_fun=NULL,efsamp=par_no/2,methas=1,
                               vb = FALSE,cb,cs,PA,diagnostics=FALSE,Tr=NULL,
-                              SMC_f,BIC_f){
+                              SMC_f,BIC_f,rt=30){
   K <- igraph::count_components(gra)
   if(is.null(clu_al)){
     clu_al <- igraph::components(gra)$membership
@@ -416,7 +417,7 @@ deforest.balanced <- function(obs,res,gra,lbe,eps,ups,clu_al=NULL,c_s=NULL,
                                p_num = par_no,rpri = rfun,p_pdf = pdf_fun,
                                efs = efsamp,nm = methas,cache_bic = cb,
                                cache_smc = cs,MA = PA,SMC_fun = SMC_f,
-                               BIC_fun = BIC_f))
+                               BIC_fun = BIC_f,ribis_thres = rt))
     }
     if(vb){
       utils::txtProgressBar(min=1,max=nrow(eps)+1,initial=j+1,style=3)
@@ -425,16 +426,16 @@ deforest.balanced <- function(obs,res,gra,lbe,eps,ups,clu_al=NULL,c_s=NULL,
       lbe_comb.1 <- sapply(c_s,FUN = function(u){u[[2]]})
       lbe_comb.2 <- apply(eps,MARGIN = 1,FUN = function(u,lZ,ca,cg){sum(lZ[-ca[match(u,igraph::V(cg)$name)]])},lZ = lbe, ca = clu_al,cg = gra)
       lbe_comb <- lbe_comb.1 + lbe_comb.2
-      unbal_clu <- c()
+      undiv_clu <- c()
       for(k in 1:K){
         if(any(table(factor(res[which(clu_al==k)],levels = 0:1))<ups)){
-          unbal_clu <- c(unbal_clu,k)
+          undiv_clu <- c(undiv_clu,k)
         }
       }
-      unbal_bool <- apply(eps,MARGIN = 1,FUN = function(u,ca,uc,cg){ca[match(u,igraph::V(cg)$name)[1]]%in%uc | ca[match(u,igraph::V(cg)$name)[2]]%in%uc},ca=clu_al,uc=unbal_clu,cg=gra)
-      unbal_bool <- unbal_bool | lbe_comb>sum(lbe)
-      if(any(unbal_bool)){
-        lbe_comb[which(!unbal_bool)] <- -Inf
+      undiv_bool <- apply(eps,MARGIN = 1,FUN = function(u,ca,uc,cg){ca[match(u,igraph::V(cg)$name)[1]]%in%uc | ca[match(u,igraph::V(cg)$name)[2]]%in%uc},ca=clu_al,uc=undiv_clu,cg=gra)
+      undiv_bool <- undiv_bool | lbe_comb>sum(lbe)
+      if(any(undiv_bool)){
+        lbe_comb[which(!undiv_bool)] <- -Inf
         cut_comb <- which.max(lbe_comb)
         edge_clu_al <- sort(clu_al[match(eps[cut_comb,],igraph::V(gra)$name)])
         if(vb){
@@ -449,8 +450,8 @@ deforest.balanced <- function(obs,res,gra,lbe,eps,ups,clu_al=NULL,c_s=NULL,
         lbe <- lbe[-edge_clu_al[2]]
         gra <- igraph::add_edges(gra,eps[cut_comb,])
         if(diagnostics){
-          sap_bal <- sapply(1:(K-1),FUN = function(u,y,z){min(table(factor(y[which(z==u)],levels=0:1)))},y=res,z=clu_al)
-          Tr <- rbind(Tr,c(paste0("Def.Add.",eps[cut_comb,1],"-",eps[cut_comb,2]),sum(lbe),min(sap_bal),sum(sap_bal<ups)))
+          sap_div <- sapply(1:(K-1),FUN = function(u,y,z){min(table(factor(y[which(z==u)],levels=0:1)))},y=res,z=clu_al)
+          Tr <- rbind(Tr,c(paste0("Def.Add.",eps[cut_comb,1],"-",eps[cut_comb,2]),sum(lbe),min(sap_div),sum(sap_div<ups)))
         }
         eps <- eps[-cut_comb,,drop=FALSE]
         c_s[[cut_comb]] <- c()

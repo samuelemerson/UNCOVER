@@ -6,18 +6,8 @@ IBIS.Z <- function(X,y,sampl=NULL,rprior=NULL,N=NULL,prior_pdf,
   }
   if(length(target_set)>length(current_set)){
     reverse <- FALSE
-    if(length(current_set)!=0){
-      if(sum(sort(target_set)[1:length(current_set)]-sort(current_set))!=0){
-        stop("For standard IBIS current_set must be a subset of target_set")
-      }
-    }
   } else{
     reverse <- TRUE
-    if(length(target_set)!=0){
-      if(sum(sort(current_set)[1:length(target_set)]-sort(target_set))!=0){
-        stop("For reverse IBIS target_set must be a subset of current_set")
-      }
-    }
     if(!identical(sampl$weights,rep(1,length(sampl$weights)))){
       N <- nrow(sampl$samples)
       p <- ncol(sampl$samples)
@@ -225,30 +215,38 @@ memo.bic <- function(X,y,which_obs=1:length(y),param_start=NULL){
 lbe.gen <- function(obs_mat,res_vec,obs_ind = 1:length(res_vec),thres=30,
                     memo_thres_bic = Inf,memo_thres_smc = Inf,p_num=1000,rpri,
                     p_pdf,efs = p_num/2,nm = 1,cache_bic,cache_smc,MA,SMC_fun,
-                    BIC_fun){
-  cache_search_fun <- function(u,cs,oi){
+                    BIC_fun,ribis_thres=30){
+  cache_search_fun_bic <- function(u,cs,oi){
+    c_ind <- cs$get(u)$value$input
+    return(length(setdiff(oi,c_ind)) + length(setdiff(c_ind,oi)))
+  }
+  cache_search_fun_smc <- function(u,cs,oi,rt){
     c_ind <- cs$get(u)$value$input
     lci <- length(c_ind)
-    loi <- length(obs_ind)
+    loi <- length(oi)
     if(lci==loi){
-      if(sum(c_ind - obs_ind)==0){
+      if(sum(c_ind - oi)==0){
         return(lci-loi)
       } else{
         return(Inf)
       }
     }
     if(lci<loi){
-      if(sum(c_ind - obs_ind[1:lci])==0){
+      if(all(c_ind%in%oi)){
         return(loi-lci)
       } else{
         return(Inf)
       }
     }
     if(lci>loi){
-      if(sum(c_ind[1:loi] - obs_ind)==0){
-        return(lci-loi)
-      } else{
+      if((lci-loi >= loi) | (loi < rt)){
         return(Inf)
+      } else{
+        if(all(oi%in%c_ind)){
+          return(lci-loi)
+        } else{
+          return(Inf)
+        }
       }
     }
   }
@@ -258,7 +256,7 @@ lbe.gen <- function(obs_mat,res_vec,obs_ind = 1:length(res_vec),thres=30,
       logZ <- tryCatch(BIC_fun(X = obs_mat, y = res_vec,which_obs = obs_ind)$logZ,
                        warning=function(...)TRUE)
     } else{
-      sub_size <- sapply(cache_bic$keys(),FUN = cache_search_fun,cs = cache_bic,
+      sub_size <- sapply(cache_bic$keys(),FUN = cache_search_fun_bic,cs = cache_bic,
                          oi = obs_ind)
       if(min(sub_size)==0 | min(sub_size)==Inf){
         logZ <- tryCatch(BIC_fun(X = obs_mat, y = res_vec, which_obs = obs_ind)$logZ,
@@ -278,8 +276,8 @@ lbe.gen <- function(obs_mat,res_vec,obs_ind = 1:length(res_vec),thres=30,
                      target_set = obs_ind,ess = efs,n_move = nm,
                      PriorArgs = MA)$output$log_Bayesian_evidence
     } else{
-      sub_size <- sapply(cache_smc$keys(),FUN = cache_search_fun,cs = cache_smc,
-                         oi = obs_ind)
+      sub_size <- sapply(cache_smc$keys(),FUN = cache_search_fun_smc,cs = cache_smc,
+                         oi = obs_ind,rt = ribis_thres)
       if(min(sub_size)==0 | min(sub_size)==Inf){
         logZ <- SMC_fun(X = cbind(rep(1,nrow(obs_mat)),obs_mat),y = res_vec,
                        rprior = rpri,N = p_num,prior_pdf = p_pdf,

@@ -45,7 +45,11 @@ UNCOVER.assign <- function(x,nX){
       return(sample(nns,1))
     }
   }
-  n.assign <- apply(conn[(nrow(x$Covariate_Matrix)+1):nrow(conn),1:nrow(x$Covariate_Matrix)],1,nn)
+  if(nrow(nX)==1){
+    n.assign <- nn(conn[(nrow(x$Covariate_Matrix)+1):nrow(conn),1:nrow(x$Covariate_Matrix)])
+  } else{
+    n.assign <- apply(conn[(nrow(x$Covariate_Matrix)+1):nrow(conn),1:nrow(x$Covariate_Matrix)],1,nn)
+  }
   c.assign <- x$Model$Cluster_Allocation[n.assign]
   return(c.assign)
 }

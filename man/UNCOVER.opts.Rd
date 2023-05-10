@@ -20,6 +20,7 @@ UNCOVER.opts(
   rprior = NULL,
   dprior = NULL,
   diagnostics = TRUE,
+  RIBIS_thres = 30,
   BIC_cache = cachem::cache_mem(max_size = 1024 * 1024^2, evict = "lru"),
   SMC_cache = cachem::cache_mem(max_size = 1024 * 1024^2, evict = "lru"),
   ...
@@ -47,7 +48,7 @@ positive. Should only be directly specified if
 \item{n_min_class}{Each cluster will have an associated minority class.
 \code{n_min_class} specifies a minimum number of observations that should have
 that class for each and every cluster. Should only be directly specified if
-\verb{deforest_criterion == "Balanced}. Defaults to 0.}
+\verb{deforest_criterion == "Diverse}. Defaults to 0.}
 
 \item{SMC_thres}{The threshold for which the number of observations needs to
 exceed to consider using BIC as an estimator. Defaults to 30 if not
@@ -83,6 +84,10 @@ default prior form this does not need to be specified.}
 
 \item{diagnostics}{Should diagnostic data be recorded and outputted?
 Defaults to \code{TRUE}.}
+
+\item{RIBIS_thres}{The threshold for which the number of observations needs
+to exceed to consider ever using RIBIS as an estimator. Defaults to 30 if
+not specified. See details.}
 
 \item{BIC_cache}{The cache for the function which estimates the log Bayesian
 evidence using BIC. Defaults to a cache with standard size and least
@@ -120,6 +125,7 @@ inputted samples. \code{NULL} if \code{prior.override==FALSE}.}
 overridden or not}
 \item{\code{diagnostics}}{Logical value indicating whether diagnostic information
 should be included in the output of \code{UNCOVER}}
+\item{\code{RIBIS_thres}}{The threshold for allowing the use of RIBIS}
 \item{\code{BIC_cache}}{Cache for the memoised function which estimates the log
 Bayesian evidence using BIC}
 \item{\code{SMC_cache}}{Cache for the memoised function which estimates the log
@@ -159,6 +165,10 @@ cluster sizes are extremely large, for example containing a million
 observations). \code{SMC_memo_thres} can be much lower as the SMC sampler is a
 much more expensive function to run. See Emerson and Aslett (2023) for more
 details.
+
+\code{RIBIS_thres} can be specified to have a higher value to ensure that the
+asymptotic properties which Reverse Iterated Batch Importance Sampling
+(RIBIS) relies upon hold. See Emerson and Aslett (2023) for more details.
 
 Specifying \code{rprior} and \code{dprior} will not override the default prior form
 unless \code{prior.override=TRUE}. If a multivariate normal form is required then

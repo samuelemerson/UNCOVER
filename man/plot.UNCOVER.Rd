@@ -81,7 +81,7 @@ the logarithm of the maximum tolerance provided.}
 \item{\code{"Validation"}}{A plot tracking the overall log Bayesian evidence
 after every action (for both the training data and all of the data) and a
 plot tracking the robustness statistic after every deforestation action.}
-\item{\code{"Balanced"}}{Three plots; one tracking the overall log Bayesian
+\item{\code{"Diverse"}}{Three plots; one tracking the overall log Bayesian
 evidence after every action, one tracking the number of criterion breaking
 clusters after every action and one tracking the minimum minority class
 across clusters after every action.}
@@ -115,7 +115,7 @@ UN.maxreg <- UNCOVER(X = CM,y = rv, deforest_criterion = "MaxReg",
 UN.validation <- UNCOVER(X = CM,y = rv, deforest_criterion = "Validation",
                          options = UNCOVER.opts(train_frac = 0.8),
                          verbose = FALSE)
-UN.balanced <- UNCOVER(X = CM,y = rv, deforest_criterion = "Balanced",
+UN.diverse <- UNCOVER(X = CM,y = rv, deforest_criterion = "Diverse",
                        options = UNCOVER.opts(n_min_class = 2), verbose = FALSE)
 plot(UN.none,type = "covariates")
 plot(UN.none,type = "fitted")
@@ -125,7 +125,7 @@ plot(UN.noc,type = "diagnostics",diagnostic_x_axis = "minimal")
 plot(UN.soc,type = "diagnostics",diagnostic_x_axis = "minimal")
 plot(UN.maxreg,type = "diagnostics",diagnostic_x_axis = "minimal")
 plot(UN.validation,type = "diagnostics",diagnostic_x_axis = "minimal")
-plot(UN.balanced,type = "diagnostics",diagnostic_x_axis = "minimal")
+plot(UN.diverse,type = "diagnostics",diagnostic_x_axis = "minimal")
 
 # If we only wanted to view the second co-variate
 plot(UN.none,type = "covariates",plot_var=2)
