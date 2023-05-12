@@ -559,12 +559,8 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
     message("Deforestation Stage")
   }
   if(deforest_criterion=="NoC"){
-    if(!options$diagnostics){
-      Z_track = NULL
-      K_track = NULL
-    }
     if(K==1){
-      if(diagnostics){
+      if(options$diagnostics){
         pnoc <- list(Cluster_Allocation = z,
                     Log_Marginal_Likelihoods = logZ,
                     Graph = g,
@@ -579,6 +575,11 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                     Edges_Removed = edge_rem)
       }
     } else{
+      if(options$diagnostics){
+        Tr_in <- Track[,1:3]
+      } else{
+        Tr_in <- NULL
+      }
       pnoc <- deforest.noc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,
                            K_dag = options$max_K,clu_al = z,c_s = combine_save,
                            est_thres = options$SMC_thres,
@@ -588,7 +589,7 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                            methas = options$n_move,vb = verbose,
                            cb = options$BIC_cache,cs = options$SMC_cache,
                            PA = MoreArgs,diagnostics = options$diagnostics,
-                           Tr = Track[,1:3],SMC_f = IBIS.Z,BIC_f = memo.bic,
+                           Tr = Tr_in,SMC_f = IBIS.Z,BIC_f = memo.bic,
                            rt = options$RIBIS_thres)
     }
     memoise::forget(memo.bic)
@@ -616,7 +617,7 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
   }
   if(deforest_criterion=="SoC"){
     if(K==1){
-      if(diagnostics){
+      if(options$diagnostics){
         psoc <- list(Cluster_Allocation = z,
                     Log_Marginal_Likelihoods = logZ,
                     Graph = g,
@@ -631,6 +632,11 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                     Edges_Removed = edge_rem)
       }
     } else{
+      if(options$diagnostics){
+        Tr_in <- Track[,c(1:2,4:5)]
+      } else{
+        Tr_in <- NULL
+      }
       psoc <- deforest.soc(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,
                            n_dag = options$min_size,clu_al = z,c_s = combine_save,
                            est_thres = options$SMC_thres,
@@ -640,7 +646,7 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                            methas = options$n_move,vb = verbose,
                            cb = options$BIC_cache,cs = options$SMC_cache,
                            PA = MoreArgs,diagnostics = options$diagnostics,
-                           Tr = Track[,c(1:2,4:5)],SMC_f = IBIS.Z,
+                           Tr = Tr_in,SMC_f = IBIS.Z,
                            BIC_f = memo.bic, rt = options$RIBIS_thres)
     }
     memoise::forget(memo.bic)
@@ -671,7 +677,7 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
   }
   if(deforest_criterion=="Diverse"){
     if(K==1){
-      if(diagnostics){
+      if(options$diagnostics){
         pdiv <- list(Cluster_Allocation = z,
                     Log_Marginal_Likelihoods = logZ,
                     Graph = g,
@@ -686,6 +692,11 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                     Edges_Removed = edge_rem)
       }
     } else{
+      if(options$diagnostics){
+        Tr_in <- Track[,c(1:2,6:7)]
+      } else{
+        Tr_in <- NULL
+      }
       pdiv <- deforest.diverse(obs = X,res = y,gra = g,lbe = logZ,eps = edge_rem,
                                 ups = options$n_min_class,clu_al = z,
                                 c_s = combine_save,est_thres = options$SMC_thres,
@@ -696,7 +707,7 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                                 vb = verbose,cb = options$BIC_cache,
                                 cs = options$SMC_cache,PA = MoreArgs,
                                 diagnostics = options$diagnostics,
-                                Tr = Track[,c(1:2,6:7)],SMC_f = IBIS.Z,
+                                Tr = Tr_in,SMC_f = IBIS.Z,
                                 BIC_f = memo.bic, rt = options$RIBIS_thres)
     }
     memoise::forget(memo.bic)
@@ -743,7 +754,7 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
   }
   if(deforest_criterion=="MaxReg"){
     if(K==1){
-      if(diagnostics){
+      if(options$diagnostics){
         pmaxreg <- list(Cluster_Allocation = z,
                     Log_Marginal_Likelihoods = logZ,
                     Graph = g,
@@ -758,6 +769,11 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                     Edges_Removed = edge_rem)
       }
     } else{
+      if(options$diagnostics){
+        Tr_in <- Track[,1:2]
+      } else{
+        Tr_in <- NULL
+      }
       pmaxreg <- deforest.maxreg(obs = X,res = y,gra = g,lbe = logZ,
                                  eps = edge_rem, tau = options$reg,clu_al = z,
                                  c_s = combine_save,
@@ -769,22 +785,18 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                                  vb = verbose,cb = options$BIC_cache,
                                  cs = options$SMC_cache,PA = MoreArgs,
                                  diagnostics = options$diagnostics,
-                                 Tr = Track[,1:2],SMC_f = IBIS.Z,BIC_f = memo.bic,
+                                 Tr = Tr_in,SMC_f = IBIS.Z,BIC_f = memo.bic,
                                  rt = options$RIBIS_thres)
     }
     memoise::forget(memo.bic)
     memoise::forget(IBIS.Z)
-    res <- (pmaxreg)
+    res <- pmaxreg
   }
   if(deforest_criterion=="Validation"){
     if(K==1){
-      if(diagnostics){
-        if(is.null(Tr)){
-          stop("If diagnostics=TRUE then Tr needs to be specified")
-        } else{
-          Tr <- data.frame(Track[,1:2],Log_Bayesian_Evidence_All = rep(NA,nrow(Track[,1:2])),
+      if(options$diagnostics){
+        Tr <- data.frame(Track[,1:2],Log_Bayesian_Evidence_All = rep(NA,nrow(Track[,1:2])),
                            Robustness_Statistic = rep(NA,nrow(Track[,1:2])))
-        }
       }
       z_all <- igraph::components(g_all)$membership
       for(k in 1:K){
@@ -805,7 +817,7 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                                ribis_thres = options$RIBIS_thres)
       }
       RobS <- sum(logZ_all-logZ)
-      if(diagnostics){
+      if(options$diagnostics){
         Tr[nrow(Tr),3:4] <- c(sum(logZ_all),RobS)
       }
       TD = list(Cluster_Allocation = z,
@@ -813,7 +825,7 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                 Graph = g,
                 Number_of_Clusters = K,
                 Edges_Removed = edge_rem)
-      if(diagnostics){
+      if(options$diagnostics){
         AD = list(Cluster_Allocation = z_all,
                   Log_Marginal_Likelihoods = logZ_all,
                   Graph = g_all,
@@ -830,6 +842,11 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
       pval <- list(Training_Data = TD,
                    All_Data = AD)
     } else{
+      if(options$diagnostics){
+        Tr_in <- Track[,1:2]
+      } else{
+        Tr_in <- NULL
+      }
       pval <- deforest.validation(obs = X,obs_all = X_all,res = y,res_all = y_all,
                                   gra = g,lbe = logZ,eps = edge_rem,gra_all = g_all,
                                   clu_al = z,c_s = combine_save,
@@ -841,7 +858,7 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
                                   rho = mst_var,vb = verbose,
                                   cb = options$BIC_cache,cs = options$SMC_cache,
                                   PA = MoreArgs,diagnostics = options$diagnostics,
-                                  Tr = Track[,1:2],SMC_f = IBIS.Z,
+                                  Tr = Tr_in,SMC_f = IBIS.Z,
                                   BIC_f = memo.bic,rt = options$RIBIS_thres)
     }
     memoise::forget(memo.bic)
