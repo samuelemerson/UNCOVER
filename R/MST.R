@@ -3,9 +3,14 @@ one.stage.mst <- function(obs,rho=NULL){
     rho <- 1:ncol(obs)
   }
   conn <- as.matrix(stats::dist(obs[,rho],method = "euclidean"))
+  beid <- min(conn[conn>0])
+  if(any(which(conn==0,arr.ind = T)[,1] != which(conn==0,arr.ind = T)[,2])){
+    conn[conn==0] <- beid/2
+    diag(conn) <- 0
+  }
   g <- igraph::graph_from_adjacency_matrix(conn,weighted=TRUE,mode="undirected")
   g <- igraph::mst(g,algorithm="prim")
-  return(g)
+  return(list(g,beid))
 }
 
 two.stage.mst.defunct <- function(obs_mat,tr_ind,mst_sub=NULL){
@@ -42,6 +47,11 @@ two.stage.mst <- function(obs_mat,tr_ind,mst_sub=NULL){
     mst_sub <- 1:ncol(obs_mat)
   }
   conn <- as.matrix(stats::dist(obs_mat[,mst_sub],method = "euclidean"))
+  beid <- min(conn[conn>0])
+  if(any(which(conn==0,arr.ind = T)[,1] != which(conn==0,arr.ind = T)[,2])){
+    conn[conn==0] <- beid/2
+    diag(conn) <- 0
+  }
   conn_temp <- conn
   conn_tr <- conn[tr_ind,tr_ind]
   g_tr <- igraph::graph_from_adjacency_matrix(conn_tr,weighted=TRUE,mode="undirected")
@@ -59,5 +69,5 @@ two.stage.mst <- function(obs_mat,tr_ind,mst_sub=NULL){
   conn_temp[add_edges_val] <- conn[add_edges_val]
   conn_temp[add_edges_val[,2:1]] <- conn[add_edges_val]
   g <- igraph::graph_from_adjacency_matrix(conn_temp,weighted = TRUE,mode="undirected")
-  return(list(g_tr,g))
+  return(list(g_tr,g,beid))
 }

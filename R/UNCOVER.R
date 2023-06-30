@@ -242,7 +242,7 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
   IBIS.Z <- memoise::memoise(IBIS.Z,cache = options$SMC_cache,
                               omit_args = c("sampl","current_set"))
   X_names <- colnames(X)
-  X <- as.matrix(X)
+  X <- model.matrix(~.,data = as.data.frame(X))[,-1]
   if(options$prior.override){
     MoreArgs <- options$MoreArgs
     TotArgs <- list(options$N)
@@ -264,8 +264,8 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
       stop("dprior specified does not produce a vector of densities for the
            N samples provided")
     }
-    prior_mean = "overriden"
-    prior_var = "overriden"
+    prior_mean = "overridden"
+    prior_var = "overridden"
   } else{
     rprior <- mvnfast::rmvn
     dprior <- mvnfast::dmvn
@@ -282,12 +282,15 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
     g_val <- two.stage.mst(obs_mat = X,tr_ind = samp,mst_sub = mst_var)
     g <- g_val[[1]]
     g_all <- g_val[[2]]
+    beid <- g_val[[3]]
     X_all <- X
     y_all <- y
     X <- X[samp,,drop=FALSE]
     y <- y[samp]
   } else{
-    g <- one.stage.mst(obs = X,rho = mst_var)
+    osm <- one.stage.mst(obs = X,rho = mst_var)
+    g <- osm[[1]]
+    beid <- osm[[2]]
   }
   depth_g <- igraph::V(g)$name[igraph::dfs(g,igraph::get_diameter(g)[1])$order]
   edge_rank <- matrix(0,length(igraph::E(g)),2)
@@ -348,7 +351,7 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
           }
           next
         }
-        if(z[igraph::get.edgelist(g,names=FALSE)[i,]][1]!=k){
+        if(z[igraph::get.edgelist(g,names=FALSE)[i,]][1]!=k | E(g)[igraph::get.edge.ids(g,igraph::get.edgelist(g)[i,])]$weight<beid){
           if(verbose){
             utils::txtProgressBar(min=1,max=nrow(edge_rank),initial=q,style=3)
           }
