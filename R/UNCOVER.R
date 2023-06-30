@@ -1132,18 +1132,19 @@ plot.UNCOVER <- function(x,type = "covariates",
     }
     x$Covariate_Matrix <- x$Covariate_Matrix[,plot_var,drop=FALSE]
     if(ncol(x$Covariate_Matrix)==1){
-      overall_plot <- ggplot2::ggplot(data.frame(x$Covariate_Matrix,y.axis = rep(0,nrow(x$Covariate_Matrix)),
-                                                 y = as.character(x$Response_Vector),
-                                                 Cluster = as.factor(x$Model$Cluster_Allocation))) +
+      plotdf <- data.frame(x$Covariate_Matrix,y.axis = rep(0,nrow(x$Covariate_Matrix)),
+                           y = as.character(x$Response_Vector),
+                           Cluster = as.factor(x$Model$Cluster_Allocation))
+      overall_plot <- ggplot2::ggplot(plotdf) +
         ggplot2::geom_density(show.legend = FALSE,
-                              ggplot2::aes_string(colnames(x$Covariate_Matrix)[1],
+                              ggplot2::aes_string(colnames(plotdf)[1],
                                                   colour = "Cluster",
                                                   fill = "Cluster"),alpha = 0.25) +
         ggplot2::geom_point(alpha=0,
-                            ggplot2::aes_string(colnames(x$Covariate_Matrix)[1],
+                            ggplot2::aes_string(colnames(plotdf)[1],
                                                 "y.axis",colour = "Cluster")) +
         ggplot2::geom_text(alpha = 1,show.legend = FALSE,size = 3,
-                           ggplot2::aes_string(colnames(x$Covariate_Matrix)[1],
+                           ggplot2::aes_string(colnames(plotdf)[1],
                                                "y.axis",
                                                label = "y",colour = "Cluster")) +
         ggplot2::guides(colour = ggplot2::guide_legend(override.aes = list(alpha=1),
@@ -1151,11 +1152,12 @@ plot.UNCOVER <- function(x,type = "covariates",
         ggplot2::labs(y = "density") +
         ggplot2::theme(legend.position = "bottom")
     } else{
-      legend_plot <- ggplot2::ggplot(data.frame(x$Covariate_Matrix[,c(1,2)],
-                                                Cluster = as.factor(x$Model$Cluster_Allocation)),
-                                     ggplot2::aes_string(colnames(x$Covariate_Matrix)[1],
-                                                  colnames(x$Covariate_Matrix)[2],
-                                                  colour = "Cluster")) +
+      plotdf <- data.frame(x$Covariate_Matrix[,c(1,2)],
+                           Cluster = as.factor(x$Model$Cluster_Allocation))
+      legend_plot <- ggplot2::ggplot(plotdf,
+                                     ggplot2::aes_string(colnames(plotdf)[1],
+                                                         colnames(plotdf)[2],
+                                                         colour = "Cluster")) +
         ggplot2::geom_point() + ggplot2::theme(legend.position = "bottom")
       label_plot <- function(data,mapping,...){
         ggplot2::ggplot(data = data,mapping = mapping) +
@@ -1180,24 +1182,25 @@ plot.UNCOVER <- function(x,type = "covariates",
     X_prob <- predict.UNCOVER(object = x)[,2]
     x$Covariate_Matrix <- x$Covariate_Matrix[,plot_var,drop=FALSE]
     if(ncol(x$Covariate_Matrix)==1){
-      overall_plot <- ggplot2::ggplot(data.frame(x$Covariate_Matrix,
-                                                 y.axis = rep(0,nrow(x$Covariate_Matrix)),
-                                                 y = as.character(x$Response_Vector),
-                                                 Fitted.Probabilities = X_prob,
-                                                 Hard.Assignment = X_prob>=0.5)) +
+      plotdf <- data.frame(x$Covariate_Matrix,
+                           y.axis = rep(0,nrow(x$Covariate_Matrix)),
+                           y = as.character(x$Response_Vector),
+                           Fitted.Probabilities = X_prob,
+                           Hard.Assignment = X_prob>=0.5)
+      overall_plot <- ggplot2::ggplot(plotdf) +
         ggplot2::geom_density(show.legend = FALSE,
-                              ggplot2::aes_string(colnames(x$Covariate_Matrix)[1],
+                              ggplot2::aes_string(colnames(plotdf)[1],
                                                   colour = "Hard.Assignment",
                                                   fill = "Hard.Assignment"),alpha=0.25) +
         ggplot2::scale_colour_manual(values = c("red","green")) +
         ggplot2::scale_fill_manual(values = c("red","green")) +
         ggnewscale::new_scale_color() +
         ggplot2::geom_point(alpha=0,
-                            ggplot2::aes_string(colnames(x$Covariate_Matrix)[1],
+                            ggplot2::aes_string(colnames(plotdf)[1],
                                                 "y.axis",
                                                 colour = "Fitted.Probabilities")) +
         ggplot2::geom_text(alpha = 1,show.legend = FALSE,size = 3,
-                           ggplot2::aes_string(colnames(x$Covariate_Matrix)[1],
+                           ggplot2::aes_string(colnames(plotdf)[1],
                                                "y.axis",
                                                label = "y",
                                                colour = "Fitted.Probabilities")) +
@@ -1205,10 +1208,11 @@ plot.UNCOVER <- function(x,type = "covariates",
         ggplot2::labs(y = "density") +
         ggplot2::theme(legend.position = "bottom")
     } else{
-      legend_plot <- ggplot2::ggplot(data.frame(x$Covariate_Matrix[,c(1,2)],
-                                                Fitted.Probabilities = X_prob),
-                                     ggplot2::aes_string(colnames(x$Covariate_Matrix)[1],
-                                         colnames(x$Covariate_Matrix)[2],
+      plotdf <- data.frame(x$Covariate_Matrix[,c(1,2)],
+                           Fitted.Probabilities = X_prob)
+      legend_plot <- ggplot2::ggplot(plotdf,
+                                     ggplot2::aes_string(colnames(plotdf)[1],
+                                         colnames(plotdf)[2],
                                          colour = "Fitted.Probabilities")) +
         ggplot2::geom_point() + ggplot2::theme(legend.position = "bottom") +
         ggplot2::scale_color_gradient(low = "red",high = "green",name = "Fitted Probabilities",limits = c(0,1))
@@ -1249,11 +1253,12 @@ plot.UNCOVER <- function(x,type = "covariates",
     if(x$Deforestation_Criterion=="Validation"){
       x$Model <- x$Model$All_Data
     }
-    legend_plot <- ggplot2::ggplot(data.frame(x$Covariate_Matrix[,c(1,2)],
-                                              Cluster = as.factor(x$Model$Cluster_Allocation)),
-                                   ggplot2::aes_string(colnames(x$Covariate_Matrix)[1],
-                                                colnames(x$Covariate_Matrix)[2],
-                                                colour = "Cluster")) +
+    plotdf <- data.frame(x$Covariate_Matrix[,c(1,2)],
+                         Cluster = as.factor(x$Model$Cluster_Allocation))
+    legend_plot <- ggplot2::ggplot(plotdf,
+                                   ggplot2::aes_string(colnames(plotdf)[1],
+                                                       colnames(plotdf)[2],
+                                                       colour = "Cluster")) +
       ggplot2::geom_point() + ggplot2::theme(legend.position = "bottom")
     overall_plot <- GGally::ggpairs(samp.df,ggplot2::aes_string(alpha = 0.5,
                                                          color = as.factor(rep(1:x$Model$Number_of_Clusters,each = x$Control$N)),
