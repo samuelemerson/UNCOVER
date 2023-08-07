@@ -505,7 +505,7 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
             system_save[[k]][[2]][edge_z[1]] <- combine_save[[cut_comb]][[2]]
             system_save[[k]][[2]] <- system_save[[k]][[2]][-edge_z[2]]
             system_save[[k]][[3]] <- igraph::add_edges(system_save[[k]][[3]],
-                                               edge_rem[cut_comb,])
+                                               edge_rem[cut_comb,],weight = beid)
             if(deforest_criterion=="Validation"){
               system_save[[k]][[5]] <- igraph::add_edges(system_save[[k]][[5]],
                                                  edge_rem[cut_comb,])
@@ -513,7 +513,7 @@ UNCOVER <- function(X,y,mst_var=NULL,options = UNCOVER.opts(),stop_criterion=5,
           }
           logZ[edge_z[1]] <- combine_save[[cut_comb]][[2]]
           logZ <- logZ[-edge_z[2]]
-          g <- igraph::add_edges(g,edge_rem[cut_comb,])
+          g <- igraph::add_edges(g,edge_rem[cut_comb,],weight = beid)
           if(deforest_criterion=="Validation"){
             g_all <- igraph::add_edges(g_all,edge_rem[cut_comb,])
           }
