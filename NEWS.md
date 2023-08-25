@@ -4,7 +4,7 @@
 
 * Initial release to CRAN
 
-## V1.0.1
+## V1.1.0
 
 * Fixed bug which caused an error if a deforestation criterion only finds one cluster before the deforestation stage 
 

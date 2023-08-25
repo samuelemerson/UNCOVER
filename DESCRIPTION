@@ -1,7 +1,7 @@
 Package: UNCOVER
 Type: Package
 Title: Utilising Normalisation Constant Optimisation via Edge Removal (UNCOVER)
-Version: 1.0.0
+Version: 1.1.0
 Authors@R: person("Samuel", "Emerson", email = "samuel.emerson@hotmail.co.uk",
                     role = c("aut", "cre"))
 Maintainer: Samuel Emerson <samuel.emerson@hotmail.co.uk>
@@ -19,5 +19,5 @@ License: GPL-2
 Encoding: UTF-8
 LazyData: true
 Imports: mvnfast, igraph, crayon, memoise, GGally, ggplot2, ggpubr, scales, stats, cachem, ggnewscale
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Roxygen: list(markdown = TRUE)

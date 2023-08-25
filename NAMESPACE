@@ -11,7 +11,7 @@ export(plot.IBIS)
 S3method(plot,IBIS)
 export(plot.UNCOVER)
 S3method(plot,UNCOVER)
-importFrom("stats", "BIC", "cov.wt", "dist", "glm", "runif")
+importFrom("stats", "BIC", "cov.wt", "dist", "glm", "runif", "model.matrix")
 importFrom("utils", "txtProgressBar")
 importFrom("ggplot2", "ggplot","aes_string","scale_color_gradient","labs",
            "geom_line","scale_x_discrete","geom_hline","scale_y_continuous",
